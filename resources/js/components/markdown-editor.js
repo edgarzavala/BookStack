@@ -256,7 +256,7 @@ class MarkdownEditor {
             }
 
             const clipboard = new Clipboard(event.dataTransfer);
-            if (clipboard.hasItems()) {
+            if (clipboard.hasItems() && clipboard.getImages().length > 0) {
                 const cursorPos = cm.coordsChar({left: event.pageX, top: event.pageY});
                 cm.setCursor(cursorPos);
                 event.stopPropagation();
@@ -440,10 +440,10 @@ class MarkdownEditor {
 
             const data = {
                 image: pngData,
-                uploaded_to: Number(document.getElementById('page-editor').getAttribute('page-id'))
+                uploaded_to: Number(this.pageId),
             };
 
-            window.$http.post(window.baseUrl('/images/drawio'), data).then(resp => {
+            window.$http.post("/images/drawio", data).then(resp => {
                 this.insertDrawing(resp.data, cursorPos);
                 DrawIO.close();
             }).catch(err => {
@@ -476,10 +476,10 @@ class MarkdownEditor {
 
             let data = {
                 image: pngData,
-                uploaded_to: Number(document.getElementById('page-editor').getAttribute('page-id'))
+                uploaded_to: Number(this.pageId),
             };
 
-            window.$http.post(window.baseUrl(`/images/drawio`), data).then(resp => {
+            window.$http.post("/images/drawio", data).then(resp => {
                 let newText = `<div drawio-diagram="${resp.data.id}"><img src="${resp.data.url}"></div>`;
                 let newContent = this.cm.getValue().split('\n').map(line => {
                     if (line.indexOf(`drawio-diagram="${drawingId}"`) !== -1) {
@@ -561,6 +561,12 @@ class MarkdownEditor {
             this.cm.setValue(content);
             const prependLineCount = markdown.split('\n').length;
             this.cm.setCursor(cursorPos.line + prependLineCount, cursorPos.ch);
+        });
+
+        // Insert editor content at the current location
+        window.$events.listen('editor::insert', (eventContent) => {
+            const markdown = getContentToInsert(eventContent);
+            this.cm.replaceSelection(markdown);
         });
 
         // Focus on editor

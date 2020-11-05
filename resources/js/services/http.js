@@ -69,7 +69,10 @@ async function dataRequest(method, url, data = null) {
 
     // Send data as JSON if a plain object
     if (typeof data === 'object' && !(data instanceof FormData)) {
-        options.headers = {'Content-Type': 'application/json'};
+        options.headers = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        };
         options.body = JSON.stringify(data);
     }
 
@@ -138,10 +141,14 @@ async function request(url, options = {}) {
 /**
  * Get the content from a fetch response.
  * Checks the content-type header to determine the format.
- * @param response
+ * @param {Response} response
  * @returns {Promise<Object|String>}
  */
 async function getResponseContent(response) {
+    if (response.status === 204) {
+        return null;
+    }
+
     const responseContentType = response.headers.get('Content-Type');
     const subType = responseContentType.split('/').pop();
 

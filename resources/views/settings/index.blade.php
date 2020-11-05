@@ -3,16 +3,7 @@
 @section('body')
     <div class="container small">
 
-        <div class="grid left-focus v-center no-row-gap">
-            <div class="py-m">
-                @include('settings.navbar', ['selected' => 'settings'])
-            </div>
-            <div class="text-right p-m">
-                <a target="_blank" rel="noopener noreferrer" href="https://github.com/BookStackApp/BookStack/releases">
-                    BookStack @if(strpos($version, 'v') !== 0) version @endif {{ $version }}
-                </a>
-            </div>
-        </div>
+        @include('settings.navbar-with-version', ['selected' => 'settings'])
 
         <div class="card content-wrap auto-height">
             <h2 id="features" class="list-heading">{{ trans('settings.app_features_security') }}</h2>
@@ -231,7 +222,8 @@
                             <label for="setting-registration-role">{{ trans('settings.reg_default_role') }}</label>
                             <select id="setting-registration-role" name="setting-registration-role" @if($errors->has('setting-registration-role')) class="neg" @endif>
                                 @foreach(\BookStack\Auth\Role::all() as $role)
-                                    <option value="{{$role->id}}" data-role-name="{{ $role->name }}"
+                                    <option value="{{$role->id}}"
+                                            data-system-role-name="{{ $role->system_name ?? '' }}"
                                             @if(setting('registration-role', \BookStack\Auth\Role::first()->id) == $role->id) selected @endif
                                     >
                                         {{ $role->display_name }}
@@ -275,6 +267,5 @@
 
     </div>
 
-    @include('components.image-manager', ['imageType' => 'system'])
     @include('components.entity-selector-popup', ['entityTypes' => 'page'])
 @stop
