@@ -1,17 +1,16 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-class AddRevisionCounts extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::table('pages', function (Blueprint $table) {
             $table->integer('revision_count');
@@ -24,15 +23,13 @@ class AddRevisionCounts extends Migration
         // Update revision count
         $pTable = DB::getTablePrefix() . 'pages';
         $rTable = DB::getTablePrefix() . 'page_revisions';
-        DB::statement("UPDATE ${pTable} SET ${pTable}.revision_count=(SELECT count(*) FROM ${rTable} WHERE ${rTable}.page_id=${pTable}.id)");
+        DB::statement("UPDATE {$pTable} SET {$pTable}.revision_count=(SELECT count(*) FROM {$rTable} WHERE {$rTable}.page_id={$pTable}.id)");
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::table('pages', function (Blueprint $table) {
             $table->dropColumn('revision_count');
@@ -41,4 +38,4 @@ class AddRevisionCounts extends Migration
             $table->dropColumn('revision_number');
         });
     }
-}
+};

@@ -1,4 +1,4 @@
-@extends('tri-layout')
+@extends('layouts.tri')
 
 @section('container-attrs')
     component="entity-search"
@@ -6,10 +6,19 @@
     option:entity-search:entity-type="book"
 @stop
 
+@push('social-meta')
+    <meta property="og:description" content="{{ Str::limit($book->description, 100, '...') }}">
+    @if($book->cover)
+        <meta property="og:image" content="{{ $book->getBookCover() }}">
+    @endif
+@endpush
+
+@include('entities.body-tag-classes', ['entity' => $book])
+
 @section('body')
 
-    <div class="mb-s">
-        @include('partials.breadcrumbs', ['crumbs' => [
+    <div class="mb-s print-hidden">
+        @include('entities.breadcrumbs', ['crumbs' => [
             $book,
         ]])
     </div>
@@ -17,14 +26,14 @@
     <main class="content-wrap card">
         <h1 class="break-text">{{$book->name}}</h1>
         <div refs="entity-search@contentView" class="book-content">
-            <p class="text-muted">{!! nl2br(e($book->description)) !!}</p>
+            <div class="text-muted break-text">{!! $book->descriptionHtml() !!}</div>
             @if(count($bookChildren) > 0)
                 <div class="entity-list book-contents">
                     @foreach($bookChildren as $childElement)
                         @if($childElement->isA('chapter'))
-                            @include('chapters.list-item', ['chapter' => $childElement])
+                            @include('chapters.parts.list-item', ['chapter' => $childElement])
                         @else
-                            @include('pages.list-item', ['page' => $childElement])
+                            @include('pages.parts.list-item', ['page' => $childElement])
                         @endif
                     @endforeach
                 </div>
@@ -52,7 +61,7 @@
             @endif
         </div>
 
-        @include('partials.entity-search-results')
+        @include('entities.search-results')
     </main>
 
 @stop
@@ -60,14 +69,20 @@
 @section('right')
     <div class="mb-xl">
         <h5>{{ trans('common.details') }}</h5>
-        <div class="text-small text-muted blended-links">
-            @include('partials.entity-meta', ['entity' => $book])
-            @if($book->restricted)
+        <div class="blended-links">
+            @include('entities.meta', ['entity' => $book, 'watchOptions' => $watchOptions])
+            @if($book->hasPermissions())
                 <div class="active-restriction">
                     @if(userCan('restrictions-manage', $book))
-                        <a href="{{ $book->getUrl('/permissions') }}">@icon('lock'){{ trans('entities.books_permissions_active') }}</a>
+                        <a href="{{ $book->getUrl('/permissions') }}" class="entity-meta-item">
+                            @icon('lock')
+                            <div>{{ trans('entities.books_permissions_active') }}</div>
+                        </a>
                     @else
-                        @icon('lock'){{ trans('entities.books_permissions_active') }}
+                        <div class="entity-meta-item">
+                            @icon('lock')
+                            <div>{{ trans('entities.books_permissions_active') }}</div>
+                        </div>
                     @endif
                 </div>
             @endif
@@ -76,16 +91,16 @@
 
     <div class="actions mb-xl">
         <h5>{{ trans('common.actions') }}</h5>
-        <div class="icon-list text-primary">
+        <div class="icon-list text-link">
 
             @if(userCan('page-create', $book))
-                <a href="{{ $book->getUrl('/create-page') }}" class="icon-list-item">
+                <a href="{{ $book->getUrl('/create-page') }}" data-shortcut="new" class="icon-list-item">
                     <span>@icon('add')</span>
                     <span>{{ trans('entities.pages_new') }}</span>
                 </a>
             @endif
             @if(userCan('chapter-create', $book))
-                <a href="{{ $book->getUrl('/create-chapter') }}" class="icon-list-item">
+                <a href="{{ $book->getUrl('/create-chapter') }}" data-shortcut="new" class="icon-list-item">
                     <span>@icon('add')</span>
                     <span>{{ trans('entities.chapters_new') }}</span>
                 </a>
@@ -94,23 +109,29 @@
             <hr class="primary-background">
 
             @if(userCan('book-update', $book))
-                <a href="{{ $book->getUrl('/edit') }}" class="icon-list-item">
+                <a href="{{ $book->getUrl('/edit') }}" data-shortcut="edit" class="icon-list-item">
                     <span>@icon('edit')</span>
                     <span>{{ trans('common.edit') }}</span>
                 </a>
-                <a href="{{ $book->getUrl('/sort') }}" class="icon-list-item">
+                <a href="{{ $book->getUrl('/sort') }}" data-shortcut="sort" class="icon-list-item">
                     <span>@icon('sort')</span>
                     <span>{{ trans('common.sort') }}</span>
                 </a>
             @endif
+            @if(userCan('book-create-all'))
+                <a href="{{ $book->getUrl('/copy') }}" data-shortcut="copy" class="icon-list-item">
+                    <span>@icon('copy')</span>
+                    <span>{{ trans('common.copy') }}</span>
+                </a>
+            @endif
             @if(userCan('restrictions-manage', $book))
-                <a href="{{ $book->getUrl('/permissions') }}" class="icon-list-item">
+                <a href="{{ $book->getUrl('/permissions') }}" data-shortcut="permissions" class="icon-list-item">
                     <span>@icon('lock')</span>
                     <span>{{ trans('entities.permissions') }}</span>
                 </a>
             @endif
             @if(userCan('book-delete', $book))
-                <a href="{{ $book->getUrl('/delete') }}" class="icon-list-item">
+                <a href="{{ $book->getUrl('/delete') }}" data-shortcut="delete" class="icon-list-item">
                     <span>@icon('delete')</span>
                     <span>{{ trans('common.delete') }}</span>
                 </a>
@@ -118,7 +139,15 @@
 
             <hr class="primary-background">
 
-            @include('partials.entity-export-menu', ['entity' => $book])
+            @if($watchOptions->canWatch() && !$watchOptions->isWatching())
+                @include('entities.watch-action', ['entity' => $book])
+            @endif
+            @if(!user()->isGuest())
+                @include('entities.favourite-action', ['entity' => $book])
+            @endif
+            @if(userCan('content-export'))
+                @include('entities.export-menu', ['entity' => $book])
+            @endif
         </div>
     </div>
 
@@ -126,25 +155,25 @@
 
 @section('left')
 
-    @include('partials.entity-search-form', ['label' => trans('entities.books_search_this')])
+    @include('entities.search-form', ['label' => trans('entities.books_search_this')])
 
     @if($book->tags->count() > 0)
         <div class="mb-xl">
-            @include('components.tag-list', ['entity' => $book])
+            @include('entities.tag-list', ['entity' => $book])
         </div>
     @endif
 
     @if(count($bookParentShelves) > 0)
         <div class="actions mb-xl">
-            <h5>{{ trans('entities.shelves_long') }}</h5>
-            @include('partials.entity-list', ['entities' => $bookParentShelves, 'style' => 'compact'])
+            <h5>{{ trans('entities.shelves') }}</h5>
+            @include('entities.list', ['entities' => $bookParentShelves, 'style' => 'compact'])
         </div>
     @endif
 
     @if(count($activity) > 0)
-        <div class="mb-xl">
+        <div id="recent-activity" class="mb-xl">
             <h5>{{ trans('entities.recent_activity') }}</h5>
-            @include('partials.activity-list', ['activity' => $activity])
+            @include('common.activity-list', ['activity' => $activity])
         </div>
     @endif
 @stop

@@ -1,40 +1,28 @@
-<?php namespace BookStack\Http\Middleware;
+<?php
 
+namespace BookStack\Http\Middleware;
+
+use BookStack\App\Providers\RouteServiceProvider;
 use Closure;
-use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
 class RedirectIfAuthenticated
 {
     /**
-     * The Guard implementation.
-     *
-     * @var Guard
-     */
-    protected $auth;
-
-    /**
-     * Create a new filter instance.
-     *
-     * @param  Guard $auth
-     * @return void
-     */
-    public function __construct(Guard $auth)
-    {
-        $this->auth = $auth;
-    }
-
-    /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Closure                 $next
-     * @return mixed
+     * @param Closure(Request): (Response) $next
      */
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next, string ...$guards): Response
     {
-        $requireConfirmation = setting('registration-confirmation');
-        if ($this->auth->check() && (!$requireConfirmation || ($requireConfirmation && $this->auth->user()->email_confirmed))) {
-            return redirect('/');
+        $guards = empty($guards) ? [null] : $guards;
+
+        foreach ($guards as $guard) {
+            if (Auth::guard($guard)->check()) {
+                return redirect(RouteServiceProvider::HOME);
+            }
         }
 
         return $next($request);

@@ -1,17 +1,18 @@
-<?php namespace Tests;
+<?php
 
-use BookStack\Entities\Book;
+namespace Tests;
+
+use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
 use Illuminate\Support\Facades\Log;
 
 class ErrorTest extends TestCase
 {
-
     public function test_404_page_does_not_show_login()
     {
         // Due to middleware being handled differently this will not fail
         // if our custom, middleware-loaded handler fails but this is here
         // as a reminder and as a general check in the event of other issues.
-        $editor = $this->getEditor();
+        $editor = $this->users->editor();
         $editor->name = 'tester';
         $editor->save();
 
@@ -22,11 +23,40 @@ class ErrorTest extends TestCase
         $notFound->assertSeeText('tester');
     }
 
+    public function test_404_page_does_not_non_visible_content()
+    {
+        $editor = $this->users->editor();
+        $book = $this->entities->book();
+
+        $this->actingAs($editor)->get($book->getUrl())->assertOk();
+
+        $this->permissions->disableEntityInheritedPermissions($book);
+
+        $this->actingAs($editor)->get($book->getUrl())->assertNotFound();
+    }
+
+    public function test_404_page_shows_visible_content_within_non_visible_parent()
+    {
+        $editor = $this->users->editor();
+        $book = $this->entities->book();
+        $page = $book->pages()->first();
+
+        $this->actingAs($editor)->get($page->getUrl())->assertOk();
+
+        $this->permissions->disableEntityInheritedPermissions($book);
+        $this->permissions->addEntityPermission($page, ['view'], $editor->roles()->first());
+
+        $resp = $this->actingAs($editor)->get($book->getUrl());
+        $resp->assertNotFound();
+        $resp->assertSee($page->name);
+        $resp->assertDontSee($book->name);
+    }
+
     public function test_item_not_found_does_not_get_logged_to_file()
     {
-        $this->actingAs($this->getViewer());
+        $this->actingAs($this->users->viewer());
         $handler = $this->withTestLogger();
-        $book = Book::query()->first();
+        $book = $this->entities->book();
 
         // Ensure we're seeing errors
         Log::error('cat');
@@ -37,5 +67,24 @@ class ErrorTest extends TestCase
         $this->get($book->getUrl('/chapter/arandomnotfouindpages'));
 
         $this->assertCount(1, $handler->getRecords());
+    }
+
+    public function test_access_to_non_existing_image_location_provides_404_response()
+    {
+        $resp = $this->actingAs($this->users->viewer())->get('/uploads/images/gallery/2021-05/anonexistingimage.png');
+        $resp->assertStatus(404);
+        $resp->assertSeeText('Image Not Found');
+    }
+
+    public function test_posts_above_php_limit_shows_friendly_error()
+    {
+        // Fake super large JSON request
+        $resp = $this->asEditor()->call('GET', '/books', [], [], [], [
+            'CONTENT_LENGTH' => '10000000000',
+            'HTTP_ACCEPT' => 'application/json',
+        ]);
+
+        $resp->assertStatus(413);
+        $resp->assertJson(['error' => 'The server cannot receive the provided amount of data. Try again with less data or a smaller file.']);
     }
 }

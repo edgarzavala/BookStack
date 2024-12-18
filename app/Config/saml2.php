@@ -1,5 +1,8 @@
 <?php
 
+$SAML2_IDP_AUTHNCONTEXT = env('SAML2_IDP_AUTHNCONTEXT', true);
+$SAML2_SP_x509 = env('SAML2_SP_x509', false);
+
 return [
 
     // Display name, shown to users, for SAML2 option
@@ -28,7 +31,6 @@ return [
 
     // Overrides, in JSON format, to the configuration passed to underlying onelogin library.
     'onelogin_overrides' => env('SAML2_ONELOGIN_OVERRIDES', null),
-
 
     'onelogin' => [
         // If 'strict' is True, then the PHP Toolkit will reject unsigned
@@ -77,10 +79,11 @@ return [
             // represent the requested subject.
             // Take a look on lib/Saml2/Constants.php to see the NameIdFormat supported
             'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+
             // Usually x509cert and privateKey of the SP are provided by files placed at
             // the certs folder. But we can also provide them with the following parameters
-            'x509cert' => '',
-            'privateKey' => '',
+            'x509cert'   => $SAML2_SP_x509 ?: '',
+            'privateKey' => env('SAML2_SP_x509_KEY', ''),
         ],
         // Identity Provider Data that we want connect with our SP
         'idp' => [
@@ -138,6 +141,19 @@ return [
             //          0 => '<cert2-string>',
             //      )
             // ),
+        ],
+        'security' => [
+            // SAML2 Authn context
+            // When set to false no AuthContext will be sent in the AuthNRequest,
+            // When set to true (Default) you will get an AuthContext 'exact' 'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'.
+            // Multiple forced values can be passed via a space separated array, For example:
+            // SAML2_IDP_AUTHNCONTEXT="urn:federation:authentication:windows urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport"
+            'requestedAuthnContext' => is_string($SAML2_IDP_AUTHNCONTEXT) ? explode(' ', $SAML2_IDP_AUTHNCONTEXT) : $SAML2_IDP_AUTHNCONTEXT,
+            // Sign requests and responses if a certificate is in use
+            'logoutRequestSigned'   => (bool) $SAML2_SP_x509,
+            'logoutResponseSigned'  => (bool) $SAML2_SP_x509,
+            'authnRequestsSigned'   => (bool) $SAML2_SP_x509,
+            'lowercaseUrlencoding'  => false,
         ],
     ],
 

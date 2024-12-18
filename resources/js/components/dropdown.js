@@ -1,21 +1,25 @@
-import {onSelect} from "../services/dom";
+import {onSelect} from '../services/dom.ts';
+import {KeyboardNavigationHandler} from '../services/keyboard-navigation.ts';
+import {Component} from './component';
 
 /**
  * Dropdown
  * Provides some simple logic to create simple dropdown menus.
- * @extends {Component}
  */
-class DropDown {
+export class Dropdown extends Component {
 
     setup() {
         this.container = this.$el;
         this.menu = this.$refs.menu;
         this.toggle = this.$refs.toggle;
         this.moveMenu = this.$opts.moveMenu;
+        this.bubbleEscapes = this.$opts.bubbleEscapes === 'true';
 
         this.direction = (document.dir === 'rtl') ? 'right' : 'left';
         this.body = document.body;
         this.showing = false;
+
+        this.hide = this.hide.bind(this);
         this.setupListeners();
     }
 
@@ -26,24 +30,42 @@ class DropDown {
         this.menu.classList.add('anim', 'menuIn');
         this.toggle.setAttribute('aria-expanded', 'true');
 
+        const menuOriginalRect = this.menu.getBoundingClientRect();
+        let heightOffset = 0;
+        const toggleHeight = this.toggle.getBoundingClientRect().height;
+        const dropUpwards = menuOriginalRect.bottom > window.innerHeight;
+        const containerRect = this.container.getBoundingClientRect();
+
+        // If enabled, Move to body to prevent being trapped within scrollable sections
         if (this.moveMenu) {
-            // Move to body to prevent being trapped within scrollable sections
-            this.rect = this.menu.getBoundingClientRect();
             this.body.appendChild(this.menu);
             this.menu.style.position = 'fixed';
-            if (this.direction === 'right') {
-                this.menu.style.right = `${(this.rect.right - this.rect.width)}px`;
+            this.menu.style.width = `${menuOriginalRect.width}px`;
+            this.menu.style.left = `${menuOriginalRect.left}px`;
+            if (dropUpwards) {
+                heightOffset = (window.innerHeight - menuOriginalRect.top - toggleHeight / 2);
             } else {
-                this.menu.style.left = `${this.rect.left}px`;
+                heightOffset = menuOriginalRect.top;
             }
-            this.menu.style.top = `${this.rect.top}px`;
-            this.menu.style.width = `${this.rect.width}px`;
+        }
+
+        // Adjust menu to display upwards if near the bottom of the screen
+        if (dropUpwards) {
+            this.menu.style.top = 'initial';
+            this.menu.style.bottom = `${heightOffset}px`;
+            const maxHeight = (window.innerHeight - 40) - (window.innerHeight - containerRect.bottom);
+            this.menu.style.maxHeight = `${Math.floor(maxHeight)}px`;
+        } else {
+            this.menu.style.top = `${heightOffset}px`;
+            this.menu.style.bottom = 'initial';
+            const maxHeight = (window.innerHeight - 40) - containerRect.top;
+            this.menu.style.maxHeight = `${Math.floor(maxHeight)}px`;
         }
 
         // Set listener to hide on mouse leave or window click
-        this.menu.addEventListener('mouseleave', this.hide.bind(this));
-        window.addEventListener('click', event => {
-            if (!this.menu.contains(event.target)) {
+        this.menu.addEventListener('mouseleave', this.hide);
+        window.addEventListener('click', clickEvent => {
+            if (!this.menu.contains(clickEvent.target)) {
                 this.hide();
             }
         });
@@ -63,7 +85,7 @@ class DropDown {
     }
 
     hideAll() {
-        for (let dropdown of window.components.dropdown) {
+        for (const dropdown of window.$components.get('dropdown')) {
             dropdown.hide();
         }
     }
@@ -72,88 +94,56 @@ class DropDown {
         this.menu.style.display = 'none';
         this.menu.classList.remove('anim', 'menuIn');
         this.toggle.setAttribute('aria-expanded', 'false');
+        this.menu.style.top = '';
+        this.menu.style.bottom = '';
+        this.menu.style.maxHeight = '';
+
         if (this.moveMenu) {
             this.menu.style.position = '';
             this.menu.style[this.direction] = '';
-            this.menu.style.top = '';
             this.menu.style.width = '';
+            this.menu.style.left = '';
             this.container.appendChild(this.menu);
         }
+
         this.showing = false;
     }
 
-    getFocusable() {
-        return Array.from(this.menu.querySelectorAll('[tabindex],[href],button,input:not([type=hidden])'));
-    }
-
-    focusNext() {
-        const focusable = this.getFocusable();
-        const currentIndex = focusable.indexOf(document.activeElement);
-        let newIndex = currentIndex + 1;
-        if (newIndex >= focusable.length) {
-            newIndex = 0;
-        }
-
-        focusable[newIndex].focus();
-    }
-
-    focusPrevious() {
-        const focusable = this.getFocusable();
-        const currentIndex = focusable.indexOf(document.activeElement);
-        let newIndex = currentIndex - 1;
-        if (newIndex < 0) {
-            newIndex = focusable.length - 1;
-        }
-
-        focusable[newIndex].focus();
-    }
-
     setupListeners() {
+        const keyboardNavHandler = new KeyboardNavigationHandler(this.container, event => {
+            this.hide();
+            this.toggle.focus();
+            if (!this.bubbleEscapes) {
+                event.stopPropagation();
+            }
+        }, event => {
+            if (event.target.nodeName === 'INPUT') {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            this.hide();
+        });
+
+        if (this.moveMenu) {
+            keyboardNavHandler.shareHandlingToEl(this.menu);
+        }
+
         // Hide menu on option click
         this.container.addEventListener('click', event => {
-             const possibleChildren = Array.from(this.menu.querySelectorAll('a'));
-             if (possibleChildren.includes(event.target)) {
-                 this.hide();
-             }
+            const possibleChildren = Array.from(this.menu.querySelectorAll('a'));
+            if (possibleChildren.includes(event.target)) {
+                this.hide();
+            }
         });
 
         onSelect(this.toggle, event => {
             event.stopPropagation();
+            event.preventDefault();
             this.show(event);
             if (event instanceof KeyboardEvent) {
-                this.focusNext();
-            }
-        });
-
-        // Keyboard navigation
-        const keyboardNavigation = event => {
-            if (event.key === 'ArrowDown' || event.key === 'ArrowRight') {
-                this.focusNext();
-                event.preventDefault();
-            } else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') {
-                this.focusPrevious();
-                event.preventDefault();
-            } else if (event.key === 'Escape') {
-                this.hide();
-                this.toggle.focus();
-                event.stopPropagation();
-            }
-        };
-        this.container.addEventListener('keydown', keyboardNavigation);
-        if (this.moveMenu) {
-            this.menu.addEventListener('keydown', keyboardNavigation);
-        }
-
-        // Hide menu on enter press or escape
-        this.menu.addEventListener('keydown ', event => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                event.stopPropagation();
-                this.hide();
+                keyboardNavHandler.focusNext();
             }
         });
     }
 
 }
-
-export default DropDown;

@@ -1,6 +1,8 @@
-<?php namespace BookStack\Settings;
+<?php
 
-use BookStack\Model;
+namespace BookStack\Settings;
+
+use BookStack\App\Model;
 
 class Setting extends Model
 {

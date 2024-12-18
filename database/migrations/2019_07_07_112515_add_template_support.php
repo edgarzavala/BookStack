@@ -1,18 +1,17 @@
 <?php
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-class AddTemplateSupport extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::table('pages', function (Blueprint $table) {
             $table->boolean('template')->default(false);
@@ -22,23 +21,21 @@ class AddTemplateSupport extends Migration
         // Create new templates-manage permission and assign to admin role
         $adminRoleId = DB::table('roles')->where('system_name', '=', 'admin')->first()->id;
         $permissionId = DB::table('role_permissions')->insertGetId([
-            'name' => 'templates-manage',
+            'name'         => 'templates-manage',
             'display_name' => 'Manage Page Templates',
-            'created_at' => Carbon::now()->toDateTimeString(),
-            'updated_at' => Carbon::now()->toDateTimeString()
+            'created_at'   => Carbon::now()->toDateTimeString(),
+            'updated_at'   => Carbon::now()->toDateTimeString(),
         ]);
         DB::table('permission_role')->insert([
-            'role_id' => $adminRoleId,
-            'permission_id' => $permissionId
+            'role_id'       => $adminRoleId,
+            'permission_id' => $permissionId,
         ]);
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::table('pages', function (Blueprint $table) {
             $table->dropColumn('template');
@@ -51,4 +48,4 @@ class AddTemplateSupport extends Migration
         DB::table('permission_role')->where('permission_id', '=', $templatesManagePermission->id)->delete();
         DB::table('role_permissions')->where('name', '=', 'templates-manage')->delete();
     }
-}
+};

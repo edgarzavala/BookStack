@@ -1,16 +1,15 @@
 <?php
 
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-class AddEntityAccessControls extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::table('images', function (Blueprint $table) {
             $table->integer('uploaded_to')->default(0);
@@ -32,7 +31,7 @@ class AddEntityAccessControls extends Migration
             $table->index('restricted');
         });
 
-        Schema::create('restrictions', function(Blueprint $table) {
+        Schema::create('restrictions', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('restrictable_id');
             $table->string('restrictable_type');
@@ -46,10 +45,8 @@ class AddEntityAccessControls extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::table('images', function (Blueprint $table) {
             $table->dropColumn('uploaded_to');
@@ -63,11 +60,10 @@ class AddEntityAccessControls extends Migration
             $table->dropColumn('restricted');
         });
 
-
         Schema::table('pages', function (Blueprint $table) {
             $table->dropColumn('restricted');
         });
 
         Schema::drop('restrictions');
     }
-}
+};

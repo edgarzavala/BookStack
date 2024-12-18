@@ -1,12 +1,15 @@
+@use "mixins";
+@use "vars";
+
 /**
  * Fonts
  */
 
 body, button, input, select, label, textarea {
-  font-family: $text;
+  font-family: var(--font-body);
 }
-.Codemirror, pre, #markdown-editor-input, .editor-toolbar, .code-base {
-  font-family: $mono;
+pre, #markdown-editor-input, .text-mono, .code-base {
+  font-family: var(--font-code);
 }
 
 /*
@@ -42,12 +45,8 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 400;
   position: relative;
   display: block;
-  @include lightDark(color, #222, #BBB);
-  .subheader {
-    font-size: 0.5em;
-    line-height: 1em;
-    color: lighten($text-dark, 32%);
-  }
+  font-family: var(--font-heading, var(--font-body));
+  @include mixins.lightDark(color, #222, #BBB);
 }
 
 h5 {
@@ -60,7 +59,7 @@ h5, h6 {
   margin-bottom: 0.66em;
 }
 
-@include smaller-than($s) {
+@include mixins.smaller-than(vars.$bp-s) {
   h1 {
     font-size: 2.8275em;
   }
@@ -90,7 +89,7 @@ h2.list-heading {
  * Link styling
  */
 a {
-  color: var(--color-primary);
+  color: var(--color-link);
   fill: currentColor;
   cursor: pointer;
   text-decoration: none;
@@ -107,8 +106,15 @@ a {
     display: inline-block;
   }
   &:focus img:only-child {
-    outline: 2px dashed var(--color-primary);
+    outline: 2px dashed var(--color-link);
     outline-offset: 2px;
+  }
+}
+
+a.no-link-style {
+  color: inherit;
+  &:hover {
+    text-decoration: none;
   }
 }
 
@@ -130,13 +136,16 @@ p, ul, ol, pre, table, blockquote {
 hr {
   border: 0;
   height: 1px;
-  @include lightDark(background, #eaeaea, #555);
-  margin-bottom: $-l;
+  @include mixins.lightDark(background, #eaeaea, #555);
+  margin-bottom: vars.$l;
   &.faded {
     background-image: linear-gradient(to right, #FFF, #e3e0e0 20%, #e3e0e0 80%, #FFF);
   }
+  &.darker {
+    @include mixins.lightDark(background, #DDD, #666);
+  }
   &.margin-top, &.even {
-    margin-top: $-l;
+    margin-top: vars.$l;
   }
 }
 
@@ -153,7 +162,6 @@ em, i, .italic {
 
 small, p.small, span.small, .text-small {
   font-size: 0.75rem;
-  @include lightDark(color, #5e5e5e, #999);
 }
 
 sup, .superscript {
@@ -169,22 +177,23 @@ sub, .subscript {
 pre {
   font-size: 12px;
   border: 1px solid #DDD;
-  @include lightDark(background-color, #f5f5f5, #2B2B2B);
-  @include lightDark(border-color, #DDD, #111);
-  padding-left: 31px;
+  @include mixins.lightDark(background-color, #FFF, #2B2B2B);
+  @include mixins.lightDark(border-color, #DDD, #111);
+  border-radius: 4px;
+  padding-inline-start: 26px;
   position: relative;
   padding-top: 3px;
   padding-bottom: 3px;
-  &:after {
+  &:before {
     content: '';
     display: block;
     position: absolute;
     top: 0;
-    width: 29px;
-    left: 0;
+    width: 22.4px;
+    inset-inline-start: 0;
     height: 100%;
-    @include lightDark(background-color, #f5f5f5, #313335);
-    @include lightDark(border-right, 1px solid #DDD, none);
+    @include mixins.lightDark(background-color, #f5f5f5, #313335);
+    @include mixins.lightDark(border-inline-end, 1px solid #DDD, none);
   }
 }
 
@@ -192,7 +201,7 @@ pre {
   pre {
     padding-left: 12px;
   }
-  pre:after {
+  pre:before {
     display: none;
   }
 }
@@ -200,23 +209,24 @@ pre {
 blockquote {
   display: block;
   position: relative;
-  border-left: 4px solid var(--color-primary);
-  @include lightDark(background-color, #f8f8f8, #333);
-  padding: $-s $-m $-s $-xl;
+  border-left: 4px solid transparent;
+  border-left-color: var(--color-primary);
+  @include mixins.lightDark(background-color, #f8f8f8, #333);
+  padding: vars.$s vars.$m vars.$s vars.$xl;
   overflow: auto;
   &:before {
     content: "\201C";
     font-size: 2em;
     font-weight: bold;
     position: absolute;
-    top: $-s;
-    left: $-s;
-    color: lighten($text-dark, 20%);
+    top: vars.$s;
+    left: vars.$s;
+    color: #777;
   }
 }
 
 .text-mono {
-  font-family: $mono;
+  font-family: var(--font-code);
 }
 
 .text-uppercase {
@@ -231,8 +241,8 @@ blockquote {
   font-size: 0.84em;
   border: 1px solid #DDD;
   border-radius: 3px;
-  @include lightDark(background-color, #f8f8f8, #2b2b2b);
-  @include lightDark(border-color, #DDD, #444);
+  @include mixins.lightDark(background-color, #f8f8f8, #2b2b2b);
+  @include mixins.lightDark(border-color, #DDD, #444);
 }
 
 code {
@@ -245,7 +255,7 @@ code {
 
 span.code {
   @extend .code-base;
-  padding: 1px $-xs;
+  padding: 1px vars.$xs;
 }
 
 pre code {
@@ -265,18 +275,17 @@ span.highlight {
  * Lists
  */
 ul, ol {
+  padding-left: vars.$m * 2.0;
+  padding-right: vars.$m * 2.0;
+  display: flow-root;
   p {
     margin: 0;
   }
 }
 ul {
-  padding-left: $-m * 1.3;
-  padding-right: $-m * 1.3;
   list-style: disc;
   ul {
     list-style: circle;
-    margin-top: 0;
-    margin-bottom: 0;
   }
   label {
     margin: 0;
@@ -285,23 +294,40 @@ ul {
 
 ol {
   list-style: decimal;
-  padding-left: $-m * 2;
-  padding-right: $-m * 2;
-}
-
-li.checkbox-item, li.task-list-item {
-  list-style: none;
-  margin-left: - ($-m * 1.3);
-  input[type="checkbox"] {
-    margin-right: $-xs;
-  }
 }
 
 li > ol, li > ul {
-  margin-block-end: 0px;
-  margin-block-start: 0px;
-  padding-block-end: 0px;
-  padding-block-start: 0px;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-block-end: 0;
+  margin-block-start: 0;
+  padding-block-end: 0;
+  padding-block-start: 0;
+  padding-left: vars.$m * 1.2;
+  padding-right: vars.$m * 1.2;
+}
+
+/**
+ * Checkbox lists
+ * Some styles duplicated for supporting logical units (eg. inline-end) while
+ * providing fallbacks to non-logical rules, so RTL is natively supported where possible.
+ */
+li.checkbox-item, li.task-list-item {
+  display: list-item;
+  list-style: none;
+  margin-left: -(vars.$m * 1.2);
+  margin-inline-start: -(vars.$m * 1.2);
+  margin-inline-end: 0;
+  input[type="checkbox"] {
+    margin-right: vars.$xs;
+    margin-inline-end: vars.$xs;
+    margin-inline-start: 0;
+  }
+  li.checkbox-item, li.task-list-item {
+    margin-left: vars.$xs;
+    margin-inline-start: vars.$xs;
+    margin-inline-end: 0;
+  }
 }
 
 /*
@@ -321,8 +347,8 @@ li > ol, li > ul {
   text-align: end;
 }
 
-@each $sizeLetter, $size in $screen-sizes {
-  @include larger-than($size) {
+@each $sizeLetter, $size in vars.$screen-sizes {
+  @include mixins.larger-than($size) {
     .text-#{$sizeLetter}-center {
       text-align: center;
     }
@@ -348,21 +374,31 @@ li > ol, li > ul {
 }
 
 .break-text {
+  white-space: normal;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
-.limit-text {
+.text-limit-lines-1 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.text-limit-lines-2 {
+  // -webkit use here is actually standardised cross-browser:
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-line-clamp
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 /**
  * Grouping
  */
 .header-group {
-  margin: $-m 0;
+  margin: vars.$m 0;
   h1, h2, h3, h4, h5, h6 {
     margin: 0;
   }
@@ -370,7 +406,7 @@ li > ol, li > ul {
 
 span.sep {
   color: #BBB;
-  padding: 0 $-xs;
+  padding: 0 vars.$xs;
 }
 
 .list > * {
@@ -386,7 +422,7 @@ span.sep {
   display: inline-block;
   position: relative;
   bottom: -0.105em;
-  margin-inline-end: $-xs;
+  margin-inline-end: vars.$xs;
   pointer-events: none;
   fill: currentColor;
 }

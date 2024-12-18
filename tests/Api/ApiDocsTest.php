@@ -1,22 +1,19 @@
-<?php namespace Tests\Api;
+<?php
 
-use BookStack\Auth\User;
+namespace Tests\Api;
+
 use Tests\TestCase;
 
 class ApiDocsTest extends TestCase
 {
     use TestsApi;
 
-    protected $endpoint = '/api/docs';
+    protected string $endpoint = '/api/docs';
 
-    public function test_docs_page_not_visible_to_normal_viewers()
+    public function test_api_endpoint_redirects_to_docs()
     {
-        $viewer = $this->getViewer();
-        $resp = $this->actingAs($viewer)->get($this->endpoint);
-        $resp->assertStatus(403);
-
-        $resp = $this->actingAsApiEditor()->get($this->endpoint);
-        $resp->assertStatus(200);
+        $resp = $this->actingAsApiEditor()->get('/api');
+        $resp->assertRedirect('api/docs');
     }
 
     public function test_docs_page_returns_view_with_docs_content()
@@ -34,25 +31,10 @@ class ApiDocsTest extends TestCase
         $resp->assertStatus(200);
         $resp->assertHeader('Content-Type', 'application/json');
         $resp->assertJson([
-            'docs' => [ [
+            'docs' => [[
                 'name' => 'docs-display',
-                'uri' => 'api/docs'
-            ] ]
+                'uri'  => 'api/docs',
+            ]],
         ]);
-    }
-
-    public function test_docs_page_visible_by_public_user_if_given_permission()
-    {
-        $this->setSettings(['app-public' => true]);
-        $guest = User::getDefault();
-
-        $this->startSession();
-        $resp = $this->get('/api/docs');
-        $resp->assertStatus(403);
-
-        $this->giveUserPermissions($guest, ['access-api']);
-
-        $resp = $this->get('/api/docs');
-        $resp->assertStatus(200);
     }
 }

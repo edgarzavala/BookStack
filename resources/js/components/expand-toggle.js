@@ -1,17 +1,15 @@
-import {slideUp, slideDown} from "../services/animations";
+import {slideUp, slideDown} from '../services/animations.ts';
+import {Component} from './component';
 
-class ExpandToggle {
+export class ExpandToggle extends Component {
 
-    constructor(elem) {
-        this.elem = elem;
-
-        // Component state
-        this.isOpen = elem.getAttribute('expand-toggle-is-open') === 'yes';
-        this.updateEndpoint = elem.getAttribute('expand-toggle-update-endpoint');
-        this.selector = elem.getAttribute('expand-toggle');
+    setup() {
+        this.targetSelector = this.$opts.targetSelector;
+        this.isOpen = this.$opts.isOpen === 'true';
+        this.updateEndpoint = this.$opts.updateEndpoint;
 
         // Listener setup
-        elem.addEventListener('click', this.click.bind(this));
+        this.$el.addEventListener('click', this.click.bind(this));
     }
 
     open(elemToToggle) {
@@ -25,9 +23,10 @@ class ExpandToggle {
     click(event) {
         event.preventDefault();
 
-        const matchingElems = document.querySelectorAll(this.selector);
-        for (let match of matchingElems) {
-            this.isOpen ?  this.close(match) : this.open(match);
+        const matchingElems = document.querySelectorAll(this.targetSelector);
+        for (const match of matchingElems) {
+            const action = this.isOpen ? this.close : this.open;
+            action(match);
         }
 
         this.isOpen = !this.isOpen;
@@ -36,10 +35,8 @@ class ExpandToggle {
 
     updateSystemAjax(isOpen) {
         window.$http.patch(this.updateEndpoint, {
-            expand: isOpen ? 'true' : 'false'
+            expand: isOpen ? 'true' : 'false',
         });
     }
 
 }
-
-export default ExpandToggle;

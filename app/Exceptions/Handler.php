@@ -3,81 +3,108 @@
 namespace BookStack\Exceptions;
 
 use Exception;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\ErrorHandler\Error\FatalError;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Throwable;
 
 class Handler extends ExceptionHandler
 {
     /**
-     * A list of the exception types that should not be reported.
+     * A list of the exception types that are not reported.
      *
-     * @var array
+     * @var array<int, class-string<\Throwable>>
      */
     protected $dontReport = [
-        AuthorizationException::class,
-        HttpException::class,
-        ModelNotFoundException::class,
-        ValidationException::class,
         NotFoundException::class,
+        StoppedAuthenticationException::class,
     ];
 
     /**
-     * Report or log an exception.
-     * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
+     * A list of the inputs that are never flashed to the session on validation exceptions.
      *
-     * @param  \Exception $e
-     * @return mixed
-     * @throws Exception
+     * @var array<int, string>
      */
-    public function report(Exception $e)
+    protected $dontFlash = [
+        'current_password',
+        'password',
+        'password_confirmation',
+    ];
+
+    /**
+     * A function to run upon out of memory.
+     * If it returns a response, that will be provided back to the request
+     * upon an out of memory event.
+     *
+     * @var ?callable(): ?Response
+     */
+    protected $onOutOfMemory = null;
+
+    /**
+     * Report or log an exception.
+     *
+     * @param \Throwable $exception
+     *
+     * @throws \Throwable
+     *
+     * @return void
+     */
+    public function report(Throwable $exception)
     {
-        return parent::report($e);
+        parent::report($exception);
     }
 
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Exception $e
+     * @param \Illuminate\Http\Request $request
+     * @param Exception                $e
+     *
      * @return \Illuminate\Http\Response
      */
-    public function render($request, Exception $e)
+    public function render($request, Throwable $e)
     {
+        if ($e instanceof FatalError && str_contains($e->getMessage(), 'bytes exhausted (tried to allocate') && $this->onOutOfMemory) {
+            $response = call_user_func($this->onOutOfMemory);
+            if ($response) {
+                return $response;
+            }
+        }
+
+        if ($e instanceof PostTooLargeException) {
+            $e = new NotifyException(trans('errors.server_post_limit'), '/', 413);
+        }
+
         if ($this->isApiRequest($request)) {
             return $this->renderApiException($e);
         }
 
-        // Handle notify exceptions which will redirect to the
-        // specified location then show a notification message.
-        if ($this->isExceptionType($e, NotifyException::class)) {
-            $message = $this->getOriginalMessage($e);
-            if (!empty($message)) {
-                session()->flash('error', $message);
-            }
-            return redirect($e->redirectLocation);
-        }
-
-        // Handle pretty exceptions which will show a friendly application-fitting page
-        // Which will include the basic message to point the user roughly to the cause.
-        if ($this->isExceptionType($e, PrettyException::class)  && !config('app.debug')) {
-            $message = $this->getOriginalMessage($e);
-            $code = ($e->getCode() === 0) ? 500 : $e->getCode();
-            return response()->view('errors/' . $code, ['message' => $message], $code);
-        }
-
-        // Handle 404 errors with a loaded session to enable showing user-specific information
-        if ($this->isExceptionType($e, NotFoundHttpException::class)) {
-            return \Route::respondWithRoute('fallback');
-        }
-
         return parent::render($request, $e);
+    }
+
+    /**
+     * Provide a function to be called when an out of memory event occurs.
+     * If the callable returns a response, this response will be returned
+     * to the request upon error.
+     */
+    public function prepareForOutOfMemory(callable $onOutOfMemory)
+    {
+        $this->onOutOfMemory = $onOutOfMemory;
+    }
+
+    /**
+     * Forget the current out of memory handler, if existing.
+     */
+    public function forgetOutOfMemoryHandler()
+    {
+        $this->onOutOfMemory = null;
     }
 
     /**
@@ -85,70 +112,49 @@ class Handler extends ExceptionHandler
      */
     protected function isApiRequest(Request $request): bool
     {
-        return strpos($request->path(), 'api/') === 0;
+        return str_starts_with($request->path(), 'api/');
     }
 
     /**
      * Render an exception when the API is in use.
      */
-    protected function renderApiException(Exception $e): JsonResponse
+    protected function renderApiException(Throwable $e): JsonResponse
     {
-        $code = $e->getCode() === 0 ? 500 : $e->getCode();
+        $code = 500;
         $headers = [];
-        if ($e instanceof HttpException) {
+
+        if ($e instanceof HttpExceptionInterface) {
             $code = $e->getStatusCode();
             $headers = $e->getHeaders();
+        }
+
+        if ($e instanceof ModelNotFoundException) {
+            $code = 404;
         }
 
         $responseData = [
             'error' => [
                 'message' => $e->getMessage(),
-            ]
+            ],
         ];
 
         if ($e instanceof ValidationException) {
+            $responseData['error']['message'] = 'The given data was invalid.';
             $responseData['error']['validation'] = $e->errors();
             $code = $e->status;
         }
 
         $responseData['error']['code'] = $code;
+
         return new JsonResponse($responseData, $code, $headers);
-    }
-
-    /**
-     * Check the exception chain to compare against the original exception type.
-     * @param Exception $e
-     * @param $type
-     * @return bool
-     */
-    protected function isExceptionType(Exception $e, $type)
-    {
-        do {
-            if (is_a($e, $type)) {
-                return true;
-            }
-        } while ($e = $e->getPrevious());
-        return false;
-    }
-
-    /**
-     * Get original exception message.
-     * @param Exception $e
-     * @return string
-     */
-    protected function getOriginalMessage(Exception $e)
-    {
-        do {
-            $message = $e->getMessage();
-        } while ($e = $e->getPrevious());
-        return $message;
     }
 
     /**
      * Convert an authentication exception into an unauthenticated response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Illuminate\Auth\AuthenticationException  $exception
+     * @param \Illuminate\Http\Request                 $request
+     * @param \Illuminate\Auth\AuthenticationException $exception
+     *
      * @return \Illuminate\Http\Response
      */
     protected function unauthenticated($request, AuthenticationException $exception)
@@ -163,8 +169,9 @@ class Handler extends ExceptionHandler
     /**
      * Convert a validation exception into a JSON response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Illuminate\Validation\ValidationException  $exception
+     * @param \Illuminate\Http\Request                   $request
+     * @param \Illuminate\Validation\ValidationException $exception
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     protected function invalidJson($request, ValidationException $exception)

@@ -1,13 +1,15 @@
-import {escapeHtml} from "../services/util";
-import {onChildEvent} from "../services/dom";
+import {escapeHtml} from '../services/util.ts';
+import {onChildEvent} from '../services/dom.ts';
+import {Component} from './component';
+import {KeyboardNavigationHandler} from '../services/keyboard-navigation.ts';
 
 const ajaxCache = {};
 
 /**
  * AutoSuggest
- * @extends {Component}
  */
-class AutoSuggest {
+export class AutoSuggest extends Component {
+
     setup() {
         this.parent = this.$el.parentElement;
         this.container = this.$el;
@@ -21,26 +23,34 @@ class AutoSuggest {
     }
 
     setupListeners() {
+        const navHandler = new KeyboardNavigationHandler(
+            this.list,
+            () => {
+                this.input.focus();
+                setTimeout(() => this.hideSuggestions(), 1);
+            },
+            event => {
+                event.preventDefault();
+                const selectionValue = event.target.textContent;
+                if (selectionValue) {
+                    this.selectSuggestion(selectionValue);
+                }
+            },
+        );
+        navHandler.shareHandlingToEl(this.input);
+
+        onChildEvent(this.list, '.text-item', 'click', (event, el) => {
+            this.selectSuggestion(el.textContent);
+        });
+
         this.input.addEventListener('input', this.requestSuggestions.bind(this));
         this.input.addEventListener('focus', this.requestSuggestions.bind(this));
+        this.input.addEventListener('blur', this.hideSuggestionsIfFocusedLost.bind(this));
         this.input.addEventListener('keydown', event => {
             if (event.key === 'Tab') {
                 this.hideSuggestions();
             }
         });
-
-        this.input.addEventListener('blur', this.hideSuggestionsIfFocusedLost.bind(this));
-        this.container.addEventListener('keydown', this.containerKeyDown.bind(this));
-
-        onChildEvent(this.list, 'button', 'click', (event, el) => {
-            this.selectSuggestion(el.textContent);
-        });
-        onChildEvent(this.list, 'button', 'keydown', (event, el) => {
-            if (event.key === 'Enter') {
-                this.selectSuggestion(el.textContent);
-            }
-        });
-
     }
 
     selectSuggestion(value) {
@@ -52,50 +62,16 @@ class AutoSuggest {
         this.hideSuggestions();
     }
 
-    containerKeyDown(event) {
-        if (event.key === 'Enter') event.preventDefault();
-        if (this.list.classList.contains('hidden')) return;
-
-        // Down arrow
-        if (event.key === 'ArrowDown') {
-            this.moveFocus(true);
-            event.preventDefault();
-        }
-        // Up Arrow
-        else if (event.key === 'ArrowUp') {
-            this.moveFocus(false);
-            event.preventDefault();
-        }
-        // Escape key
-        else if (event.key === 'Escape') {
-            this.hideSuggestions();
-            event.preventDefault();
-        }
-    }
-
-    moveFocus(forward = true) {
-        const focusables = Array.from(this.container.querySelectorAll('input,button'));
-        const index = focusables.indexOf(document.activeElement);
-        const newFocus = focusables[index + (forward ? 1 : -1)];
-        if (newFocus) {
-            newFocus.focus()
-        }
-    }
-
     async requestSuggestions() {
         if (Date.now() - this.lastPopulated < 50) {
             return;
         }
 
         const nameFilter = this.getNameFilterIfNeeded();
-        const search = this.input.value.slice(0, 3).toLowerCase();
+        const search = this.input.value.toLowerCase();
         const suggestions = await this.loadSuggestions(search, nameFilter);
-        let toShow = suggestions.slice(0, 6);
-        if (search.length > 0) {
-            toShow = suggestions.filter(val => {
-                return val.toLowerCase().includes(search);
-            }).slice(0, 6);
-        }
+
+        const toShow = suggestions.filter(val => search === '' || val.toLowerCase().startsWith(search)).slice(0, 10);
 
         this.displaySuggestions(toShow);
     }
@@ -111,6 +87,9 @@ class AutoSuggest {
      * @returns {Promise<Object|String|*>}
      */
     async loadSuggestions(search, nameFilter = null) {
+        // Truncate search to prevent over numerous lookups
+        search = search.slice(0, 4);
+
         const params = {search, name: nameFilter};
         const cacheKey = `${this.url}:${JSON.stringify(params)}`;
 
@@ -128,12 +107,15 @@ class AutoSuggest {
      */
     displaySuggestions(suggestions) {
         if (suggestions.length === 0) {
-            return this.hideSuggestions();
+            this.hideSuggestions();
+            return;
         }
 
-        this.list.innerHTML = suggestions.map(value => `<li><button type="button">${escapeHtml(value)}</button></li>`).join('');
+        // This used to use <button>s but was changed to div elements since Safari would not focus on buttons
+        // on which causes a range of other complexities related to focus handling.
+        this.list.innerHTML = suggestions.map(value => `<li><div tabindex="0" class="text-item">${escapeHtml(value)}</div></li>`).join('');
         this.list.style.display = 'block';
-        for (const button of this.list.querySelectorAll('button')) {
+        for (const button of this.list.querySelectorAll('.text-item')) {
             button.addEventListener('blur', this.hideSuggestionsIfFocusedLost.bind(this));
         }
     }
@@ -147,6 +129,5 @@ class AutoSuggest {
             this.hideSuggestions();
         }
     }
-}
 
-export default AutoSuggest;
+}

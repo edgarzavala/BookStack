@@ -1,6 +1,8 @@
-import {onSelect} from "../services/dom";
+import {onSelect} from '../services/dom.ts';
+import {Component} from './component';
 
-class OptionalInput {
+export class OptionalInput extends Component {
+
     setup() {
         this.removeButton = this.$refs.remove;
         this.showButton = this.$refs.show;
@@ -24,5 +26,3 @@ class OptionalInput {
     }
 
 }
-
-export default OptionalInput;

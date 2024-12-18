@@ -1,21 +1,20 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-class CreateSearchIndexTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('search_terms', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('term', 200);
+            $table->string('term', 180);
             $table->string('entity_type', 100);
             $table->integer('entity_id');
             $table->integer('score');
@@ -27,26 +26,27 @@ class CreateSearchIndexTable extends Migration
         });
 
         $sm = Schema::getConnection()->getDoctrineSchemaManager();
-        $pages = $sm->listTableDetails('pages');
-        $books = $sm->listTableDetails('books');
-        $chapters = $sm->listTableDetails('chapters');
+        $prefix = DB::getTablePrefix();
+        $pages = $sm->introspectTable($prefix . 'pages');
+        $books = $sm->introspectTable($prefix . 'books');
+        $chapters = $sm->introspectTable($prefix . 'chapters');
 
         if ($pages->hasIndex('search')) {
-            Schema::table('pages', function(Blueprint $table) {
+            Schema::table('pages', function (Blueprint $table) {
                 $table->dropIndex('search');
                 $table->dropIndex('name_search');
             });
         }
 
         if ($books->hasIndex('search')) {
-            Schema::table('books', function(Blueprint $table) {
+            Schema::table('books', function (Blueprint $table) {
                 $table->dropIndex('search');
                 $table->dropIndex('name_search');
             });
         }
 
         if ($chapters->hasIndex('search')) {
-            Schema::table('chapters', function(Blueprint $table) {
+            Schema::table('chapters', function (Blueprint $table) {
                 $table->dropIndex('search');
                 $table->dropIndex('name_search');
             });
@@ -55,10 +55,8 @@ class CreateSearchIndexTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         // This was removed for v0.24 since these indexes are removed anyway
         // and will cause issues for db engines that don't support such indexes.
@@ -70,7 +68,7 @@ class CreateSearchIndexTable extends Migration
 //        DB::statement("ALTER TABLE {$prefix}pages ADD FULLTEXT name_search(name)");
 //        DB::statement("ALTER TABLE {$prefix}books ADD FULLTEXT name_search(name)");
 //        DB::statement("ALTER TABLE {$prefix}chapters ADD FULLTEXT name_search(name)");
-        
+
         Schema::dropIfExists('search_terms');
     }
-}
+};

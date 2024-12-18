@@ -1,28 +1,44 @@
-<?php namespace BookStack\Api;
+<?php
+
+namespace BookStack\Api;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ListingResponseBuilder
 {
+    protected Builder $query;
+    protected Request $request;
 
-    protected $query;
-    protected $request;
-    protected $fields;
+    /**
+     * @var string[]
+     */
+    protected array $fields;
 
-    protected $filterOperators = [
+    /**
+     * @var array<callable>
+     */
+    protected array $resultModifiers = [];
+
+    /**
+     * @var array<string, string>
+     */
+    protected array $filterOperators = [
         'eq'   => '=',
         'ne'   => '!=',
         'gt'   => '>',
         'lt'   => '<',
         'gte'  => '>=',
         'lte'  => '<=',
-        'like' => 'like'
+        'like' => 'like',
     ];
 
     /**
      * ListingResponseBuilder constructor.
+     * The given fields will be forced visible within the model results.
      */
     public function __construct(Builder $query, Request $request, array $fields)
     {
@@ -34,26 +50,41 @@ class ListingResponseBuilder
     /**
      * Get the response from this builder.
      */
-    public function toResponse()
+    public function toResponse(): JsonResponse
     {
         $filteredQuery = $this->filterQuery($this->query);
 
         $total = $filteredQuery->count();
-        $data = $this->fetchData($filteredQuery);
+        $data = $this->fetchData($filteredQuery)->each(function ($model) {
+            foreach ($this->resultModifiers as $modifier) {
+                $modifier($model);
+            }
+        });
 
         return response()->json([
-            'data' => $data,
+            'data'  => $data,
             'total' => $total,
         ]);
     }
 
     /**
-     * Fetch the data to return in the response.
+     * Add a callback to modify each element of the results.
+     *
+     * @param (callable(Model): void) $modifier
+     */
+    public function modifyResults(callable $modifier): void
+    {
+        $this->resultModifiers[] = $modifier;
+    }
+
+    /**
+     * Fetch the data to return within the response.
      */
     protected function fetchData(Builder $query): Collection
     {
         $query = $this->countAndOffsetQuery($query);
         $query = $this->sortQuery($query);
+
         return $query->get($this->fields);
     }
 
@@ -95,6 +126,7 @@ class ListingResponseBuilder
         }
 
         $queryOperator = $this->filterOperators[$filterOperator];
+
         return [$field, $queryOperator, $value];
     }
 

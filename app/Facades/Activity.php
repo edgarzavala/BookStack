@@ -1,7 +1,12 @@
-<?php namespace BookStack\Facades;
+<?php
+
+namespace BookStack\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
+/**
+ * @mixin \BookStack\Activity\Tools\ActivityLogger
+ */
 class Activity extends Facade
 {
     /**

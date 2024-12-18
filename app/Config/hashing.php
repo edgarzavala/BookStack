@@ -21,7 +21,8 @@ return [
     // passwords are hashed using the Bcrypt algorithm. This will allow you
     // to control the amount of time it takes to hash the given password.
     'bcrypt' => [
-        'rounds' => env('BCRYPT_ROUNDS', 10),
+        'rounds' => env('BCRYPT_ROUNDS', 12),
+        'verify' => true,
     ],
 
     // Argon Options
@@ -29,9 +30,9 @@ return [
     // passwords are hashed using the Argon algorithm. These will allow you
     // to control the amount of time it takes to hash the given password.
     'argon' => [
-        'memory' => 1024,
+        'memory'  => 1024,
         'threads' => 2,
-        'time' => 2,
+        'time'    => 2,
     ],
 
 ];

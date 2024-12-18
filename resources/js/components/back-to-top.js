@@ -1,48 +1,49 @@
+import {Component} from './component';
 
-class BackToTop {
+export class BackToTop extends Component {
 
-    constructor(elem) {
-        this.elem = elem;
+    setup() {
+        this.button = this.$el;
         this.targetElem = document.getElementById('header');
         this.showing = false;
         this.breakPoint = 1200;
 
         if (document.body.classList.contains('flexbox')) {
-            this.elem.style.display = 'none';
+            this.button.style.display = 'none';
             return;
         }
 
-        this.elem.addEventListener('click', this.scrollToTop.bind(this));
+        this.button.addEventListener('click', this.scrollToTop.bind(this));
         window.addEventListener('scroll', this.onPageScroll.bind(this));
     }
 
     onPageScroll() {
-        let scrollTopPos = document.documentElement.scrollTop || document.body.scrollTop || 0;
+        const scrollTopPos = document.documentElement.scrollTop || document.body.scrollTop || 0;
         if (!this.showing && scrollTopPos > this.breakPoint) {
-            this.elem.style.display = 'block';
+            this.button.style.display = 'block';
             this.showing = true;
             setTimeout(() => {
-                this.elem.style.opacity = 0.4;
+                this.button.style.opacity = 0.4;
             }, 1);
         } else if (this.showing && scrollTopPos < this.breakPoint) {
-            this.elem.style.opacity = 0;
+            this.button.style.opacity = 0;
             this.showing = false;
             setTimeout(() => {
-                this.elem.style.display = 'none';
+                this.button.style.display = 'none';
             }, 500);
         }
     }
 
     scrollToTop() {
-        let targetTop = this.targetElem.getBoundingClientRect().top;
-        let scrollElem = document.documentElement.scrollTop ? document.documentElement : document.body;
-        let duration = 300;
-        let start = Date.now();
-        let scrollStart = this.targetElem.getBoundingClientRect().top;
+        const targetTop = this.targetElem.getBoundingClientRect().top;
+        const scrollElem = document.documentElement.scrollTop ? document.documentElement : document.body;
+        const duration = 300;
+        const start = Date.now();
+        const scrollStart = this.targetElem.getBoundingClientRect().top;
 
         function setPos() {
-            let percentComplete = (1-((Date.now() - start) / duration));
-            let target = Math.abs(percentComplete * scrollStart);
+            const percentComplete = (1 - ((Date.now() - start) / duration));
+            const target = Math.abs(percentComplete * scrollStart);
             if (percentComplete > 0) {
                 scrollElem.scrollTop = target;
                 requestAnimationFrame(setPos.bind(this));
@@ -55,5 +56,3 @@ class BackToTop {
     }
 
 }
-
-export default BackToTop;

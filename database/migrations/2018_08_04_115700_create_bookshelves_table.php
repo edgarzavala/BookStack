@@ -1,17 +1,17 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
+use Carbon\Carbon;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
-class CreateBookshelvesTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
 
         // Convert the existing entity tables to InnoDB.
@@ -23,7 +23,8 @@ class CreateBookshelvesTable extends Migration
             DB::statement("ALTER TABLE {$prefix}pages ENGINE = InnoDB;");
             DB::statement("ALTER TABLE {$prefix}chapters ENGINE = InnoDB;");
             DB::statement("ALTER TABLE {$prefix}books ENGINE = InnoDB;");
-        } catch (Exception $exception) {}
+        } catch (Exception $exception) {
+        }
 
         // Here we have table drops before the creations due to upgrade issues
         // people were having due to the bookshelves_books table creation failing.
@@ -37,8 +38,8 @@ class CreateBookshelvesTable extends Migration
 
         Schema::create('bookshelves', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name', 200);
-            $table->string('slug', 200);
+            $table->string('name', 180);
+            $table->string('slug', 180);
             $table->text('description');
             $table->integer('created_by')->nullable()->default(null);
             $table->integer('updated_by')->nullable()->default(null);
@@ -79,18 +80,18 @@ class CreateBookshelvesTable extends Migration
                 ->where('role_permissions.name', '=', 'book-' . $dbOpName)->get(['roles.id'])->pluck('id');
 
             $permId = DB::table('role_permissions')->insertGetId([
-                'name' => 'bookshelf-' . $dbOpName,
+                'name'         => 'bookshelf-' . $dbOpName,
                 'display_name' => $op . ' ' . 'BookShelves',
-                'created_at' => \Carbon\Carbon::now()->toDateTimeString(),
-                'updated_at' => \Carbon\Carbon::now()->toDateTimeString()
+                'created_at'   => Carbon::now()->toDateTimeString(),
+                'updated_at'   => Carbon::now()->toDateTimeString(),
             ]);
 
-            $rowsToInsert = $roleIdsWithBookPermission->filter(function($roleId) {
+            $rowsToInsert = $roleIdsWithBookPermission->filter(function ($roleId) {
                 return !is_null($roleId);
-            })->map(function($roleId) use ($permId) {
+            })->map(function ($roleId) use ($permId) {
                 return [
-                    'role_id' => $roleId,
-                    'permission_id' => $permId
+                    'role_id'       => $roleId,
+                    'permission_id' => $permId,
                 ];
             })->toArray();
 
@@ -101,13 +102,11 @@ class CreateBookshelvesTable extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         // Drop created permissions
-        $ops = ['bookshelf-create-all','bookshelf-create-own','bookshelf-delete-all','bookshelf-delete-own','bookshelf-update-all','bookshelf-update-own','bookshelf-view-all','bookshelf-view-own'];
+        $ops = ['bookshelf-create-all', 'bookshelf-create-own', 'bookshelf-delete-all', 'bookshelf-delete-own', 'bookshelf-update-all', 'bookshelf-update-own', 'bookshelf-view-all', 'bookshelf-view-own'];
 
         $permissionIds = DB::table('role_permissions')->whereIn('name', $ops)
             ->get(['id'])->pluck('id')->toArray();
@@ -119,11 +118,11 @@ class CreateBookshelvesTable extends Migration
         Schema::dropIfExists('bookshelves');
 
         // Drop related polymorphic items
-        DB::table('activities')->where('entity_type', '=', 'BookStack\Entities\Bookshelf')->delete();
-        DB::table('views')->where('viewable_type', '=', 'BookStack\Entities\Bookshelf')->delete();
-        DB::table('entity_permissions')->where('restrictable_type', '=', 'BookStack\Entities\Bookshelf')->delete();
-        DB::table('tags')->where('entity_type', '=', 'BookStack\Entities\Bookshelf')->delete();
-        DB::table('search_terms')->where('entity_type', '=', 'BookStack\Entities\Bookshelf')->delete();
-        DB::table('comments')->where('entity_type', '=', 'BookStack\Entities\Bookshelf')->delete();
+        DB::table('activities')->where('entity_type', '=', 'BookStack\Entities\Models\Bookshelf')->delete();
+        DB::table('views')->where('viewable_type', '=', 'BookStack\Entities\Models\Bookshelf')->delete();
+        DB::table('entity_permissions')->where('restrictable_type', '=', 'BookStack\Entities\Models\Bookshelf')->delete();
+        DB::table('tags')->where('entity_type', '=', 'BookStack\Entities\Models\Bookshelf')->delete();
+        DB::table('search_terms')->where('entity_type', '=', 'BookStack\Entities\Models\Bookshelf')->delete();
+        DB::table('comments')->where('entity_type', '=', 'BookStack\Entities\Models\Bookshelf')->delete();
     }
-}
+};

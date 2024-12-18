@@ -2,12 +2,10 @@
 
 use Illuminate\Database\Migrations\Migration;
 
-class UpdateDbEncodingToUt8mb4 extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
@@ -18,11 +16,9 @@ class UpdateDbEncodingToUt8mb4 extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
         //
     }
-}
+};

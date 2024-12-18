@@ -1,10 +1,16 @@
-import Code from "../services/code"
-class CodeHighlighter {
+import {Component} from './component';
 
-    constructor(elem) {
-        Code.highlightWithin(elem);
+export class CodeHighlighter extends Component {
+
+    setup() {
+        const container = this.$el;
+
+        const codeBlocks = container.querySelectorAll('pre');
+        if (codeBlocks.length > 0) {
+            window.importVersioned('code').then(Code => {
+                Code.highlightWithin(container);
+            });
+        }
     }
 
 }
-
-export default CodeHighlighter;

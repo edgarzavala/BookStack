@@ -4,14 +4,12 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class DropJointPermissionsId extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::table('joint_permissions', function (Blueprint $table) {
             $table->dropColumn('id');
@@ -21,10 +19,8 @@ class DropJointPermissionsId extends Migration
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::table('joint_permissions', function (Blueprint $table) {
             $table->dropPrimary(['role_id', 'entity_type', 'entity_id', 'action']);
@@ -34,4 +30,4 @@ class DropJointPermissionsId extends Migration
             $table->increments('id')->unsigned();
         });
     }
-}
+};

@@ -1,15 +1,31 @@
-<?php namespace BookStack\Api;
+<?php
 
-use BookStack\Auth\User;
+namespace BookStack\Api;
+
+use BookStack\Activity\Models\Loggable;
+use BookStack\Users\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
-class ApiToken extends Model
+/**
+ * Class ApiToken.
+ *
+ * @property int    $id
+ * @property string $token_id
+ * @property string $secret
+ * @property string $name
+ * @property Carbon $expires_at
+ * @property User   $user
+ */
+class ApiToken extends Model implements Loggable
 {
+    use HasFactory;
+
     protected $fillable = ['name', 'expires_at'];
     protected $casts = [
-        'expires_at' => 'date:Y-m-d'
+        'expires_at' => 'date:Y-m-d',
     ];
 
     /**
@@ -27,5 +43,21 @@ class ApiToken extends Model
     public static function defaultExpiry(): string
     {
         return Carbon::now()->addYears(100)->format('Y-m-d');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function logDescriptor(): string
+    {
+        return "({$this->id}) {$this->name}; User: {$this->user->logDescriptor()}";
+    }
+
+    /**
+     * Get the URL for managing this token.
+     */
+    public function getUrl(string $path = ''): string
+    {
+        return url("/api-tokens/{$this->user_id}/{$this->id}/" . trim($path, '/'));
     }
 }

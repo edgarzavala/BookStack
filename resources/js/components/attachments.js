@@ -1,25 +1,23 @@
-/**
- * Attachments
- * @extends {Component}
- */
-import {showLoading} from "../services/dom";
+import {showLoading} from '../services/dom.ts';
+import {Component} from './component';
 
-class Attachments {
+export class Attachments extends Component {
 
     setup() {
         this.container = this.$el;
         this.pageId = this.$opts.pageId;
         this.editContainer = this.$refs.editContainer;
         this.listContainer = this.$refs.listContainer;
-        this.mainTabs = this.$refs.mainTabs;
-        this.list = this.$refs.list;
+        this.linksContainer = this.$refs.linksContainer;
+        this.listPanel = this.$refs.listPanel;
+        this.attachLinkButton = this.$refs.attachLinkButton;
 
         this.setupListeners();
     }
 
     setupListeners() {
         const reloadListBound = this.reloadList.bind(this);
-        this.container.addEventListener('dropzone-success', reloadListBound);
+        this.container.addEventListener('dropzone-upload-success', reloadListBound);
         this.container.addEventListener('ajax-form-success', reloadListBound);
 
         this.container.addEventListener('sortable-list-sort', event => {
@@ -30,7 +28,7 @@ class Attachments {
             this.startEdit(event.detail.id);
         });
 
-        this.container.addEventListener('event-emit-select-edit-back', event => {
+        this.container.addEventListener('event-emit-select-edit-back', () => {
             this.stopEdit();
         });
 
@@ -42,14 +40,29 @@ class Attachments {
                 markdown: contentTypes['text/plain'],
             });
         });
+
+        this.attachLinkButton.addEventListener('click', () => {
+            this.showSection('links');
+        });
+    }
+
+    showSection(section) {
+        const sectionMap = {
+            links: this.linksContainer,
+            edit: this.editContainer,
+            list: this.listContainer,
+        };
+
+        for (const [name, elem] of Object.entries(sectionMap)) {
+            elem.toggleAttribute('hidden', name !== section);
+        }
     }
 
     reloadList() {
         this.stopEdit();
-        this.mainTabs.components.tabs.show('items');
         window.$http.get(`/attachments/get/page/${this.pageId}`).then(resp => {
-            this.list.innerHTML = resp.data;
-            window.components.init(this.list);
+            this.listPanel.innerHTML = resp.data;
+            window.$components.init(this.listPanel);
         });
     }
 
@@ -60,20 +73,16 @@ class Attachments {
     }
 
     async startEdit(id) {
-        this.editContainer.classList.remove('hidden');
-        this.listContainer.classList.add('hidden');
+        this.showSection('edit');
 
         showLoading(this.editContainer);
         const resp = await window.$http.get(`/attachments/edit/${id}`);
         this.editContainer.innerHTML = resp.data;
-        window.components.init(this.editContainer);
+        window.$components.init(this.editContainer);
     }
 
     stopEdit() {
-        this.editContainer.classList.add('hidden');
-        this.listContainer.classList.remove('hidden');
+        this.showSection('list');
     }
 
 }
-
-export default Attachments;

@@ -1,18 +1,23 @@
-import Code from "../services/code"
-class DetailsHighlighter {
+import {Component} from './component';
 
-    constructor(elem) {
-        this.elem = elem;
+export class DetailsHighlighter extends Component {
+
+    setup() {
+        this.container = this.$el;
         this.dealtWith = false;
-        elem.addEventListener('toggle', this.onToggle.bind(this));
+
+        this.container.addEventListener('toggle', this.onToggle.bind(this));
     }
 
     onToggle() {
         if (this.dealtWith) return;
 
-        Code.highlightWithin(this.elem);
+        if (this.container.querySelector('pre')) {
+            window.importVersioned('code').then(Code => {
+                Code.highlightWithin(this.container);
+            });
+        }
         this.dealtWith = true;
     }
-}
 
-export default DetailsHighlighter;
+}

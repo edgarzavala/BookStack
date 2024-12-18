@@ -1,8 +1,7 @@
-/**
- * TagManager
- * @extends {Component}
- */
-class TagManager {
+import {Component} from './component';
+
+export class TagManager extends Component {
+
     setup() {
         this.addRemoveComponentEl = this.$refs.addRemove;
         this.container = this.$el;
@@ -12,9 +11,10 @@ class TagManager {
     }
 
     setupListeners() {
-        this.container.addEventListener('change', event => {
-            const addRemoveComponent = this.addRemoveComponentEl.components['add-remove-rows'];
-            if (!this.hasEmptyRows()) {
+        this.container.addEventListener('input', event => {
+            /** @var {AddRemoveRows} * */
+            const addRemoveComponent = window.$components.firstOnElement(this.addRemoveComponentEl, 'add-remove-rows');
+            if (!this.hasEmptyRows() && event.target.value) {
                 addRemoveComponent.add();
             }
         });
@@ -22,11 +22,8 @@ class TagManager {
 
     hasEmptyRows() {
         const rows = this.container.querySelectorAll(this.rowSelector);
-        const firstEmpty = [...rows].find(row => {
-            return [...row.querySelectorAll('input')].filter(input => input.value).length === 0;
-        });
+        const firstEmpty = [...rows].find(row => [...row.querySelectorAll('input')].filter(input => input.value).length === 0);
         return firstEmpty !== undefined;
     }
-}
 
-export default TagManager;
+}

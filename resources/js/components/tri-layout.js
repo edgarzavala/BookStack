@@ -1,14 +1,16 @@
+import {Component} from './component';
 
-class TriLayout {
+export class TriLayout extends Component {
 
-    constructor(elem) {
-        this.elem = elem;
+    setup() {
+        this.container = this.$refs.container;
+        this.tabs = this.$manyRefs.tab;
 
         this.lastLayoutType = 'none';
         this.onDestroy = null;
         this.scrollCache = {
-            'content': 0,
-            'info': 0,
+            content: 0,
+            info: 0,
         };
         this.lastTabShown = 'content';
 
@@ -17,15 +19,15 @@ class TriLayout {
 
         // Watch layout changes
         this.updateLayout();
-        window.addEventListener('resize', event => {
+        window.addEventListener('resize', () => {
             this.updateLayout();
         }, {passive: true});
     }
 
     updateLayout() {
         let newLayout = 'tablet';
-        if (window.innerWidth <= 1000) newLayout =  'mobile';
-        if (window.innerWidth >= 1400) newLayout =  'desktop';
+        if (window.innerWidth <= 1000) newLayout = 'mobile';
+        if (window.innerWidth >= 1400) newLayout = 'desktop';
         if (newLayout === this.lastLayoutType) return;
 
         if (this.onDestroy) {
@@ -43,29 +45,27 @@ class TriLayout {
     }
 
     setupMobile() {
-        const layoutTabs = document.querySelectorAll('[tri-layout-mobile-tab]');
-        for (let tab of layoutTabs) {
+        for (const tab of this.tabs) {
             tab.addEventListener('click', this.mobileTabClick);
         }
 
         this.onDestroy = () => {
-            for (let tab of layoutTabs) {
+            for (const tab of this.tabs) {
                 tab.removeEventListener('click', this.mobileTabClick);
             }
-        }
+        };
     }
 
     setupDesktop() {
         //
     }
 
-
     /**
      * Action to run when the mobile info toggle bar is clicked/tapped
      * @param event
      */
     mobileTabClick(event) {
-        const tab = event.target.getAttribute('tri-layout-mobile-tab');
+        const {tab} = event.target.dataset;
         this.showTab(tab);
     }
 
@@ -79,21 +79,21 @@ class TriLayout {
 
     /**
      * Show the given tab
-     * @param tabName
+     * @param {String} tabName
+     * @param {Boolean }scroll
      */
     showTab(tabName, scroll = true) {
         this.scrollCache[this.lastTabShown] = document.documentElement.scrollTop;
 
         // Set tab status
-        const tabs = document.querySelectorAll('.tri-layout-mobile-tab');
-        for (let tab of tabs) {
-            const isActive = (tab.getAttribute('tri-layout-mobile-tab') === tabName);
-            tab.classList.toggle('active', isActive);
+        for (const tab of this.tabs) {
+            const isActive = (tab.dataset.tab === tabName);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
         }
 
         // Toggle section
         const showInfo = (tabName === 'info');
-        this.elem.classList.toggle('show-info', showInfo);
+        this.container.classList.toggle('show-info', showInfo);
 
         // Set the scroll position from cache
         if (scroll) {
@@ -109,5 +109,3 @@ class TriLayout {
     }
 
 }
-
-export default TriLayout;

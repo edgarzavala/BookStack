@@ -1,79 +1,82 @@
-<?php namespace Tests;
+<?php
 
-use Auth;
-use BookStack\Auth\Permissions\PermissionService;
-use BookStack\Auth\Permissions\RolePermission;
-use BookStack\Auth\Role;
-use BookStack\Auth\User;
-use BookStack\Entities\Book;
-use BookStack\Entities\Chapter;
-use BookStack\Entities\Page;
+namespace Tests;
 
-class PublicActionTest extends BrowserKitTest
+use BookStack\Entities\Models\Book;
+use BookStack\Entities\Models\Chapter;
+use BookStack\Permissions\Models\RolePermission;
+use BookStack\Users\Models\Role;
+use BookStack\Users\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\View;
+
+class PublicActionTest extends TestCase
 {
-
     public function test_app_not_public()
     {
         $this->setSettings(['app-public' => 'false']);
-        $book = Book::orderBy('name', 'asc')->first();
-        $this->visit('/books')->seePageIs('/login');
-        $this->visit($book->getUrl())->seePageIs('/login');
+        $book = $this->entities->book();
+        $this->get('/books')->assertRedirect('/login');
+        $this->get($book->getUrl())->assertRedirect('/login');
 
-        $page = Page::first();
-        $this->visit($page->getUrl())->seePageIs('/login');
+        $page = $this->entities->page();
+        $this->get($page->getUrl())->assertRedirect('/login');
     }
 
     public function test_login_link_visible()
     {
         $this->setSettings(['app-public' => 'true']);
-        $this->visit('/')->see(url('/login'));
+        $resp = $this->get('/');
+        $this->withHtml($resp)->assertElementExists('a[href="' . url('/login') . '"]');
     }
 
     public function test_register_link_visible_when_enabled()
     {
         $this->setSettings(['app-public' => 'true']);
-
-        $this->visit('/')->see(url('/login'));
-        $this->visit('/')->dontSee(url('/register'));
+        $home = $this->get('/');
+        $home->assertSee(url('/login'));
+        $home->assertDontSee(url('/register'));
 
         $this->setSettings(['app-public' => 'true', 'registration-enabled' => 'true']);
-        $this->visit('/')->see(url('/login'));
-        $this->visit('/')->see(url('/register'));
+        $home = $this->get('/');
+        $home->assertSee(url('/login'));
+        $home->assertSee(url('/register'));
     }
 
     public function test_books_viewable()
     {
         $this->setSettings(['app-public' => 'true']);
-        $books = Book::orderBy('name', 'asc')->take(10)->get();
+        $books = Book::query()->orderBy('name', 'asc')->take(10)->get();
         $bookToVisit = $books[1];
 
         // Check books index page is showing
-        $this->visit('/books')
-            ->seeStatusCode(200)
-            ->see($books[0]->name)
-            // Check individual book page is showing and it's child contents are visible.
-            ->click($bookToVisit->name)
-            ->seePageIs($bookToVisit->getUrl())
-            ->see($bookToVisit->name)
-            ->see($bookToVisit->chapters()->first()->name);
+        $resp = $this->get('/books');
+        $resp->assertStatus(200);
+        $resp->assertSee($books[0]->name);
+
+        // Check individual book page is showing and it's child contents are visible.
+        $resp = $this->get($bookToVisit->getUrl());
+        $resp->assertSee($bookToVisit->name);
+        $resp->assertSee($bookToVisit->chapters()->first()->name);
     }
 
     public function test_chapters_viewable()
     {
         $this->setSettings(['app-public' => 'true']);
-        $chapterToVisit = Chapter::first();
+        /** @var Chapter $chapterToVisit */
+        $chapterToVisit = Chapter::query()->first();
         $pageToVisit = $chapterToVisit->pages()->first();
 
         // Check chapters index page is showing
-        $this->visit($chapterToVisit->getUrl())
-            ->seeStatusCode(200)
-            ->see($chapterToVisit->name)
-            // Check individual chapter page is showing and it's child contents are visible.
-            ->see($pageToVisit->name)
-            ->click($pageToVisit->name)
-            ->see($chapterToVisit->book->name)
-            ->see($chapterToVisit->name)
-            ->seePageIs($pageToVisit->getUrl());
+        $resp = $this->get($chapterToVisit->getUrl());
+        $resp->assertStatus(200);
+        $resp->assertSee($chapterToVisit->name);
+        // Check individual chapter page is showing and it's child contents are visible.
+        $resp->assertSee($pageToVisit->name);
+        $resp = $this->get($pageToVisit->getUrl());
+        $resp->assertStatus(200);
+        $resp->assertSee($chapterToVisit->book->name);
+        $resp->assertSee($chapterToVisit->name);
     }
 
     public function test_public_page_creation()
@@ -85,99 +88,108 @@ class PublicActionTest extends BrowserKitTest
         foreach (RolePermission::all() as $perm) {
             $publicRole->attachPermission($perm);
         }
-        $this->app[PermissionService::class]->buildJointPermissionForRole($publicRole);
+        user()->clearPermissionCache();
 
-        $chapter = Chapter::first();
-        $this->visit($chapter->book->getUrl());
-        $this->visit($chapter->getUrl())
-            ->click('New Page')
-            ->see('New Page')
-            ->seePageIs($chapter->getUrl('/create-page'));
+        $chapter = $this->entities->chapter();
+        $resp = $this->get($chapter->getUrl());
+        $resp->assertSee('New Page');
+        $this->withHtml($resp)->assertElementExists('a[href="' . $chapter->getUrl('/create-page') . '"]');
 
-        $this->submitForm('Continue', [
-            'name' => 'My guest page'
-        ])->seePageIs($chapter->book->getUrl('/page/my-guest-page/edit'));
+        $resp = $this->get($chapter->getUrl('/create-page'));
+        $resp->assertSee('Continue');
+        $resp->assertSee('Page Name');
+        $this->withHtml($resp)->assertElementExists('form[action="' . $chapter->getUrl('/create-guest-page') . '"]');
 
-        $user = User::getDefault();
-        $this->seeInDatabase('pages', [
-            'name' => 'My guest page',
+        $resp = $this->post($chapter->getUrl('/create-guest-page'), ['name' => 'My guest page']);
+        $resp->assertRedirect($chapter->book->getUrl('/page/my-guest-page/edit'));
+
+        $user = $this->users->guest();
+        $this->assertDatabaseHas('pages', [
+            'name'       => 'My guest page',
             'chapter_id' => $chapter->id,
             'created_by' => $user->id,
-            'updated_by' => $user->id
+            'updated_by' => $user->id,
         ]);
     }
 
     public function test_content_not_listed_on_404_for_public_users()
     {
-        $page = Page::first();
-        $this->asAdmin()->visit($page->getUrl());
+        $page = $this->entities->page();
+        $page->fill(['name' => 'my testing random unique page name'])->save();
+        $this->asAdmin()->get($page->getUrl()); // Fake visit to show on recents
+        $resp = $this->get('/cats/dogs/hippos');
+        $resp->assertStatus(404);
+        $resp->assertSee($page->name);
+        View::share('pageTitle', '');
+
         Auth::logout();
-        view()->share('pageTitle', '');
-        $this->forceVisit('/cats/dogs/hippos');
-        $this->dontSee($page->name);
+        $resp = $this->get('/cats/dogs/hippos');
+        $resp->assertStatus(404);
+        $resp->assertDontSee($page->name);
     }
 
-    public function test_robots_effected_by_public_status()
+    public function test_default_favicon_file_created_upon_access()
     {
-        $this->visit('/robots.txt');
-        $this->seeText("User-agent: *\nDisallow: /");
+        $faviconPath = public_path('favicon.ico');
+        if (file_exists($faviconPath)) {
+            unlink($faviconPath);
+        }
 
-        $this->setSettings(['app-public' => 'true']);
-        $this->visit('/robots.txt');
-
-        $this->seeText("User-agent: *\nDisallow:");
-        $this->dontSeeText("Disallow: /");
-    }
-
-    public function test_robots_effected_by_setting()
-    {
-        $this->visit('/robots.txt');
-        $this->seeText("User-agent: *\nDisallow: /");
-
-        config()->set('app.allow_robots', true);
-        $this->visit('/robots.txt');
-
-        $this->seeText("User-agent: *\nDisallow:");
-        $this->dontSeeText("Disallow: /");
-
-        // Check config overrides app-public setting
-        config()->set('app.allow_robots', false);
-        $this->setSettings(['app-public' => 'true']);
-        $this->visit('/robots.txt');
-
-        $this->seeText("User-agent: *\nDisallow: /");
+        $this->assertFileDoesNotExist($faviconPath);
+        $this->get('/favicon.ico');
+        $this->assertFileExists($faviconPath);
     }
 
     public function test_public_view_then_login_redirects_to_previous_content()
     {
         $this->setSettings(['app-public' => 'true']);
-        $book = Book::query()->first();
-        $this->visit($book->getUrl())
-            ->see($book->name)
-            ->visit('/login')
-            ->type('admin@admin.com', '#email')
-            ->type('password', '#password')
-            ->press('Log In')
-            ->seePageUrlIs($book->getUrl());
+        $book = $this->entities->book();
+        $resp = $this->get($book->getUrl());
+        $resp->assertSee($book->name);
+
+        $this->get('/login');
+        $resp = $this->post('/login', ['email' => 'admin@admin.com', 'password' => 'password']);
+        $resp->assertRedirect($book->getUrl());
     }
 
     public function test_access_hidden_content_then_login_redirects_to_intended_content()
     {
         $this->setSettings(['app-public' => 'true']);
-        $book = Book::query()->first();
-        $this->setEntityRestrictions($book);
+        $book = $this->entities->book();
+        $this->permissions->setEntityPermissions($book);
 
-        try {
-            $this->visit($book->getUrl());
-        } catch (\Exception $exception) {}
+        $resp = $this->get($book->getUrl());
+        $resp->assertSee('Book not found');
 
-        $this->see('Book not found')
-            ->dontSee($book->name)
-            ->visit('/login')
-            ->type('admin@admin.com', '#email')
-            ->type('password', '#password')
-            ->press('Log In')
-            ->seePageUrlIs($book->getUrl())
-            ->see($book->name);
+        $this->get('/login');
+        $resp = $this->post('/login', ['email' => 'admin@admin.com', 'password' => 'password']);
+        $resp->assertRedirect($book->getUrl());
+        $this->followRedirects($resp)->assertSee($book->name);
+    }
+
+    public function test_public_view_can_take_on_other_roles()
+    {
+        $this->setSettings(['app-public' => 'true']);
+        $newRole = $this->users->attachNewRole($this->users->guest(), []);
+        $page = $this->entities->page();
+        $this->permissions->disableEntityInheritedPermissions($page);
+        $this->permissions->addEntityPermission($page, ['view', 'update'], $newRole);
+
+        $resp = $this->get($page->getUrl());
+        $resp->assertOk();
+
+        $this->withHtml($resp)->assertLinkExists($page->getUrl('/edit'));
+    }
+
+    public function test_public_user_cannot_view_or_update_their_profile()
+    {
+        $this->setSettings(['app-public' => 'true']);
+        $guest = $this->users->guest();
+
+        $resp = $this->get($guest->getEditUrl());
+        $this->assertPermissionError($resp);
+
+        $resp = $this->put($guest->getEditUrl(), ['name' => 'My new guest name']);
+        $this->assertPermissionError($resp);
     }
 }

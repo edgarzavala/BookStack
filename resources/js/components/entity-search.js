@@ -1,10 +1,8 @@
-import {onSelect} from "../services/dom";
+import {onSelect} from '../services/dom.ts';
+import {Component} from './component';
 
-/**
- * Class EntitySearch
- * @extends {Component}
- */
-class EntitySearch {
+export class EntitySearch extends Component {
+
     setup() {
         this.entityId = this.$opts.entityId;
         this.entityType = this.$opts.entityType;
@@ -33,7 +31,8 @@ class EntitySearch {
     runSearch() {
         const term = this.searchInput.value.trim();
         if (term.length === 0) {
-            return this.clearSearch();
+            this.clearSearch();
+            return;
         }
 
         this.searchView.classList.remove('hidden');
@@ -54,6 +53,5 @@ class EntitySearch {
         this.loadingBlock.classList.add('hidden');
         this.searchInput.value = '';
     }
-}
 
-export default EntitySearch;
+}

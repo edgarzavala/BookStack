@@ -1,3 +1,5 @@
+@use "mixins";
+
 /**
  * Background colors
  */
@@ -7,30 +9,33 @@
 }
 .primary-background-light {
   background-color: var(--color-primary-light);
-  @include whenDark {
+  @include mixins.whenDark {
     background: #000;
-    .text-primary {
+    .text-link {
       color: #AAA !important;
     }
   }
+}
+.link-background {
+  background-color: var(--color-link) !important;
 }
 
 /*
  * Status text colors
  */
 .text-pos, .text-pos:hover, .text-pos-hover:hover {
-  color: $positive !important;
-  fill: $positive !important;
+  color: var(--color-positive) !important;
+  fill: var(--color-positive) !important;
 }
 
 .text-warn, .text-warn:hover, .text-warn-hover:hover {
-  color: $warning !important;
-  fill: $warning !important;
+  color: var(--color-warning) !important;
+  fill: var(--color-warning) !important;
 }
 
 .text-neg, .text-neg:hover, .text-neg-hover:hover  {
-  color: $negative !important;
-  fill: $negative !important;
+  color: var(--color-negative) !important;
+  fill: var(--color-negative) !important;
 }
 
 /*
@@ -41,13 +46,18 @@
   fill: var(--color-primary) !important;
 }
 
+.text-link, .text-link:hover, .text-link-hover:hover  {
+  color: var(--color-link) !important;
+  fill: var(--color-link) !important;
+}
+
 .text-muted {
-  @include lightDark(color, #575757, #888888, true);
+  @include mixins.lightDark(color, #575757, #888888, true);
   fill: currentColor !important;
 }
 
 .text-dark {
-  @include lightDark(color, #222, #ccc, true);
+  @include mixins.lightDark(color, #222, #ccc, true);
   fill: currentColor !important;
 }
 
@@ -92,6 +102,6 @@
 .bg-chapter {
   background-color: var(--color-chapter);
 }
-.bg-shelf {
+.bg-bookshelf {
   background-color: var(--color-bookshelf);
 }

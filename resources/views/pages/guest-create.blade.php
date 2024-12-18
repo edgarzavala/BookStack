@@ -1,11 +1,11 @@
-@extends('simple-layout')
+@extends('layouts.simple')
 
 @section('body')
 
     <div class="container small">
 
         <div class="my-s">
-            @include('partials.breadcrumbs', ['crumbs' => [
+            @include('entities.breadcrumbs', ['crumbs' => [
                 ($parent->isA('chapter') ? $parent->book : null),
                 $parent,
                 $parent->getUrl('/create-page') => [
@@ -22,7 +22,7 @@
 
                 <div class="form-group title-input">
                     <label for="name">{{ trans('entities.pages_name') }}</label>
-                    @include('form.text', ['name' => 'name'])
+                    @include('form.text', ['name' => 'name', 'autofocus' => true])
                 </div>
 
                 <div class="form-group text-right">

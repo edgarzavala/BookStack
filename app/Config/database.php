@@ -59,37 +59,41 @@ return [
     'connections' => [
 
         'mysql' => [
-            'driver'    => 'mysql',
-            'url' => env('DATABASE_URL'),
-            'host'      => $mysql_host,
-            'database'  => env('DB_DATABASE', 'forge'),
-            'username'  => env('DB_USERNAME', 'forge'),
-            'password'  => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
-            'port'      => $mysql_port,
-            'charset'   => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix'    => '',
+            'driver'         => 'mysql',
+            'url'            => env('DATABASE_URL'),
+            'host'           => $mysql_host,
+            'database'       => env('DB_DATABASE', 'forge'),
+            'username'       => env('DB_USERNAME', 'forge'),
+            'password'       => env('DB_PASSWORD', ''),
+            'unix_socket'    => env('DB_SOCKET', ''),
+            'port'           => $mysql_port,
+            'charset'        => 'utf8mb4',
+            'collation'      => 'utf8mb4_unicode_ci',
+            // Prefixes are only semi-supported and may be unstable
+            // since they are not tested as part of our automated test suite.
+            // If used, the prefix should not be changed otherwise you will likely receive errors.
+            'prefix'         => env('DB_TABLE_PREFIX', ''),
             'prefix_indexes' => true,
-            'strict'    => false,
-            'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
+            'strict'         => false,
+            'engine'         => null,
+            'options'        => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
         'mysql_testing' => [
-            'driver'    => 'mysql',
-            'url' => env('TEST_DATABASE_URL'),
-            'host'      => '127.0.0.1',
-            'database'  => 'bookstack-test',
-            'username'  => env('MYSQL_USER', 'bookstack-test'),
-            'password'  => env('MYSQL_PASSWORD', 'bookstack-test'),
-            'charset'   => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix'    => '',
+            'driver'         => 'mysql',
+            'url'            => env('TEST_DATABASE_URL'),
+            'host'           => '127.0.0.1',
+            'database'       => 'bookstack-test',
+            'username'       => env('MYSQL_USER', 'bookstack-test'),
+            'password'       => env('MYSQL_PASSWORD', 'bookstack-test'),
+            'port'           => $mysql_port,
+            'charset'        => 'utf8mb4',
+            'collation'      => 'utf8mb4_unicode_ci',
+            'prefix'         => '',
             'prefix_indexes' => true,
-            'strict'    => false,
+            'strict'         => false,
         ],
 
     ],
@@ -101,6 +105,6 @@ return [
     'migrations' => 'migrations',
 
     // Redis configuration to use if set
-    'redis' => env('REDIS_SERVERS', false) ? $redisConfig : [],
+    'redis' => $redisConfig ?? [],
 
 ];

@@ -1,13 +1,13 @@
-import {fadeIn, fadeOut} from "../services/animations";
-import {onSelect} from "../services/dom";
+import {fadeIn, fadeOut} from '../services/animations.ts';
+import {onSelect} from '../services/dom.ts';
+import {Component} from './component';
 
 /**
  * Popup window that will contain other content.
  * This component provides the show/hide functionality
  * with the ability for popup@hide child references to close this.
- * @extends {Component}
  */
-class Popup {
+export class Popup extends Component {
 
     setup() {
         this.container = this.$el;
@@ -26,15 +26,15 @@ class Popup {
 
         this.container.addEventListener('click', event => {
             if (event.target === this.container && lastMouseDownTarget === this.container) {
-                return this.hide();
+                this.hide();
             }
         });
 
-        onSelect(this.hideButtons, e => this.hide());
+        onSelect(this.hideButtons, () => this.hide());
     }
 
     hide(onComplete = null) {
-        fadeOut(this.container, 240, onComplete);
+        fadeOut(this.container, 120, onComplete);
         if (this.onkeyup) {
             window.removeEventListener('keyup', this.onkeyup);
             this.onkeyup = null;
@@ -45,9 +45,9 @@ class Popup {
     }
 
     show(onComplete = null, onHide = null) {
-        fadeIn(this.container, 240, onComplete);
+        fadeIn(this.container, 120, onComplete);
 
-        this.onkeyup = (event) => {
+        this.onkeyup = event => {
             if (event.key === 'Escape') {
                 this.hide();
             }
@@ -57,5 +57,3 @@ class Popup {
     }
 
 }
-
-export default Popup;

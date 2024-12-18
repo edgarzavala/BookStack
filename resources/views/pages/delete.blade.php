@@ -1,11 +1,11 @@
-@extends('simple-layout')
+@extends('layouts.simple')
 
 @section('body')
 
     <div class="container small">
 
         <div class="my-s">
-            @include('partials.breadcrumbs', ['crumbs' => [
+            @include('entities.breadcrumbs', ['crumbs' => [
                 $page->book,
                 $page->chapter,
                 $page,
@@ -19,6 +19,9 @@
         <div class="card content-wrap auto-height">
             <h1 class="list-heading">{{ $page->draft ? trans('entities.pages_delete_draft') : trans('entities.pages_delete') }}</h1>
 
+            @if($usedAsTemplate)
+                <p class="text-warn">{{ trans('entities.pages_delete_warning_template') }}</p>
+            @endif
 
             <div class="grid half v-center">
                 <div>

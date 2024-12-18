@@ -1,4 +1,4 @@
-@extends('simple-layout')
+@extends('layouts.simple')
 
 @section('body')
 
@@ -7,11 +7,11 @@
         <main class="card content-wrap auto-height">
             <h1 class="list-heading">{{ trans('settings.user_api_token_create') }}</h1>
 
-            <form action="{{ $user->getEditUrl('/create-api-token') }}" method="post">
-                {!! csrf_field() !!}
+            <form action="{{ url('/api-tokens/' . $user->id . '/create') }}" method="post">
+                {{ csrf_field() }}
 
                 <div class="setting-list">
-                    @include('users.api-tokens.form')
+                    @include('users.api-tokens.parts.form')
 
                     <div>
                         <p class="text-warn italic">
@@ -21,7 +21,7 @@
                 </div>
 
                 <div class="form-group text-right">
-                    <a href="{{ $user->getEditUrl('#api_tokens') }}" class="button outline">{{ trans('common.cancel') }}</a>
+                    <a href="{{ $back }}" class="button outline">{{ trans('common.cancel') }}</a>
                     <button class="button" type="submit">{{ trans('common.save') }}</button>
                 </div>
 

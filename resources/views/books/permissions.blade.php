@@ -1,11 +1,11 @@
-@extends('simple-layout')
+@extends('layouts.simple')
 
 @section('body')
 
     <div class="container">
 
         <div class="my-s">
-            @include('partials.breadcrumbs', ['crumbs' => [
+            @include('entities.breadcrumbs', ['crumbs' => [
                 $book,
                 $book->getUrl('/permissions') => [
                     'text' => trans('entities.books_permissions'),
@@ -14,9 +14,8 @@
             ]])
         </div>
 
-        <main class="card content-wrap">
-            <h1 class="list-heading">{{ trans('entities.books_permissions') }}</h1>
-            @include('form.entity-permissions', ['model' => $book])
+        <main class="card content-wrap auto-height">
+            @include('form.entity-permissions', ['model' => $book, 'title' => trans('entities.books_permissions')])
         </main>
     </div>
 

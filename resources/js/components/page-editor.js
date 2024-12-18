@@ -1,18 +1,17 @@
-import * as Dates from "../services/dates";
-import {onSelect} from "../services/dom";
+import {onSelect} from '../services/dom.ts';
+import {debounce} from '../services/util.ts';
+import {Component} from './component';
+import {utcTimeStampToLocalTime} from '../services/dates.ts';
 
-/**
- * Page Editor
- * @extends {Component}
- */
-class PageEditor {
+export class PageEditor extends Component {
+
     setup() {
         // Options
         this.draftsEnabled = this.$opts.draftsEnabled === 'true';
         this.editorType = this.$opts.editorType;
         this.pageId = Number(this.$opts.pageId);
         this.isNewDraft = this.$opts.pageNewDraft === 'true';
-        this.hasDefaultTitle = this.$opts.isDefaultTitle || false;
+        this.hasDefaultTitle = this.$opts.hasDefaultTitle || false;
 
         // Elements
         this.container = this.$el;
@@ -20,26 +19,33 @@ class PageEditor {
         this.saveDraftButton = this.$refs.saveDraft;
         this.discardDraftButton = this.$refs.discardDraft;
         this.discardDraftWrap = this.$refs.discardDraftWrap;
+        this.deleteDraftButton = this.$refs.deleteDraft;
+        this.deleteDraftWrap = this.$refs.deleteDraftWrap;
         this.draftDisplay = this.$refs.draftDisplay;
         this.draftDisplayIcon = this.$refs.draftDisplayIcon;
         this.changelogInput = this.$refs.changelogInput;
         this.changelogDisplay = this.$refs.changelogDisplay;
+        this.changeEditorButtons = this.$manyRefs.changeEditor || [];
+        this.switchDialogContainer = this.$refs.switchDialog;
+        this.deleteDraftDialogContainer = this.$refs.deleteDraftDialog;
 
         // Translations
         this.draftText = this.$opts.draftText;
         this.autosaveFailText = this.$opts.autosaveFailText;
         this.editingPageText = this.$opts.editingPageText;
         this.draftDiscardedText = this.$opts.draftDiscardedText;
+        this.draftDeleteText = this.$opts.draftDeleteText;
+        this.draftDeleteFailText = this.$opts.draftDeleteFailText;
         this.setChangelogText = this.$opts.setChangelogText;
 
         // State data
-        this.editorHTML = '';
-        this.editorMarkdown = '';
         this.autoSave = {
             interval: null,
             frequency: 30000,
             last: 0,
+            pendingChange: false,
         };
+        this.shownWarningsCache = new Set();
 
         if (this.pageId !== 0 && this.draftsEnabled) {
             window.setTimeout(() => {
@@ -58,24 +64,32 @@ class PageEditor {
         window.$events.listen('editor-save-page', this.savePage.bind(this));
 
         // Listen to content changes from the editor
-        window.$events.listen('editor-html-change', html => {
-            this.editorHTML = html;
-        });
-        window.$events.listen('editor-markdown-change', markdown => {
-            this.editorMarkdown = markdown;
-        });
+        const onContentChange = () => {
+            this.autoSave.pendingChange = true;
+        };
+        window.$events.listen('editor-html-change', onContentChange);
+        window.$events.listen('editor-markdown-change', onContentChange);
+
+        // Listen to changes on the title input
+        this.titleElem.addEventListener('input', onContentChange);
 
         // Changelog controls
-        this.changelogInput.addEventListener('change', this.updateChangelogDisplay.bind(this));
+        const updateChangelogDebounced = debounce(this.updateChangelogDisplay.bind(this), 300, false);
+        this.changelogInput.addEventListener('input', updateChangelogDebounced);
 
         // Draft Controls
         onSelect(this.saveDraftButton, this.saveDraft.bind(this));
         onSelect(this.discardDraftButton, this.discardDraft.bind(this));
+        onSelect(this.deleteDraftButton, this.deleteDraft.bind(this));
+
+        // Change editor controls
+        onSelect(this.changeEditorButtons, this.changeEditor.bind(this));
     }
 
     setInitialFocus() {
         if (this.hasDefaultTitle) {
-            return this.titleElem.select();
+            this.titleElem.select();
+            return;
         }
 
         window.setTimeout(() => {
@@ -84,18 +98,17 @@ class PageEditor {
     }
 
     startAutoSave() {
-        let lastContent = this.titleElem.value.trim() + '::' + this.editorHTML;
-        this.autoSaveInterval = window.setInterval(() => {
-            // Stop if manually saved recently to prevent bombarding the server
-            let savedRecently = (Date.now() - this.autoSave.last < (this.autoSave.frequency)/2);
-            if (savedRecently) return;
-            const newContent = this.titleElem.value.trim() + '::' + this.editorHTML;
-            if (newContent !== lastContent) {
-                lastContent = newContent;
-                this.saveDraft();
-            }
+        this.autoSave.interval = window.setInterval(this.runAutoSave.bind(this), this.autoSave.frequency);
+    }
 
-        }, this.autoSave.frequency);
+    runAutoSave() {
+        // Stop if manually saved recently to prevent bombarding the server
+        const savedRecently = (Date.now() - this.autoSave.last < (this.autoSave.frequency) / 2);
+        if (savedRecently || !this.autoSave.pendingChange) {
+            return;
+        }
+
+        this.saveDraft();
     }
 
     savePage() {
@@ -103,32 +116,41 @@ class PageEditor {
     }
 
     async saveDraft() {
-        const data = {
-            name: this.titleElem.value.trim(),
-            html: this.editorHTML,
-        };
+        const data = {name: this.titleElem.value.trim()};
 
-        if (this.editorType === 'markdown') {
-            data.markdown = this.editorMarkdown;
-        }
+        const editorContent = await this.getEditorComponent().getContent();
+        Object.assign(data, editorContent);
 
+        let didSave = false;
         try {
             const resp = await window.$http.put(`/ajax/page/${this.pageId}/save-draft`, data);
             if (!this.isNewDraft) {
-                this.toggleDiscardDraftVisibility(true);
+                this.discardDraftWrap.toggleAttribute('hidden', false);
+                this.deleteDraftWrap.toggleAttribute('hidden', false);
             }
-            this.draftNotifyChange(`${resp.data.message} ${Dates.utcTimeStampToLocalTime(resp.data.timestamp)}`);
+
+            this.draftNotifyChange(`${resp.data.message} ${utcTimeStampToLocalTime(resp.data.timestamp)}`);
             this.autoSave.last = Date.now();
+            if (resp.data.warning && !this.shownWarningsCache.has(resp.data.warning)) {
+                window.$events.emit('warning', resp.data.warning);
+                this.shownWarningsCache.add(resp.data.warning);
+            }
+
+            didSave = true;
+            this.autoSave.pendingChange = false;
         } catch (err) {
             // Save the editor content in LocalStorage as a last resort, just in case.
             try {
                 const saveKey = `draft-save-fail-${(new Date()).toISOString()}`;
                 window.localStorage.setItem(saveKey, JSON.stringify(data));
-            } catch (err) {}
+            } catch (lsErr) {
+                console.error(lsErr);
+            }
 
             window.$events.emit('error', this.autosaveFailText);
         }
 
+        return didSave;
     }
 
     draftNotifyChange(text) {
@@ -139,12 +161,13 @@ class PageEditor {
         }, 2000);
     }
 
-    async discardDraft() {
+    async discardDraft(notify = true) {
         let response;
         try {
             response = await window.$http.get(`/ajax/page/${this.pageId}`);
         } catch (e) {
-            return console.error(e);
+            console.error(e);
+            return;
         }
 
         if (this.autoSave.interval) {
@@ -152,16 +175,40 @@ class PageEditor {
         }
 
         this.draftDisplay.innerText = this.editingPageText;
-        this.toggleDiscardDraftVisibility(false);
-        window.$events.emit('editor-html-update', response.data.html || '');
-        window.$events.emit('editor-markdown-update', response.data.markdown || response.data.html);
+        this.discardDraftWrap.toggleAttribute('hidden', true);
+        window.$events.emit('editor::replace', {
+            html: response.data.html,
+            markdown: response.data.markdown,
+        });
 
         this.titleElem.value = response.data.name;
         window.setTimeout(() => {
             this.startAutoSave();
         }, 1000);
-        window.$events.emit('success', this.draftDiscardedText);
 
+        if (notify) {
+            window.$events.success(this.draftDiscardedText);
+        }
+    }
+
+    async deleteDraft() {
+        /** @var {ConfirmDialog} * */
+        const dialog = window.$components.firstOnElement(this.deleteDraftDialogContainer, 'confirm-dialog');
+        const confirmed = await dialog.show();
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            const discard = this.discardDraft(false);
+            const draftDelete = window.$http.delete(`/page-revisions/user-drafts/${this.pageId}`);
+            await Promise.all([discard, draftDelete]);
+            window.$events.success(this.draftDeleteText);
+            this.deleteDraftWrap.toggleAttribute('hidden', true);
+        } catch (err) {
+            console.error(err);
+            window.$events.error(this.draftDeleteFailText);
+        }
     }
 
     updateChangelogDisplay() {
@@ -169,15 +216,31 @@ class PageEditor {
         if (summary.length === 0) {
             summary = this.setChangelogText;
         } else if (summary.length > 16) {
-            summary = summary.slice(0, 16) + '...';
+            summary = `${summary.slice(0, 16)}...`;
         }
         this.changelogDisplay.innerText = summary;
     }
 
-    toggleDiscardDraftVisibility(show) {
-        this.discardDraftWrap.classList.toggle('hidden', !show);
+    async changeEditor(event) {
+        event.preventDefault();
+
+        const link = event.target.closest('a').href;
+        /** @var {ConfirmDialog} * */
+        const dialog = window.$components.firstOnElement(this.switchDialogContainer, 'confirm-dialog');
+        const [saved, confirmed] = await Promise.all([this.saveDraft(), dialog.show()]);
+
+        if (saved && confirmed) {
+            window.location = link;
+        }
+    }
+
+    /**
+     * @return {MarkdownEditor|WysiwygEditor|WysiwygEditorTinymce}
+     */
+    getEditorComponent() {
+        return window.$components.first('markdown-editor')
+            || window.$components.first('wysiwyg-editor')
+            || window.$components.first('wysiwyg-editor-tinymce');
     }
 
 }
-
-export default PageEditor;

@@ -1,44 +1,25 @@
-<?php namespace BookStack\Entities\Repos;
+<?php
 
-use BookStack\Entities\Book;
-use BookStack\Entities\Chapter;
-use BookStack\Entities\Managers\BookContents;
-use BookStack\Entities\Managers\TrashCan;
+namespace BookStack\Entities\Repos;
+
+use BookStack\Activity\ActivityType;
+use BookStack\Entities\Models\Book;
+use BookStack\Entities\Models\Chapter;
+use BookStack\Entities\Queries\EntityQueries;
+use BookStack\Entities\Tools\BookContents;
+use BookStack\Entities\Tools\TrashCan;
 use BookStack\Exceptions\MoveOperationException;
-use BookStack\Exceptions\NotFoundException;
-use BookStack\Exceptions\NotifyException;
+use BookStack\Exceptions\PermissionsException;
+use BookStack\Facades\Activity;
 use Exception;
-use Illuminate\Contracts\Container\BindingResolutionException;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 
 class ChapterRepo
 {
-
-    protected $baseRepo;
-
-    /**
-     * ChapterRepo constructor.
-     * @param $baseRepo
-     */
-    public function __construct(BaseRepo $baseRepo)
-    {
-        $this->baseRepo = $baseRepo;
-    }
-
-    /**
-     * Get a chapter via the slug.
-     * @throws NotFoundException
-     */
-    public function getBySlug(string $bookSlug, string $chapterSlug): Chapter
-    {
-        $chapter = Chapter::visible()->whereSlugs($bookSlug, $chapterSlug)->first();
-
-        if ($chapter === null) {
-            throw new NotFoundException(trans('errors.chapter_not_found'));
-        }
-
-        return $chapter;
+    public function __construct(
+        protected BaseRepo $baseRepo,
+        protected EntityQueries $entityQueries,
+        protected TrashCan $trashCan,
+    ) {
     }
 
     /**
@@ -50,6 +31,9 @@ class ChapterRepo
         $chapter->book_id = $parentBook->id;
         $chapter->priority = (new BookContents($parentBook))->getLastPriority() + 1;
         $this->baseRepo->create($chapter, $input);
+        $this->baseRepo->updateDefaultTemplate($chapter, intval($input['default_template_id'] ?? null));
+        Activity::add(ActivityType::CHAPTER_CREATE, $chapter);
+
         return $chapter;
     }
 
@@ -59,50 +43,51 @@ class ChapterRepo
     public function update(Chapter $chapter, array $input): Chapter
     {
         $this->baseRepo->update($chapter, $input);
+
+        if (array_key_exists('default_template_id', $input)) {
+            $this->baseRepo->updateDefaultTemplate($chapter, intval($input['default_template_id']));
+        }
+
+        Activity::add(ActivityType::CHAPTER_UPDATE, $chapter);
+
         return $chapter;
     }
 
     /**
-     * Update the permissions of a chapter.
-     */
-    public function updatePermissions(Chapter $chapter, bool $restricted, Collection $permissions = null)
-    {
-        $this->baseRepo->updatePermissions($chapter, $restricted, $permissions);
-    }
-
-    /**
      * Remove a chapter from the system.
+     *
      * @throws Exception
      */
     public function destroy(Chapter $chapter)
     {
-        $trashCan = new TrashCan();
-        $trashCan->destroyChapter($chapter);
+        $this->trashCan->softDestroyChapter($chapter);
+        Activity::add(ActivityType::CHAPTER_DELETE, $chapter);
+        $this->trashCan->autoClearOld();
     }
 
     /**
      * Move the given chapter into a new parent book.
      * The $parentIdentifier must be a string of the following format:
-     * 'book:<id>' (book:5)
+     * 'book:<id>' (book:5).
+     *
      * @throws MoveOperationException
+     * @throws PermissionsException
      */
     public function move(Chapter $chapter, string $parentIdentifier): Book
     {
-        $stringExploded = explode(':', $parentIdentifier);
-        $entityType = $stringExploded[0];
-        $entityId = intval($stringExploded[1]);
-
-        if ($entityType !== 'book') {
-            throw new MoveOperationException('Chapters can only be moved into books');
+        $parent = $this->entityQueries->findVisibleByStringIdentifier($parentIdentifier);
+        if (!$parent instanceof Book) {
+            throw new MoveOperationException('Book to move chapter into not found');
         }
 
-        $parent = Book::visible()->where('id', '=', $entityId)->first();
-        if ($parent === null) {
-            throw new MoveOperationException('Book to move chapter into not found');
+        if (!userCan('chapter-create', $parent)) {
+            throw new PermissionsException('User does not have permission to create a chapter within the chosen book');
         }
 
         $chapter->changeBook($parent->id);
         $chapter->rebuildPermissions();
+        Activity::add(ActivityType::CHAPTER_MOVE, $chapter);
+
         return $parent;
     }
 }
