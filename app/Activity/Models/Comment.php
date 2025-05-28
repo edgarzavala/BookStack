@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property int      $entity_id
  * @property int      $created_by
  * @property int      $updated_by
+ * @property string   $content_ref
+ * @property bool     $archived
  */
 class Comment extends Model implements Loggable
 {
@@ -26,7 +28,6 @@ class Comment extends Model implements Loggable
     use HasCreatorAndUpdater;
 
     protected $fillable = ['parent_id'];
-    protected $appends = ['created', 'updated'];
 
     /**
      * Get the entity that this comment belongs to.
@@ -52,22 +53,6 @@ class Comment extends Model implements Loggable
     public function isUpdated(): bool
     {
         return $this->updated_at->timestamp > $this->created_at->timestamp;
-    }
-
-    /**
-     * Get created date as a relative diff.
-     */
-    public function getCreatedAttribute(): string
-    {
-        return $this->created_at->diffForHumans();
-    }
-
-    /**
-     * Get updated date as a relative diff.
-     */
-    public function getUpdatedAttribute(): string
-    {
-        return $this->updated_at->diffForHumans();
     }
 
     public function logDescriptor(): string

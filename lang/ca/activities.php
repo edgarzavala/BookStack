@@ -84,6 +84,14 @@ return [
     'webhook_delete' => 'ha suprimit el webhook',
     'webhook_delete_notification' => 'S’ha suprimit el webhook',
 
+    // Imports
+    'import_create' => 'created import',
+    'import_create_notification' => 'Import successfully uploaded',
+    'import_run' => 'updated import',
+    'import_run_notification' => 'Content successfully imported',
+    'import_delete' => 'deleted import',
+    'import_delete_notification' => 'Import successfully deleted',
+
     // Users
     'user_create' => 'ha creat l’usuari',
     'user_create_notification' => 'S’ha creat l’usuari',
@@ -118,6 +126,14 @@ return [
     'comment_create'              => 'ha afegit un comentari',
     'comment_update'              => 'ha actualitzat un comentari',
     'comment_delete'              => 'ha suprimit un comentari',
+
+    // Sort Rules
+    'sort_rule_create' => 'created sort rule',
+    'sort_rule_create_notification' => 'Sort rule successfully created',
+    'sort_rule_update' => 'updated sort rule',
+    'sort_rule_update_notification' => 'Sort rule successfully updated',
+    'sort_rule_delete' => 'deleted sort rule',
+    'sort_rule_delete_notification' => 'Sort rule successfully deleted',
 
     // Other
     'permissions_update'          => 'ha actualitzat els permisos',

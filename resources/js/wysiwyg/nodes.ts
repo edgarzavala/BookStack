@@ -8,7 +8,7 @@ import {
 } from "lexical";
 import {LinkNode} from "@lexical/link";
 import {ImageNode} from "@lexical/rich-text/LexicalImageNode";
-import {DetailsNode, SummaryNode} from "@lexical/rich-text/LexicalDetailsNode";
+import {DetailsNode} from "@lexical/rich-text/LexicalDetailsNode";
 import {ListItemNode, ListNode} from "@lexical/list";
 import {TableCellNode, TableNode, TableRowNode} from "@lexical/table";
 import {HorizontalRuleNode} from "@lexical/rich-text/LexicalHorizontalRuleNode";
@@ -18,6 +18,7 @@ import {EditorUiContext} from "./ui/framework/core";
 import {MediaNode} from "@lexical/rich-text/LexicalMediaNode";
 import {HeadingNode} from "@lexical/rich-text/LexicalHeadingNode";
 import {QuoteNode} from "@lexical/rich-text/LexicalQuoteNode";
+import {CaptionNode} from "@lexical/table/LexicalCaptionNode";
 
 /**
  * Load the nodes for lexical.
@@ -32,9 +33,10 @@ export function getNodesForPageEditor(): (KlassConstructor<typeof LexicalNode> |
         TableNode,
         TableRowNode,
         TableCellNode,
+        CaptionNode,
         ImageNode, // TODO - Alignment
         HorizontalRuleNode,
-        DetailsNode, SummaryNode,
+        DetailsNode,
         CodeBlockNode,
         DiagramNode,
         MediaNode, // TODO - Alignment

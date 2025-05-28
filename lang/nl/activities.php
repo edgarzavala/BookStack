@@ -84,6 +84,14 @@ return [
     'webhook_delete' => 'verwijderde webhook',
     'webhook_delete_notification' => 'Webhook succesvol verwijderd',
 
+    // Imports
+    'import_create' => 'maakte import',
+    'import_create_notification' => 'Import succesvol geüpload',
+    'import_run' => 'wijzigde import',
+    'import_run_notification' => 'Inhoud succesvol geïmporteerd',
+    'import_delete' => 'verwijderde import',
+    'import_delete_notification' => 'Import succesvol verwijderd',
+
     // Users
     'user_create' => 'maakte gebruiker aan',
     'user_create_notification' => 'Gebruiker succesvol aangemaakt',
@@ -118,6 +126,14 @@ return [
     'comment_create'              => 'voegde opmerking toe',
     'comment_update'              => 'paste opmerking aan',
     'comment_delete'              => 'verwijderde opmerking',
+
+    // Sort Rules
+    'sort_rule_create' => 'maakte soorteerregel',
+    'sort_rule_create_notification' => 'Sorteerregel succesvol aangemaakt',
+    'sort_rule_update' => 'wijzigde sorteerregel',
+    'sort_rule_update_notification' => 'Sorteerregel succesvol bijgewerkt',
+    'sort_rule_delete' => 'verwijderde sorteerregel',
+    'sort_rule_delete_notification' => 'Sorteerregel succesvol verwijderd',
 
     // Other
     'permissions_update'          => 'wijzigde machtigingen',

@@ -105,6 +105,18 @@ return [
     'app_down' => ':appName is nu niet beschikbaar',
     'back_soon' => 'Komt snel weer online.',
 
+    // Import
+    'import_zip_cant_read' => 'Kon het Zip-bestand niet lezen.',
+    'import_zip_cant_decode_data' => 'Kon de data.json Zip-inhoud niet vinden of decoderen.',
+    'import_zip_no_data' => 'Zip-bestand bevat niet de verwachte boek, hoofdstuk of pagina-inhoud.',
+    'import_validation_failed' => 'De validatie van het Zip-bestand is mislukt met de volgende fouten:',
+    'import_zip_failed_notification' => 'Importeren van het Zip-bestand is mislukt.',
+    'import_perms_books' => 'Je mist de vereiste machtigingen om boeken te maken.',
+    'import_perms_chapters' => 'Je mist de vereiste machtigingen om hoofdstukken te maken.',
+    'import_perms_pages' => 'Je mist de vereiste machtigingen om pagina\'s te maken.',
+    'import_perms_images' => 'Je mist de vereiste machtigingen om afbeeldingen toe te voegen.',
+    'import_perms_attachments' => 'Je mist de vereiste machtigingen om bijlagen toe te voegen.',
+
     // API errors
     'api_no_authorization_found' => 'Geen autorisatie token gevonden',
     'api_bad_authorization_format' => 'Een autorisatie token is gevonden, maar het formaat schijnt onjuist te zijn',

@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ImageService
 {
-    protected static array $supportedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    protected static array $supportedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
 
     public function __construct(
         protected ImageStorage $storage,
@@ -31,8 +31,8 @@ class ImageService
         UploadedFile $uploadedFile,
         string $type,
         int $uploadedTo = 0,
-        int $resizeWidth = null,
-        int $resizeHeight = null,
+        ?int $resizeWidth = null,
+        ?int $resizeHeight = null,
         bool $keepRatio = true,
         string $imageName = '',
     ): Image {

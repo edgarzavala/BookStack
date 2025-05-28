@@ -13,6 +13,7 @@ return [
     'cancel' => 'Abbrechen',
     'save' => 'Speichern',
     'close' => 'Schließen',
+    'apply' => 'Übernehmen',
     'undo' => 'Rückgängig machen',
     'redo' => 'Wiederholen',
     'left' => 'Links',
@@ -147,6 +148,7 @@ return [
     'url' => 'URL',
     'text_to_display' => 'Anzuzeigender Text',
     'title' => 'Titel',
+    'browse_links' => 'Links durchsuchen',
     'open_link' => 'Link öffnen',
     'open_link_in' => 'Link öffnen in...',
     'open_link_current' => 'Aktuellem Fenster',
@@ -161,8 +163,10 @@ return [
 
     // About view
     'about' => 'Über den Editor',
-    'about_title' => 'Über den WYSIWYG Editor',
+    'about_title' => 'Über den WYSIWYG-Editor',
     'editor_license' => 'Editorlizenz & Copyright',
+    'editor_lexical_license' => 'Dieser Editor wurde mithilfe von :lexicalLink erstellt, der unter der MIT-Lizenz bereitgestellt wird.',
+    'editor_lexical_license_link' => 'Vollständige Lizenzdetails findest du hier.',
     'editor_tiny_license' => 'Dieser Editor wurde mit :tinyLink erstellt, das unter der MIT-Lizenz zur Verfügung gestellt wird.',
     'editor_tiny_license_link' => 'Die Copyright- und Lizenzdetails von TinyMCE findest du hier.',
     'save_continue' => 'Seite speichern & fortfahren',

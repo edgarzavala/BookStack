@@ -84,6 +84,14 @@ return [
     'webhook_delete' => 'fshiu uebhook',
     'webhook_delete_notification' => 'Uebhook-u u fshi me sukses',
 
+    // Imports
+    'import_create' => 'created import',
+    'import_create_notification' => 'Import successfully uploaded',
+    'import_run' => 'updated import',
+    'import_run_notification' => 'Content successfully imported',
+    'import_delete' => 'deleted import',
+    'import_delete_notification' => 'Import successfully deleted',
+
     // Users
     'user_create' => 'krijoi përdorues',
     'user_create_notification' => 'Përdoruesi u krijua me sukses',
@@ -118,6 +126,14 @@ return [
     'comment_create'              => 'shtoi koment',
     'comment_update'              => 'përditësoi koment',
     'comment_delete'              => 'fshiu koment',
+
+    // Sort Rules
+    'sort_rule_create' => 'created sort rule',
+    'sort_rule_create_notification' => 'Sort rule successfully created',
+    'sort_rule_update' => 'updated sort rule',
+    'sort_rule_update_notification' => 'Sort rule successfully updated',
+    'sort_rule_delete' => 'deleted sort rule',
+    'sort_rule_delete_notification' => 'Sort rule successfully deleted',
 
     // Other
     'permissions_update'          => 'përditësoi lejet',

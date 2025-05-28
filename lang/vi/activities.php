@@ -84,6 +84,14 @@ return [
     'webhook_delete' => 'đã xóa webhook',
     'webhook_delete_notification' => 'Webhook đã được xóa thành công',
 
+    // Imports
+    'import_create' => 'created import',
+    'import_create_notification' => 'Import successfully uploaded',
+    'import_run' => 'updated import',
+    'import_run_notification' => 'Content successfully imported',
+    'import_delete' => 'deleted import',
+    'import_delete_notification' => 'Import successfully deleted',
+
     // Users
     'user_create' => 'đã tạo người dùng',
     'user_create_notification' => 'Người dùng được tạo thành công',
@@ -118,6 +126,14 @@ return [
     'comment_create'              => 'thêm bình luận',
     'comment_update'              => 'cập nhật bình luận',
     'comment_delete'              => 'đã xóa bình luận',
+
+    // Sort Rules
+    'sort_rule_create' => 'created sort rule',
+    'sort_rule_create_notification' => 'Sort rule successfully created',
+    'sort_rule_update' => 'updated sort rule',
+    'sort_rule_update_notification' => 'Sort rule successfully updated',
+    'sort_rule_delete' => 'deleted sort rule',
+    'sort_rule_delete_notification' => 'Sort rule successfully deleted',
 
     // Other
     'permissions_update'          => 'các quyền đã được cập nhật',

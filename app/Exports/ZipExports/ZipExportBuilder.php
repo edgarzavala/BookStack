@@ -2,6 +2,7 @@
 
 namespace BookStack\Exports\ZipExports;
 
+use BookStack\App\AppVersion;
 use BookStack\Entities\Models\Book;
 use BookStack\Entities\Models\Chapter;
 use BookStack\Entities\Models\Page;
@@ -70,7 +71,7 @@ class ZipExportBuilder
         $this->data['exported_at'] = date(DATE_ATOM);
         $this->data['instance'] = [
             'id'      => setting('instance-id', ''),
-            'version' => trim(file_get_contents(base_path('version'))),
+            'version' => AppVersion::get(),
         ];
 
         $zipFile = tempnam(sys_get_temp_dir(), 'bszip-');
@@ -84,10 +85,27 @@ class ZipExportBuilder
         $zip->addEmptyDir('files');
 
         $toRemove = [];
-        $this->files->extractEach(function ($filePath, $fileRef) use ($zip, &$toRemove) {
-            $zip->addFile($filePath, "files/$fileRef");
-            $toRemove[] = $filePath;
-        });
+        $addedNames = [];
+
+        try {
+            $this->files->extractEach(function ($filePath, $fileRef) use ($zip, &$toRemove, &$addedNames) {
+                $entryName = "files/$fileRef";
+                $zip->addFile($filePath, $entryName);
+                $toRemove[] = $filePath;
+                $addedNames[] = $entryName;
+            });
+        } catch (\Exception $exception) {
+            // Cleanup the files we've processed so far and respond back with error
+            foreach ($toRemove as $file) {
+                unlink($file);
+            }
+            foreach ($addedNames as $name) {
+                $zip->deleteName($name);
+            }
+            $zip->close();
+            unlink($zipFile);
+            throw new ZipExportException("Failed to add files for ZIP export, received error: " . $exception->getMessage());
+        }
 
         $zip->close();
 
