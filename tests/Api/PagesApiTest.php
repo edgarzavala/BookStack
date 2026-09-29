@@ -2,6 +2,7 @@
 
 namespace Tests\Api;
 
+use BookStack\Activity\Models\Comment;
 use BookStack\Entities\Models\Chapter;
 use BookStack\Entities\Models\Page;
 use Carbon\Carbon;
@@ -127,6 +128,27 @@ class PagesApiTest extends TestCase
         $this->assertStringContainsString('href="https://example.com"', $respHtml);
     }
 
+    public function test_create_can_accept_a_changelog_message()
+    {
+        $this->actingAsApiEditor();
+        $book = $this->entities->book();
+        $details = [
+            'name' => 'My updated API page',
+            'html' => '<p>A page updated via the API</p>',
+            'changelog' => 'This is a create changelog message via the API',
+            'book_id' => $book->id,
+        ];
+
+        $resp = $this->postJson($this->baseEndpoint, $details);
+        $resp->assertOk();
+
+        $pageId = $resp->json('id');
+        $page = Page::query()->findOrFail($pageId);
+
+        $latestRevision = $page->revisions()->orderBy('id', 'desc')->first();
+        $this->assertEquals('This is a create changelog message via the API', $latestRevision->summary);
+    }
+
     public function test_read_endpoint()
     {
         $this->actingAsApiEditor();
@@ -197,6 +219,44 @@ class PagesApiTest extends TestCase
             ],
         ]);
         $this->assertSame(404, $resp->json('error')['code']);
+    }
+
+    public function test_read_with_invalid_id_returns_not_found()
+    {
+        $this->actingAsApiEditor();
+        $resp = $this->getJson($this->baseEndpoint . '/invalid-id');
+        $resp->assertNotFound();
+        $resp->assertJsonStructure([
+            'error' => [
+                'code',
+                'message',
+            ],
+        ]);
+    }
+
+    public function test_read_endpoint_includes_page_comments_tree_structure()
+    {
+        $this->actingAsApiEditor();
+        $page = $this->entities->page();
+        $relation = ['commentable_type' => 'page', 'commentable_id' => $page->id];
+        $active = Comment::factory()->create([...$relation, 'html' => '<p>My active<script>cat</script> comment</p>']);
+        Comment::factory()->count(5)->create([...$relation, 'parent_id' => $active->local_id]);
+        $archived = Comment::factory()->create([...$relation, 'archived' => true]);
+        Comment::factory()->count(2)->create([...$relation, 'parent_id' => $archived->local_id]);
+
+        $resp = $this->getJson("{$this->baseEndpoint}/{$page->id}");
+        $resp->assertOk();
+
+        $resp->assertJsonCount(1, 'comments.active');
+        $resp->assertJsonCount(1, 'comments.archived');
+        $resp->assertJsonCount(5, 'comments.active.0.children');
+        $resp->assertJsonCount(2, 'comments.archived.0.children');
+
+        $resp->assertJsonFragment([
+            'id' => $active->id,
+            'local_id' => $active->local_id,
+            'html' => '<p>My active comment</p>',
+        ]);
     }
 
     public function test_update_endpoint()
@@ -286,7 +346,7 @@ class PagesApiTest extends TestCase
     {
         $this->actingAsApiEditor();
         $page = $this->entities->page();
-        DB::table('pages')->where('id', '=', $page->id)->update(['updated_at' => Carbon::now()->subWeek()]);
+        $page->newQuery()->where('id', '=', $page->id)->update(['updated_at' => Carbon::now()->subWeek()]);
 
         $details = [
             'tags' => [['name' => 'Category', 'value' => 'Testing']],
@@ -299,6 +359,23 @@ class PagesApiTest extends TestCase
         $this->assertGreaterThan(Carbon::now()->subDay()->unix(), $page->updated_at->unix());
     }
 
+    public function test_update_can_accept_a_changelog_message()
+    {
+        $this->actingAsApiEditor();
+        $page = $this->entities->page();
+        $details = [
+            'name' => 'My updated API page',
+            'html' => '<p>A page updated via the API</p>',
+            'changelog' => 'This is a changelog message via the API',
+        ];
+
+        $resp = $this->putJson($this->baseEndpoint . "/{$page->id}", $details);
+        $resp->assertOk();
+
+        $latestRevision = $page->revisions()->orderBy('id', 'desc')->first();
+        $this->assertEquals('This is a changelog message via the API', $latestRevision->summary);
+    }
+
     public function test_delete_endpoint()
     {
         $this->actingAsApiEditor();
@@ -307,61 +384,5 @@ class PagesApiTest extends TestCase
 
         $resp->assertStatus(204);
         $this->assertActivityExists('page_delete', $page);
-    }
-
-    public function test_export_html_endpoint()
-    {
-        $this->actingAsApiEditor();
-        $page = $this->entities->page();
-
-        $resp = $this->get($this->baseEndpoint . "/{$page->id}/export/html");
-        $resp->assertStatus(200);
-        $resp->assertSee($page->name);
-        $resp->assertHeader('Content-Disposition', 'attachment; filename="' . $page->slug . '.html"');
-    }
-
-    public function test_export_plain_text_endpoint()
-    {
-        $this->actingAsApiEditor();
-        $page = $this->entities->page();
-
-        $resp = $this->get($this->baseEndpoint . "/{$page->id}/export/plaintext");
-        $resp->assertStatus(200);
-        $resp->assertSee($page->name);
-        $resp->assertHeader('Content-Disposition', 'attachment; filename="' . $page->slug . '.txt"');
-    }
-
-    public function test_export_pdf_endpoint()
-    {
-        $this->actingAsApiEditor();
-        $page = $this->entities->page();
-
-        $resp = $this->get($this->baseEndpoint . "/{$page->id}/export/pdf");
-        $resp->assertStatus(200);
-        $resp->assertHeader('Content-Disposition', 'attachment; filename="' . $page->slug . '.pdf"');
-    }
-
-    public function test_export_markdown_endpoint()
-    {
-        $this->actingAsApiEditor();
-        $page = $this->entities->page();
-
-        $resp = $this->get($this->baseEndpoint . "/{$page->id}/export/markdown");
-        $resp->assertStatus(200);
-        $resp->assertSee('# ' . $page->name);
-        $resp->assertHeader('Content-Disposition', 'attachment; filename="' . $page->slug . '.md"');
-    }
-
-    public function test_cant_export_when_not_have_permission()
-    {
-        $types = ['html', 'plaintext', 'pdf', 'markdown'];
-        $this->actingAsApiEditor();
-        $this->permissions->removeUserRolePermissions($this->users->editor(), ['content-export']);
-
-        $page = $this->entities->page();
-        foreach ($types as $type) {
-            $resp = $this->get($this->baseEndpoint . "/{$page->id}/export/{$type}");
-            $this->assertPermissionError($resp);
-        }
     }
 }

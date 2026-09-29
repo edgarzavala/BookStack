@@ -87,11 +87,11 @@ return [
     'role_cannot_remove_only_admin' => 'Deze gebruiker is de enige gebruiker die is toegewezen aan de beheerdersrol. Wijs de beheerdersrol toe aan een andere gebruiker voordat u probeert deze hier te verwijderen.',
 
     // Comments
-    'comment_list' => 'Er is een fout opgetreden tijdens het ophalen van de reacties.',
-    'cannot_add_comment_to_draft' => 'Je kunt geen reacties toevoegen aan een concept.',
-    'comment_add' => 'Er is een fout opgetreden tijdens het aanpassen / toevoegen van de reactie.',
-    'comment_delete' => 'Er is een fout opgetreden tijdens het verwijderen van de reactie.',
-    'empty_comment' => 'Kan geen lege reactie toevoegen.',
+    'comment_list' => 'Er is een fout opgetreden tijdens het ophalen van de opmerkingen.',
+    'cannot_add_comment_to_draft' => 'Je kunt geen opmerkingen toevoegen aan een concept.',
+    'comment_add' => 'Er is een fout opgetreden tijdens het aanpassen / toevoegen van de opmerking.',
+    'comment_delete' => 'Er is een fout opgetreden tijdens het verwijderen van de opmerking.',
+    'empty_comment' => 'Kan geen lege opmerking toevoegen.',
 
     // Error pages
     '404_page_not_found' => 'Pagina Niet Gevonden',
@@ -109,6 +109,7 @@ return [
     'import_zip_cant_read' => 'Kon het Zip-bestand niet lezen.',
     'import_zip_cant_decode_data' => 'Kon de data.json Zip-inhoud niet vinden of decoderen.',
     'import_zip_no_data' => 'Zip-bestand bevat niet de verwachte boek, hoofdstuk of pagina-inhoud.',
+    'import_zip_data_too_large' => 'De inhoud van data.json in de ZIP overschrijdt de ingestelde maximum upload grootte.',
     'import_validation_failed' => 'De validatie van het Zip-bestand is mislukt met de volgende fouten:',
     'import_zip_failed_notification' => 'Importeren van het Zip-bestand is mislukt.',
     'import_perms_books' => 'Je mist de vereiste machtigingen om boeken te maken.',
@@ -124,6 +125,7 @@ return [
     'api_incorrect_token_secret' => 'Het opgegeven geheim voor de API-token is onjuist',
     'api_user_no_api_permission' => 'De eigenaar van de gebruikte API-token heeft geen machtiging om API calls te maken',
     'api_user_token_expired' => 'De gebruikte autorisatie token is verlopen',
+    'api_cookie_auth_only_get' => 'Alleen GET verzoeken zijn toegestaan wanneer de API wordt gebruikt met cookie-gebaseerde authenticatie',
 
     // Settings & Maintenance
     'maintenance_test_email_failure' => 'Fout opgetreden bij het verzenden van een test email:',

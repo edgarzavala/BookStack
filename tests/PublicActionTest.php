@@ -6,7 +6,6 @@ use BookStack\Entities\Models\Book;
 use BookStack\Entities\Models\Chapter;
 use BookStack\Permissions\Models\RolePermission;
 use BookStack\Users\Models\Role;
-use BookStack\Users\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 
@@ -104,7 +103,7 @@ class PublicActionTest extends TestCase
         $resp->assertRedirect($chapter->book->getUrl('/page/my-guest-page/edit'));
 
         $user = $this->users->guest();
-        $this->assertDatabaseHas('pages', [
+        $this->assertDatabaseHasEntityData('page', [
             'name'       => 'My guest page',
             'chapter_id' => $chapter->id,
             'created_by' => $user->id,
@@ -173,7 +172,7 @@ class PublicActionTest extends TestCase
         $newRole = $this->users->attachNewRole($this->users->guest(), []);
         $page = $this->entities->page();
         $this->permissions->disableEntityInheritedPermissions($page);
-        $this->permissions->addEntityPermission($page, ['view', 'update'], $newRole);
+        $this->permissions->setEntityPermissionsForRole($page, ['view', 'update'], $newRole);
 
         $resp = $this->get($page->getUrl());
         $resp->assertOk();

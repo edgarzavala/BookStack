@@ -2,6 +2,7 @@
 
 namespace BookStack\Uploads;
 
+use BookStack\Exceptions\ImageUploadException;
 use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Support\Str;
 
@@ -35,7 +36,17 @@ class ImageStorage
     }
 
     /**
+     * Check if "local secure" (Fetched behind auth, either with or without permissions enforced)
+     * is currently active in the instance.
+     */
+    public function usingSecureImages(): bool
+    {
+        return config('filesystems.images') === 'local_secure' || $this->usingSecureRestrictedImages();
+    }
+
+    /**
      * Clean up an image file name to be both URL and storage safe.
+     * @throws ImageUploadException
      */
     public function cleanImageFileName(string $name): string
     {
@@ -44,6 +55,10 @@ class ImageStorage
         $extension = array_pop($nameParts);
         $name = implode('-', $nameParts);
         $name = Str::slug($name);
+
+        if (!ImageService::isExtensionSupported($extension)) {
+            throw new ImageUploadException('Non supported image extension used when storing image: ' . $extension);
+        }
 
         if (strlen($name) === 0) {
             $name = Str::random(10);
@@ -65,7 +80,7 @@ class ImageStorage
             return 'local';
         }
 
-        // Rename local_secure options to get our image specific storage driver which
+        // Rename local_secure options to get our image-specific storage driver, which
         // is scoped to the relevant image directories.
         if ($localSecureInUse) {
             return 'local_secure_images';

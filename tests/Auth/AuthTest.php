@@ -3,6 +3,7 @@
 namespace Tests\Auth;
 
 use BookStack\Access\Mfa\MfaSession;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -70,10 +71,18 @@ class AuthTest extends TestCase
         config()->set('app.url', 'http://localhost');
         $this->setSettings(['app-public' => true]);
 
-        $this->get('/login', ['referer' => 'https://example.com']);
-        $login = $this->post('/login', ['email' => 'admin@admin.com', 'password' => 'password']);
+        $testCases = [
+            'https://example.com',
+            'http://localhost.example.com',
+            'http://localhost:ab@example.com',
+        ];
 
-        $login->assertRedirect('http://localhost');
+        foreach ($testCases as $testCase) {
+            $this->get('/login', ['Referer' => $testCase]);
+            $login = $this->post('/login', ['email' => 'admin@admin.com', 'password' => 'password']);
+            $login->assertRedirect('http://localhost');
+            auth()->logout();
+        }
     }
 
     public function test_login_intended_redirect_does_not_factor_mfa_routes()
@@ -162,6 +171,44 @@ class AuthTest extends TestCase
         $resp->assertRedirect('/login');
         $resp = $this->followRedirects($resp);
         $resp->assertSee('These credentials do not match our records.');
+    }
+
+    public function test_failed_login_attempt_has_noise_added_and_have_similar_times_between_known_and_unknown_users()
+    {
+        $this->markTestSkipped('Time consuming test');
+
+        $user = $this->users->editor();
+        $user->password = bcrypt('password');
+        $user->save();
+        // Warmup
+        $this->post('/login', ['email' => $user->email, 'password' => 'passwordtesting']);
+
+        // For known user attempts
+        $durations = [];
+        for ($i = 0; $i < 25; $i++) {
+            $knownStart = microtime(true);
+            $this->post('/login', ['email' => $user->email, 'password' => 'passwordtesting']);
+            $durations[] = (microtime(true) - $knownStart) * 1000;
+            Cache::clear(); // Clear the cache to avoid hitting rate limits
+        }
+        $range = max($durations) - min($durations);
+        $this->assertGreaterThan(125, $range);
+        $knownAvg = array_sum($durations) / count($durations);
+
+        // For unknown user attempts
+        $durations = [];
+        for ($i = 0; $i < 25; $i++) {
+            $unknownStart = microtime(true);
+            $this->post('/login', ['email' => 'unknown@example.com', 'password' => 'passwordtesting']);
+            $durations[] = (microtime(true) - $unknownStart) * 1000;
+            Cache::clear(); // Clear the cache to avoid hitting rate limits
+        }
+        $range = max($durations) - min($durations);
+        $this->assertGreaterThan(125, $range);
+        $unknownAvg = array_sum($durations) / count($durations);
+
+        $knownDiff = abs($knownAvg - $unknownAvg);
+        $this->assertLessThan(25, $knownDiff);
     }
 
     /**

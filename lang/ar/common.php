@@ -30,6 +30,8 @@ return [
     'create' => 'إنشاء',
     'update' => 'تحديث',
     'edit' => 'تعديل',
+    'archive' => 'أرشف',
+    'unarchive' => 'إلغاء الأرشفة',
     'sort' => 'سرد',
     'move' => 'نقل',
     'copy' => 'نسخ',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'غير نشط',
     'never' => 'مطلقاً',
     'none' => 'لا شَيْء',
+    'move_left' => 'تحريك لليسار',
+    'move_right' => 'تحريك لليمين',
 
     // Header
     'homepage' => 'الصفحة الرئيسية',

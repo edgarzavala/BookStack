@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Deze inloggegevens zijn niet bij ons bekend.',
     'throttle' => 'Te veel inlogpogingen! Probeer het opnieuw na :seconds seconden.',
+    'mfa_throttle' => 'Te veel pogingen om te verifiëren met meervoudige verificatie. Probeer het opnieuw na :seconds seconden.',
 
     // Login & Register
     'sign_up' => 'Registreer',
@@ -20,6 +21,9 @@ return [
     'username' => 'Gebruikersnaam',
     'email' => 'E-mail',
     'password' => 'Wachtwoord',
+    'password_new' => 'Nieuw Wachtwoord',
+    'password_new_confirm' => 'Bevestig Nieuw Wachtwoord',
+    'password_current' => 'Bevestig Huidig Wachtwoord',
     'password_confirm' => 'Wachtwoord Bevestigen',
     'password_hint' => 'Moet uit minstens 8 tekens bestaan',
     'forgot_password' => 'Wachtwoord vergeten?',

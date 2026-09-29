@@ -30,6 +30,8 @@ return [
     'create' => 'Luo',
     'update' => 'Päivitä',
     'edit' => 'Muokkaa',
+    'archive' => 'Archive',
+    'unarchive' => 'Un-Archive',
     'sort' => 'Järjestä',
     'move' => 'Siirrä',
     'copy' => 'Kopioi',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Ei aktiivinen',
     'never' => 'Ei koskaan',
     'none' => 'Ei mitään',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Kotisivu',

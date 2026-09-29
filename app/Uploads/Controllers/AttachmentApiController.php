@@ -2,9 +2,11 @@
 
 namespace BookStack\Uploads\Controllers;
 
+use BookStack\Entities\EntityExistsRule;
 use BookStack\Entities\Queries\PageQueries;
 use BookStack\Exceptions\FileUploadException;
 use BookStack\Http\ApiController;
+use BookStack\Permissions\Permission;
 use BookStack\Uploads\Attachment;
 use BookStack\Uploads\AttachmentService;
 use Exception;
@@ -22,7 +24,7 @@ class AttachmentApiController extends ApiController
 
     /**
      * Get a listing of attachments visible to the user.
-     * The external property indicates whether the attachment is simple a link.
+     * The external property indicates whether the attachment is simply a link.
      * A false value for the external property would indicate a file upload.
      */
     public function list()
@@ -37,7 +39,7 @@ class AttachmentApiController extends ApiController
      * An uploaded_to value must be provided containing an ID of the page
      * that this upload will be related to.
      *
-     * If you're uploading a file the POST data should be provided via
+     * If you're uploading a file, the POST data should be provided via
      * a multipart/form-data type request instead of JSON.
      *
      * @throws ValidationException
@@ -45,12 +47,12 @@ class AttachmentApiController extends ApiController
      */
     public function create(Request $request)
     {
-        $this->checkPermission('attachment-create-all');
+        $this->checkPermission(Permission::AttachmentCreateAll);
         $requestData = $this->validate($request, $this->rules()['create']);
 
-        $pageId = $request->get('uploaded_to');
+        $pageId = $request->input('uploaded_to');
         $page = $this->pageQueries->findVisibleByIdOrFail($pageId);
-        $this->checkOwnablePermission('page-update', $page);
+        $this->checkOwnablePermission(Permission::PageUpdate, $page);
 
         if ($request->hasFile('file')) {
             $uploadedFile = $request->file('file');
@@ -69,7 +71,7 @@ class AttachmentApiController extends ApiController
     }
 
     /**
-     * Get the details & content of a single attachment of the given ID.
+     * Get the details and content of a single attachment of the given ID.
      * The attachment link or file content is provided via a 'content' property.
      * For files the content will be base64 encoded.
      *
@@ -118,7 +120,7 @@ class AttachmentApiController extends ApiController
 
     /**
      * Update the details of a single attachment.
-     * As per the create endpoint, if a file is being provided as the attachment content
+     * As per the create endpoint, if a file is being provided as the attachment content,
      * the request should be formatted as a multipart/form-data request instead of JSON.
      *
      * @throws ValidationException
@@ -132,14 +134,17 @@ class AttachmentApiController extends ApiController
 
         $page = $attachment->page;
         if ($requestData['uploaded_to'] ?? false) {
-            $pageId = $request->get('uploaded_to');
-            $page = $this->pageQueries->findVisibleByIdOrFail($pageId);
-            $attachment->uploaded_to = $requestData['uploaded_to'];
+            $pageId = intval($requestData['uploaded_to']);
+            if ($pageId !== $page->id) {
+                $this->checkOwnablePermission(Permission::PageUpdate, $page);
+                $page = $this->pageQueries->findVisibleByIdOrFail($pageId);
+                $attachment->uploaded_to = $pageId;
+            }
         }
 
-        $this->checkOwnablePermission('page-view', $page);
-        $this->checkOwnablePermission('page-update', $page);
-        $this->checkOwnablePermission('attachment-update', $attachment);
+        $this->checkOwnablePermission(Permission::PageView, $page);
+        $this->checkOwnablePermission(Permission::PageUpdate, $page);
+        $this->checkOwnablePermission(Permission::AttachmentUpdate, $attachment);
 
         if ($request->hasFile('file')) {
             $uploadedFile = $request->file('file');
@@ -160,7 +165,7 @@ class AttachmentApiController extends ApiController
     {
         /** @var Attachment $attachment */
         $attachment = Attachment::visible()->findOrFail($id);
-        $this->checkOwnablePermission('attachment-delete', $attachment);
+        $this->checkOwnablePermission(Permission::AttachmentDelete, $attachment);
 
         $this->attachmentService->deleteFile($attachment);
 
@@ -172,13 +177,13 @@ class AttachmentApiController extends ApiController
         return [
             'create' => [
                 'name'        => ['required', 'string', 'min:1', 'max:255'],
-                'uploaded_to' => ['required', 'integer', 'exists:pages,id'],
+                'uploaded_to' => ['required', 'integer', new EntityExistsRule('page')],
                 'file'        => array_merge(['required_without:link'], $this->attachmentService->getFileValidationRules()),
                 'link'        => ['required_without:file', 'string', 'min:1', 'max:2000', 'safe_url'],
             ],
             'update' => [
                 'name'        => ['string', 'min:1', 'max:255'],
-                'uploaded_to' => ['integer', 'exists:pages,id'],
+                'uploaded_to' => ['integer', new EntityExistsRule('page')],
                 'file'        => $this->attachmentService->getFileValidationRules(),
                 'link'        => ['string', 'min:1', 'max:2000', 'safe_url'],
             ],

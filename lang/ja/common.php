@@ -30,6 +30,8 @@ return [
     'create' => '作成',
     'update' => '更新',
     'edit' => '編集',
+    'archive' => 'アーカイブ',
+    'unarchive' => 'アーカイブ解除',
     'sort' => '並び順',
     'move' => '移動',
     'copy' => 'コピー',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => '無効',
     'never' => '該当なし',
     'none' => 'なし',
+    'move_left' => '左に移動',
+    'move_right' => '右に移動',
 
     // Header
     'homepage' => 'ホームページ',

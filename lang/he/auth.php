@@ -8,6 +8,7 @@ return [
 
     'failed' => 'פרטי ההתחברות אינם תואמים את הנתונים שלנו.',
     'throttle' => 'נסיונות התחברות מהירים מדי, יש להמתין :seconds שניות ולנסות שנית.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'הרשמה למערכת',
@@ -20,6 +21,9 @@ return [
     'username' => 'שם משתמש',
     'email' => 'אי-מייל',
     'password' => 'סיסמא',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'אימות סיסמא',
     'password_hint' => '‏אורך הסיסמה חייב להיות לפחות 8 תווים',
     'forgot_password' => 'שכחת סיסמא?',
@@ -106,12 +110,13 @@ return [
     'mfa_verify_access' => 'אשר גישה',
     'mfa_verify_access_desc' => 'חשבון המשתמש שלך דורש ממך לאת את הזהות שלך בשכבת הגנה נוספת על מנת לאפשר לך גישה. יש לאשר גישה דרך אחד האמצעים הקיימים על מנת להמשיך.',
     'mfa_verify_no_methods' => 'אין אפשרויות אימות דו-שלבי מוגדרות',
-    'mfa_verify_no_methods_desc' => 'No multi-factor authentication methods could be found for your account. You\'ll need to set up at least one method before you gain access.',
+    'mfa_verify_no_methods_desc' => 'לא נמצאו אפשרויות ווידוא זהות עבור המשתמש שלך.
+נדרש לקנפג לפחות אחד על מנת לקבל גישה.',
     'mfa_verify_use_totp' => 'אמת באמצעות אפליקציה',
     'mfa_verify_use_backup_codes' => 'אמת באמצעות קוד גיבוי',
     'mfa_verify_backup_code' => 'קוד גיבוי',
     'mfa_verify_backup_code_desc' => 'הזן מטה אחד מקודי הגיבוי הנותרים לך:',
     'mfa_verify_backup_code_enter_here' => 'הזן קוד גיבוי כאן',
     'mfa_verify_totp_desc' => 'הזן את הקוד, שהונפק דרך האפליקציה שלך, מטה:',
-    'mfa_setup_login_notification' => 'Multi-factor method configured, Please now login again using the configured method.',
+    'mfa_setup_login_notification' => 'אמצעי זיהוי זהות הוגדרו, אנא התחבר מחדש.',
 ];

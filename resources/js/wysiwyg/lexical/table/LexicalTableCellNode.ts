@@ -334,10 +334,13 @@ export function $convertTableCellNodeElement(
     width = parseFloat(domNode_.style.width);
   }
 
+  let isHeader = nodeName === 'th';
+  if (domNode instanceof HTMLElement && domNode.closest('thead')) {
+    isHeader = true;
+  }
+
   const tableCellNode = $createTableCellNode(
-      nodeName === 'th'
-          ? TableCellHeaderStates.ROW
-          : TableCellHeaderStates.NO_STATUS,
+      isHeader ? TableCellHeaderStates.ROW : TableCellHeaderStates.NO_STATUS,
       domNode_.colSpan,
       width,
   );
@@ -353,8 +356,15 @@ export function $convertTableCellNodeElement(
   const hasUnderlineTextDecoration = textDecoration.includes('underline');
 
   if (domNode instanceof HTMLElement) {
-    tableCellNode.setStyles(extractStyleMapFromElement(domNode));
+    const styleMap = extractStyleMapFromElement(domNode);
+    styleMap.delete('background-color');
+    tableCellNode.setStyles(styleMap);
     tableCellNode.setAlignment(extractAlignmentFromElement(domNode));
+  }
+
+  const background = style.backgroundColor || null;
+  if (background) {
+    tableCellNode.setBackgroundColor(background);
   }
 
   return {

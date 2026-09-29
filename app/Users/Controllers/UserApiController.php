@@ -4,9 +4,9 @@ namespace BookStack\Users\Controllers;
 
 use BookStack\Exceptions\UserUpdateException;
 use BookStack\Http\ApiController;
+use BookStack\Permissions\Permission;
 use BookStack\Users\Models\User;
 use BookStack\Users\UserRepo;
-use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
@@ -26,7 +26,7 @@ class UserApiController extends ApiController
 
         // Checks for all endpoints in this controller
         $this->middleware(function ($request, $next) {
-            $this->checkPermission('users-manage');
+            $this->checkPermission(Permission::UsersManage);
             $this->preventAccessInDemoMode();
 
             return $next($request);
@@ -81,7 +81,7 @@ class UserApiController extends ApiController
         return $this->apiListingResponse($users, [
             'id', 'name', 'slug', 'email', 'external_auth_id',
             'created_at', 'updated_at', 'last_activity_at',
-        ], [Closure::fromCallable([$this, 'listFormatter'])]);
+        ], [$this->listFormatter(...)]);
     }
 
     /**
@@ -109,7 +109,7 @@ class UserApiController extends ApiController
      */
     public function read(string $id)
     {
-        $user = $this->userRepo->getById($id);
+        $user = $this->userRepo->getById(intval($id));
         $this->singleFormatter($user);
 
         return response()->json($user);
@@ -123,9 +123,9 @@ class UserApiController extends ApiController
      */
     public function update(Request $request, string $id)
     {
-        $data = $this->validate($request, $this->rules($id)['update']);
-        $user = $this->userRepo->getById($id);
-        $this->userRepo->update($user, $data, userCan('users-manage'));
+        $data = $this->validate($request, $this->rules(intval($id))['update']);
+        $user = $this->userRepo->getById(intval($id));
+        $this->userRepo->update($user, $data, userCan(Permission::UsersManage));
         $this->singleFormatter($user);
 
         return response()->json($user);
@@ -139,8 +139,8 @@ class UserApiController extends ApiController
      */
     public function delete(Request $request, string $id)
     {
-        $user = $this->userRepo->getById($id);
-        $newOwnerId = $request->get('migrate_ownership_id', null);
+        $user = $this->userRepo->getById(intval($id));
+        $newOwnerId = $request->input('migrate_ownership_id', null);
 
         $this->userRepo->destroy($user, $newOwnerId);
 

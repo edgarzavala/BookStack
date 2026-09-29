@@ -71,6 +71,8 @@ import {TableDOMTable, TableObserver} from './LexicalTableObserver';
 import {$isTableRowNode} from './LexicalTableRowNode';
 import {$isTableSelection} from './LexicalTableSelection';
 import {$computeTableMap, $getNodeTriplet} from './LexicalTableUtils';
+import {$selectOrCreateAdjacent} from "../../utils/nodes";
+import {$selectNodeAtXPixelOffset} from "../../utils/selection";
 
 const LEXICAL_ELEMENT_KEY = '__lexicalTableSelection';
 
@@ -915,9 +917,14 @@ export function getTable(tableElement: HTMLElement): TableDOMTable {
   domRows.length = 0;
 
   while (currentNode != null) {
-    const nodeMame = currentNode.nodeName;
+    const nodeName = currentNode.nodeName;
 
-    if (nodeMame === 'TD' || nodeMame === 'TH') {
+    if (nodeName === 'COLGROUP' || nodeName === 'CAPTION') {
+      currentNode = currentNode.nextSibling;
+      continue;
+    }
+
+    if (nodeName === 'TD' || nodeName === 'TH') {
       const elem = currentNode as HTMLElement;
       const cell = {
         elem,
@@ -1067,6 +1074,7 @@ const selectTableNodeInDirection = (
   x: number,
   y: number,
   direction: Direction,
+  selectionOffset: number = -1
 ): boolean => {
   const isForward = direction === 'forward';
 
@@ -1106,9 +1114,10 @@ const selectTableNodeInDirection = (
         selectTableCellNode(
           tableNode.getCellNodeFromCordsOrThrow(x, y - 1, tableObserver.table),
           false,
+          selectionOffset,
         );
       } else {
-        tableNode.selectPrevious();
+        $selectOrCreateAdjacent(tableNode, false);
       }
 
       return true;
@@ -1118,9 +1127,10 @@ const selectTableNodeInDirection = (
         selectTableCellNode(
           tableNode.getCellNodeFromCordsOrThrow(x, y + 1, tableObserver.table),
           true,
+          selectionOffset,
         );
       } else {
-        tableNode.selectNext();
+        $selectOrCreateAdjacent(tableNode, true);
       }
 
       return true;
@@ -1191,7 +1201,14 @@ function $isSelectionInTable(
   return false;
 }
 
-function selectTableCellNode(tableCell: TableCellNode, fromStart: boolean) {
+function selectTableCellNode(tableCell: TableCellNode, fromStart: boolean, selectionOffsetPixels : number = -1) {
+  if (selectionOffsetPixels !== -1) {
+    const selection = $selectNodeAtXPixelOffset(tableCell, selectionOffsetPixels, fromStart);
+    if (selection) {
+      return;
+    }
+  }
+
   if (fromStart) {
     tableCell.selectStart();
   } else {
@@ -1485,12 +1502,14 @@ function $handleArrowKey(
         tableObserver.setAnchorCellForSelection(cell);
         tableObserver.setFocusCellForSelection(cell, true);
       } else {
+        const selectionOffset = edgeSelectionRect.x - edgeRect.x;
         return selectTableNodeInDirection(
           tableObserver,
           tableNode,
           cords.x,
           cords.y,
           direction,
+          selectionOffset
         );
       }
 

@@ -4,11 +4,13 @@ namespace BookStack\Users\Controllers;
 
 use BookStack\Access\SocialDriverManager;
 use BookStack\Http\Controller;
+use BookStack\Permissions\Permission;
 use BookStack\Permissions\PermissionApplicator;
 use BookStack\Settings\UserNotificationPreferences;
 use BookStack\Settings\UserShortcutMap;
 use BookStack\Uploads\ImageRepo;
 use BookStack\Users\UserRepo;
+use BookStack\View\ViewBlockManager;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
@@ -62,9 +64,9 @@ class UserAccountController extends Controller
             'profile_image'    => array_merge(['nullable'], $this->getImageValidationRules()),
         ]);
 
-        $this->userRepo->update($user, $validated, userCan('users-manage'));
+        $this->userRepo->update($user, $validated, userCan(Permission::UsersManage));
 
-        // Save profile image if in request
+        // Save the profile image if in request
         if ($request->hasFile('profile_image')) {
             $imageUpload = $request->file('profile_image');
             $imageRepo->destroyImage($user->avatar);
@@ -73,7 +75,7 @@ class UserAccountController extends Controller
             $user->save();
         }
 
-        // Delete the profile image if reset option is in request
+        // Delete the profile image if the reset option is in request
         if ($request->has('profile_image_reset')) {
             $imageRepo->destroyImage($user->avatar);
             $user->image_id = 0;
@@ -105,8 +107,8 @@ class UserAccountController extends Controller
      */
     public function updateShortcuts(Request $request)
     {
-        $enabled = $request->get('enabled') === 'true';
-        $providedShortcuts = $request->get('shortcut', []);
+        $enabled = $request->input('enabled') === 'true';
+        $providedShortcuts = $request->input('shortcut', []);
         $shortcuts = new UserShortcutMap($providedShortcuts);
 
         setting()->putForCurrentUser('ui-shortcuts', $shortcuts->toJson());
@@ -122,7 +124,7 @@ class UserAccountController extends Controller
      */
     public function showNotifications(PermissionApplicator $permissions)
     {
-        $this->checkPermission('receive-notifications');
+        $this->checkPermission(Permission::ReceiveNotifications);
 
         $preferences = (new UserNotificationPreferences(user()));
 
@@ -145,7 +147,7 @@ class UserAccountController extends Controller
     public function updateNotifications(Request $request)
     {
         $this->preventAccessInDemoMode();
-        $this->checkPermission('receive-notifications');
+        $this->checkPermission(Permission::ReceiveNotifications);
         $data = $this->validate($request, [
            'preferences' => ['required', 'array'],
            'preferences.*' => ['required', 'string'],
@@ -156,6 +158,37 @@ class UserAccountController extends Controller
         $this->showSuccessNotification(trans('preferences.notifications_update_success'));
 
         return redirect('/my-account/notifications');
+    }
+
+    /**
+     * Show the view for the "Interface Preferences" user account area.
+     */
+    public function showInterface(ViewBlockManager $viewBlockManager)
+    {
+        $this->setPageTitle(trans('preferences.interface'));
+
+        return view('users.account.interface', [
+            'category'       => 'interface',
+            'namedLocations' => $viewBlockManager->getNamedLocations(),
+        ]);
+    }
+
+    /**
+     * Handle the submission of the interface preferences form.
+     */
+    public function updateInterface(Request $request)
+    {
+        $this->preventAccessInDemoMode();
+
+        $user = user();
+        $validated = $this->validate($request, [
+            'language' => ['string', 'max:15', 'alpha_dash'],
+            'display_mode' => ['string', 'max:15', 'alpha_dash'],
+        ]);
+
+        $this->userRepo->update($user, $validated, userCan(Permission::UsersManage));
+
+        return redirect('/my-account/interface');
     }
 
     /**
@@ -187,8 +220,9 @@ class UserAccountController extends Controller
         }
 
         $validated = $this->validate($request, [
-            'password'         => ['required_with:password_confirm', Password::default()],
-            'password-confirm' => ['same:password', 'required_with:password'],
+            'password'         => ['required', Password::default()],
+            'password-confirm' => ['required', 'same:password'],
+            'password-current' => ['required', 'current_password:standard'],
         ]);
 
         $this->userRepo->update(user(), $validated, false);
@@ -217,8 +251,8 @@ class UserAccountController extends Controller
     {
         $this->preventAccessInDemoMode();
 
-        $requestNewOwnerId = intval($request->get('new_owner_id')) ?: null;
-        $newOwnerId = userCan('users-manage') ? $requestNewOwnerId : null;
+        $requestNewOwnerId = intval($request->input('new_owner_id')) ?: null;
+        $newOwnerId = userCan(Permission::UsersManage) ? $requestNewOwnerId : null;
 
         $this->userRepo->destroy(user(), $newOwnerId);
 

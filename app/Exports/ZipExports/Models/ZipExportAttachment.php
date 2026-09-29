@@ -6,7 +6,7 @@ use BookStack\Exports\ZipExports\ZipExportFiles;
 use BookStack\Exports\ZipExports\ZipValidationHelper;
 use BookStack\Uploads\Attachment;
 
-class ZipExportAttachment extends ZipExportModel
+final class ZipExportAttachment extends ZipExportModel
 {
     public ?int $id = null;
     public string $name;
@@ -45,16 +45,16 @@ class ZipExportAttachment extends ZipExportModel
         $rules = [
             'id'    => ['nullable', 'int', $context->uniqueIdRule('attachment')],
             'name'  => ['required', 'string', 'min:1'],
-            'link'  => ['required_without:file', 'nullable', 'string'],
+            'link'  => ['required_without:file', 'nullable', 'string', 'max:2000', 'safe_url'],
             'file'  => ['required_without:link', 'nullable', 'string', $context->fileReferenceRule()],
         ];
 
         return $context->validateData($data, $rules);
     }
 
-    public static function fromArray(array $data): self
+    public static function fromArray(array $data): static
     {
-        $model = new self();
+        $model = new static();
 
         $model->id = $data['id'] ?? null;
         $model->name = $data['name'];

@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Þeesi auðkenning er ekki á skrá.',
     'throttle' => 'Of margar tilraunir til innskráningar. Reyndu aftur eftir :seconds sekúndur.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'Nýskrá',
@@ -20,6 +21,9 @@ return [
     'username' => 'Notandanafn',
     'email' => 'Netfang',
     'password' => 'Lykilorð',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Staðfestu lykilorð',
     'password_hint' => 'Verður að vera minnst 8 stafir',
     'forgot_password' => 'Gleymt lykilorð?',

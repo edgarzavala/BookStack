@@ -1,6 +1,20 @@
-import {$getRoot, $getSelection, LexicalEditor} from "lexical";
+import {
+    $createParagraphNode,
+    $getRoot,
+    $getSelection,
+    $insertNodes,
+    $isBlockElementNode,
+    LexicalEditor,
+} from "lexical";
 import {$generateHtmlFromNodes} from "@lexical/html";
-import {$htmlToBlockNodes} from "./nodes";
+import {
+    $getAllNodesOfType,
+    $getNearestNodeBlockParent,
+    $htmlToBlockNodes,
+    $htmlToNodes,
+    $isSingleSelectableNode
+} from "./nodes";
+import {$isHeadingNode} from "@lexical/rich-text/LexicalHeadingNode";
 
 export function setEditorContentFromHtml(editor: LexicalEditor, html: string) {
     editor.update(() => {
@@ -12,6 +26,12 @@ export function setEditorContentFromHtml(editor: LexicalEditor, html: string) {
 
         const nodes = $htmlToBlockNodes(editor, html);
         root.append(...nodes);
+
+        // Always ensure we at least have a paragraph in the root
+        // as a target for the cursor/focus/actions.
+        if (root.isEmpty()) {
+            root.append($createParagraphNode());
+        }
     });
 }
 
@@ -42,14 +62,34 @@ export function prependHtmlToEditor(editor: LexicalEditor, html: string) {
 export function insertHtmlIntoEditor(editor: LexicalEditor, html: string) {
     editor.update(() => {
         const selection = $getSelection();
-        const nodes = $htmlToBlockNodes(editor, html);
+        const nodes = $htmlToNodes(editor, html);
 
-        const reference = selection?.getNodes()[0];
-        const referencesParents = reference?.getParents() || [];
-        const topLevel = referencesParents[referencesParents.length - 1];
-        if (topLevel && reference) {
-            for (let i = nodes.length - 1; i >= 0; i--) {
-                reference.insertAfter(nodes[i]);
+        let reference = selection?.getNodes()[0];
+        let replacedReference = false;
+        let parentBlock = reference ? $getNearestNodeBlockParent(reference) : null;
+
+        for (let i = nodes.length - 1; i >= 0; i--) {
+            const toInsert = nodes[i];
+            if ($isBlockElementNode(toInsert) && parentBlock) {
+                // Insert at a block level, before or after the referenced block
+                // depending on if the reference has been replaced.
+                if (replacedReference) {
+                    parentBlock.insertBefore(toInsert);
+                } else {
+                    parentBlock.insertAfter(toInsert);
+                }
+            } else if ($isBlockElementNode(toInsert)) {
+                // Otherwise append blocks to the root
+                $getRoot().append(toInsert);
+            } else if (!replacedReference) {
+                // First inline node, replacing existing selection
+                $insertNodes([toInsert]);
+                reference = toInsert;
+                parentBlock = $getNearestNodeBlockParent(reference);
+                replacedReference = true;
+            } else {
+                // For other inline nodes, insert before the reference node
+                reference?.insertBefore(toInsert)
             }
         }
     });
@@ -64,6 +104,29 @@ export function getEditorContentAsHtml(editor: LexicalEditor): Promise<string> {
     });
 }
 
-export function focusEditor(editor: LexicalEditor) {
+export function focusEditor(editor: LexicalEditor): void {
+    editor.update(() => {
+        const root = $getRoot();
+        const selection = $getSelection();
+        const firstChild = root.getFirstChild();
+        if (firstChild && !selection) {
+            firstChild.selectStart();
+        }
+
+        if ($isSingleSelectableNode(selection?.getNodes() || [])) {
+            editor._rootElement?.focus();
+        }
+    });
+    editor.commitUpdates();
     editor.focus(() => {}, {defaultSelection: "rootStart"});
+}
+
+export function focusOnHeader(editor: LexicalEditor, headerIndex: number): void {
+    editor.update(() => {
+        const headers = $getAllNodesOfType($isHeadingNode);
+        const target = headers[headerIndex];
+        if (target) {
+            target.selectEnd();
+        }
+    });
 }

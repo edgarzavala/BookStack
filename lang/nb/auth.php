@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Disse detaljene samsvarer ikke med det vi har på bok.',
     'throttle' => 'For mange forsøk, prøv igjen om :seconds sekunder.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'Registrer deg',
@@ -20,6 +21,9 @@ return [
     'username' => 'Brukernavn',
     'email' => 'E-post',
     'password' => 'Passord',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Bekreft passord',
     'password_hint' => 'Må være minst 8 tegn',
     'forgot_password' => 'Glemt passord?',

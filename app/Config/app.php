@@ -37,10 +37,15 @@ return [
     // The limit for all uploaded files, including images and attachments in MB.
     'upload_limit' => env('FILE_UPLOAD_SIZE_LIMIT', 50),
 
-    // Allow <script> tags to entered within page content.
-    // <script> tags are escaped by default.
-    // Even when overridden the WYSIWYG editor may still escape script content.
-    'allow_content_scripts' => env('ALLOW_CONTENT_SCRIPTS', false),
+    // Control the behaviour of content filtering, primarily used for page content.
+    // This setting is a string of characters which represent different available filters:
+    // - j - Filter out JavaScript and unknown binary data based content
+    // - h - Filter out unexpected, and potentially dangerous, HTML elements
+    // - f - Filter out unexpected form elements
+    // - a - Run content through a more complex allowlist filter
+    // This defaults to using all filters, unless ALLOW_CONTENT_SCRIPTS is set to true in which case no filters are used.
+    // Note: These filters are a best-attempt and may not be 100% effective. They are typically a layer used in addition to other security measures.
+    'content_filtering' => env('APP_CONTENT_FILTERING', env('ALLOW_CONTENT_SCRIPTS', false) === true ? '' : 'jhfa'),
 
     // Allow server-side fetches to be performed to potentially unknown
     // and user-provided locations. Primarily used in exports when loading
@@ -48,8 +53,8 @@ return [
     'allow_untrusted_server_fetching' => env('ALLOW_UNTRUSTED_SERVER_FETCHING', false),
 
     // Override the default behaviour for allowing crawlers to crawl the instance.
-    // May be ignored if view has be overridden or modified.
-    // Defaults to null since, if not set, 'app-public' status used instead.
+    // May be ignored if the underlying view has been overridden or modified.
+    // Defaults to null in which case the 'app-public' status is used instead.
     'allow_robots' => env('ALLOW_ROBOTS', null),
 
     // Application Base URL, Used by laravel in development commands
@@ -67,11 +72,22 @@ return [
     // Current host and source for the "DRAWIO" setting will be auto-appended to the sources configured.
     'iframe_sources' => env('ALLOWED_IFRAME_SOURCES', 'https://*.draw.io https://*.youtube.com https://*.youtube-nocookie.com https://*.vimeo.com'),
 
+    // A list of style sources/hostnames that can be loaded styles within BookStack.
+    // Space separated if multiple. BookStack host domain is auto-inferred.
+    // If not set, a permissive default set is used to reduce potential breakage.
+    'style_sources' => env('ALLOWED_STYLE_SOURCES', null),
+
+    // A list of sources/hostnames that can be loaded as image content within BookStack.
+    // Space separated if multiple. BookStack host domain is auto-inferred, in addition to
+    // data and blob images, due to their use for various functionality.
+    // If not set, a permissive default set is used to reduce potential breakage.
+    'image_sources' => env('ALLOWED_IMAGE_SOURCES', null),
+
     // A list of the sources/hostnames that can be reached by application SSR calls.
     // This is used wherever users can provide URLs/hosts in-platform, like for webhooks.
     // Host-specific functionality (usually controlled via other options) like auth
-    // or user avatars for example, won't use this list.
-    // Space seperated if multiple. Can use '*' as a wildcard.
+    // or user avatars, for example, won't use this list.
+    // Space separated if multiple. Can use '*' as a wildcard.
     // Values will be compared prefix-matched, case-insensitive, against called SSR urls.
     // Defaults to allow all hosts.
     'ssr_hosts' => env('ALLOWED_SSR_HOSTS', '*'),
@@ -80,8 +96,10 @@ return [
     // Integer value between 0 (IP hidden) to 4 (Full IP usage)
     'ip_address_precision' => env('IP_ADDRESS_PRECISION', 4),
 
-    // Application timezone for back-end date functions.
+    // Application timezone for stored date/time values.
     'timezone' => env('APP_TIMEZONE', 'UTC'),
+    // Application timezone for displayed date/time values in the UI.
+    'display_timezone' => env('APP_DISPLAY_TIMEZONE', env('APP_TIMEZONE', 'UTC')),
 
     // Default locale to use
     // A default variant is also stored since Laravel can overwrite
@@ -102,7 +120,7 @@ return [
     'auto_detect_locale' => env('APP_AUTO_LANG_PUBLIC', true),
 
     // Encryption key
-    'key' => env('APP_KEY', 'AbAZchsay4uBTU33RubBzLKw203yqSqr'),
+    'key' => env('APP_KEY'),
 
     // Encryption cipher
     'cipher' => 'AES-256-CBC',

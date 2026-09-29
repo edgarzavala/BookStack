@@ -8,18 +8,22 @@ return [
 
     'failed' => 'Ces informations ne correspondent à aucun compte.',
     'throttle' => 'Trop d\'essais, veuillez réessayer dans :seconds secondes.',
+    'mfa_throttle' => 'Trop de tentatives de vérification multifactorielle. Veuillez réessayer dans :secondes secondes.',
 
     // Login & Register
     'sign_up' => 'S\'inscrire',
     'log_in' => 'Se connecter',
-    'log_in_with' => 'Se connecter avec :socialDriver',
+    'log_in_with' => 'Connexion avec :socialDriver',
     'sign_up_with' => 'S\'inscrire avec :socialDriver',
-    'logout' => 'Se déconnecter',
+    'logout' => 'Déconnexion',
 
     'name' => 'Nom',
     'username' => 'Nom d\'utilisateur',
     'email' => 'E-mail',
     'password' => 'Mot de passe',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Confirmez le mot de passe',
     'password_hint' => 'Doit être d\'au moins 8 caractères',
     'forgot_password' => 'Mot de passe oublié ?',

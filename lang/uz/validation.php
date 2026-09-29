@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute qiymati faqat harflar va raqamlardan iborat bo‘lishi kerak.',
     'array'                => ':attribute qiymati massiv bo‘lishi kerak.',
     'backup_codes'         => 'Kiritilgan kod to‘g‘ri emas yoki ishlatib bo‘lingan.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute qiymati :date sanadan oldingi sana bo‘lishi kerak.',
     'between'              => [
         'numeric' => ':attribute qiymati :min va :max orasida bo‘lishi kerak.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute qiymati faqat «true» yoki «false» bo`lishi kerak.',
     'confirmed'            => ':attribute tasdiqlash qiymati mos emas.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute qiymati sana emas.',
     'date_format'          => ':attribute qiymati :format formatdagi sana emas.',
     'different'            => ':attribute va :other qiymatlari har xil bo‘lishi kerak.',
@@ -105,10 +107,11 @@ return [
     'url'                  => ':attribute URL formatida emas.',
     'uploaded'             => 'Faylni yuklashda xatolik. Server bunday hajmdagi faylllarni yuklamasligi mumkin.',
 
-    'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
-    'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
-    'zip_model_expected' => 'Data object expected but ":type" found.',
-    'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',
+    'zip_file' => ':attribute ZIP ichidagi faylga havola qilishi kerak.',
+    'zip_file_size' => ':attribute fayli :size MB dan oshmasligi kerak.',
+    'zip_file_mime' => ':attribute :validTypes turidagi faylga havola qilishi kerak, lekin :foundType turida keldi.',
+    'zip_model_expected' => 'Ma\'lumotlar obyekti kutilmoqda, ammo ":type" topildi.',
+    'zip_unique' => ':attribute ZIP ichidagi obyekt turi uchun noyob bo\'lishi kerak.',
 
     // Custom validation lines
     'custom' => [

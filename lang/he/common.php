@@ -30,6 +30,8 @@ return [
     'create' => 'צור',
     'update' => 'עדכן',
     'edit' => 'ערוך',
+    'archive' => 'הכנס לארכיון',
+    'unarchive' => 'הוצא מארכיון',
     'sort' => 'מיין',
     'move' => 'הזז',
     'copy' => 'העתק',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'לא פעיל',
     'never' => 'אף פעם',
     'none' => 'ללא',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'דף הבית',

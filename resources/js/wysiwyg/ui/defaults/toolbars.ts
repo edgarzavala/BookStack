@@ -28,7 +28,7 @@ import {
     pasteRowBefore, resizeTableToContents,
     rowProperties,
     splitCell,
-    table, tableProperties
+    table, tableProperties, toggleRowHeaders
 } from "./buttons/tables";
 import {about, fullscreen, redo, source, undo} from "./buttons/controls";
 import {
@@ -79,6 +79,7 @@ import {
 import {el} from "../../utils/dom";
 import {EditorButtonWithMenu} from "../framework/blocks/button-with-menu";
 import {EditorSeparator} from "../framework/blocks/separator";
+import {EditorContextToolbarDefinition} from "../framework/toolbars";
 
 export function getMainEditorFullToolbar(context: EditorUiContext): EditorContainerUiElement {
 
@@ -87,7 +88,7 @@ export function getMainEditorFullToolbar(context: EditorUiContext): EditorContai
     return new EditorSimpleClassContainer('editor-toolbar-main', [
 
         // History state
-        new EditorOverflowContainer(2, [
+        new EditorOverflowContainer('history', 2, [
             new EditorButton(undo),
             new EditorButton(redo),
         ]),
@@ -109,7 +110,7 @@ export function getMainEditorFullToolbar(context: EditorUiContext): EditorContai
         ]),
 
         // Inline formats
-        new EditorOverflowContainer(6, [
+        new EditorOverflowContainer('inline_formats', 6, [
             new EditorButton(bold),
             new EditorButton(italic),
             new EditorButton(underline),
@@ -127,7 +128,7 @@ export function getMainEditorFullToolbar(context: EditorUiContext): EditorContai
         ]),
 
         // Alignment
-        new EditorOverflowContainer(6, [
+        new EditorOverflowContainer('alignment', 6, [
             new EditorButton(alignLeft),
             new EditorButton(alignCenter),
             new EditorButton(alignRight),
@@ -137,7 +138,7 @@ export function getMainEditorFullToolbar(context: EditorUiContext): EditorContai
         ].filter(x => x !== null)),
 
         // Lists
-        new EditorOverflowContainer(3, [
+        new EditorOverflowContainer('lists', 3, [
             new EditorButton(bulletList),
             new EditorButton(numberList),
             new EditorButton(taskList),
@@ -146,7 +147,7 @@ export function getMainEditorFullToolbar(context: EditorUiContext): EditorContai
         ]),
 
         // Insert types
-        new EditorOverflowContainer(4, [
+        new EditorOverflowContainer('inserts', 4, [
             new EditorButton(link),
 
             new EditorDropdownButton({button: table, direction: 'vertical', showAside: false}, [
@@ -199,7 +200,7 @@ export function getMainEditorFullToolbar(context: EditorUiContext): EditorContai
         ]),
 
         // Meta elements
-        new EditorOverflowContainer(3, [
+        new EditorOverflowContainer('meta', 3, [
             new EditorButton(source),
             new EditorButton(about),
             new EditorButton(fullscreen),
@@ -220,46 +221,90 @@ export function getMainEditorFullToolbar(context: EditorUiContext): EditorContai
     ]);
 }
 
-export function getImageToolbarContent(): EditorUiElement[] {
-    return [new EditorButton(image)];
+export function getBasicEditorToolbar(context: EditorUiContext): EditorContainerUiElement {
+    return new EditorSimpleClassContainer('editor-toolbar-main', [
+        new EditorOverflowContainer('formats', 7, [
+            new EditorButton(bold),
+            new EditorButton(italic),
+            new EditorButton(link),
+            new EditorButton(code),
+            new EditorButton(bulletList),
+            new EditorButton(numberList),
+        ])
+    ]);
 }
 
-export function getLinkToolbarContent(): EditorUiElement[] {
-    return [
-        new EditorButton(link),
-        new EditorButton(unlink),
-    ];
-}
-
-export function getCodeToolbarContent(): EditorUiElement[] {
-    return [
-        new EditorButton(editCodeBlock),
-    ];
-}
-
-export function getTableToolbarContent(): EditorUiElement[] {
-    return [
-        new EditorOverflowContainer(2, [
-            new EditorButton(tableProperties),
-            new EditorButton(deleteTable),
-        ]),
-        new EditorOverflowContainer(3, [
-            new EditorButton(insertRowAbove),
-            new EditorButton(insertRowBelow),
-            new EditorButton(deleteRow),
-        ]),
-        new EditorOverflowContainer(3, [
-            new EditorButton(insertColumnBefore),
-            new EditorButton(insertColumnAfter),
-            new EditorButton(deleteColumn),
-        ]),
-    ];
-}
-
-export function getDetailsToolbarContent(): EditorUiElement[] {
-    return [
-        new EditorButton(detailsEditLabel),
-        new EditorButton(detailsToggle),
-        new EditorButton(detailsUnwrap),
-    ];
-}
+export const contextToolbars: Record<string, EditorContextToolbarDefinition> = {
+    image: {
+        selector: 'img:not([drawio-diagram] img)',
+        content: () => [new EditorButton(image)],
+    },
+    media: {
+        selector: '.editor-media-wrap',
+        content: () => [new EditorButton(media)],
+    },
+    link: {
+        selector: 'a:not([data-mention-user-id])',
+        content() {
+            return [
+                new EditorButton(link),
+                new EditorButton(unlink),
+            ]
+        },
+        displayTargetLocator(originalTarget: HTMLElement): HTMLElement {
+            const image = originalTarget.querySelector('img');
+            return image || originalTarget;
+        }
+    },
+    code: {
+        selector: '.editor-code-block-wrap',
+        content: () => [new EditorButton(editCodeBlock)],
+    },
+    table: {
+        selector: 'td,th',
+        content() {
+            return [
+                new EditorOverflowContainer('table', 2, [
+                    new EditorButton(tableProperties),
+                    new EditorButton(deleteTable),
+                ]),
+                new EditorOverflowContainer('table_row',3, [
+                    new EditorButton(insertRowAbove),
+                    new EditorButton(insertRowBelow),
+                    new EditorButton(deleteRow),
+                ]),
+                new EditorOverflowContainer('table_column', 3, [
+                    new EditorButton(insertColumnBefore),
+                    new EditorButton(insertColumnAfter),
+                    new EditorButton(deleteColumn),
+                ]),
+            ];
+        },
+        displayTargetLocator(originalTarget: HTMLElement): HTMLElement {
+            return originalTarget.closest('table') as HTMLTableElement;
+        }
+    },
+    table_header: {
+        selector: 'table tr:first-of-type td, table tr:first-of-type th',
+        content() {
+            return [
+                new EditorOverflowContainer('table_headers', 1, [
+                    new EditorButton(toggleRowHeaders),
+                ]),
+            ];
+        },
+        displayTargetLocator(originalTarget: HTMLElement): HTMLElement {
+            return originalTarget.closest('table') as HTMLTableElement;
+        }
+    },
+    details: {
+        selector: 'details',
+        content() {
+            return [
+                new EditorButton(detailsEditLabel),
+                new EditorButton(detailsToggle),
+                new EditorButton(detailsUnwrap),
+            ]
+        },
+    },
+};

@@ -29,6 +29,21 @@ class SettingService
     }
 
     /**
+     * Get a setting from the database as an integer.
+     * Returns the default value if not found or not an integer, and clamps the value to the given min/max range.
+     */
+    public function getInteger(string $key, int $default, int $min = 0, int $max = PHP_INT_MAX): int
+    {
+        $value = $this->get($key, $default);
+        if (!is_numeric($value)) {
+            return $default;
+        }
+
+        $int = intval($value);
+        return max($min, min($max, $int));
+    }
+
+    /**
      * Get a value from the session instead of the main store option.
      */
     protected function getFromSession(string $key, $default = false)
@@ -228,9 +243,9 @@ class SettingService
     /**
      * Convert a setting key into a user-specific key.
      */
-    protected function userKey(string $userId, string $key = ''): string
+    protected function userKey(int $userId, string $key = ''): string
     {
-        return 'user:' . $userId . ':' . $key;
+        return 'user:' . strval($userId) . ':' . $key;
     }
 
     /**
@@ -250,9 +265,17 @@ class SettingService
     }
 
     /**
+     * Remove a user-specific setting from the database, for the current access user.
+     */
+    public function removeForCurrentUser(string $key): void
+    {
+        $this->remove($this->userKey(user()->id, $key));
+    }
+
+    /**
      * Delete settings for a given user id.
      */
-    public function deleteUserSettings(string $userId): void
+    public function deleteUserSettings(int $userId): void
     {
         Setting::query()
             ->where('setting_key', 'like', $this->userKey($userId) . '%')

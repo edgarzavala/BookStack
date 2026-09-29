@@ -17,6 +17,7 @@ use BookStack\Sorting as SortingControllers;
 use BookStack\Theming\ThemeController;
 use BookStack\Uploads\Controllers as UploadControllers;
 use BookStack\Users\Controllers as UserControllers;
+use BookStack\View\LayoutController;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
@@ -39,6 +40,7 @@ Route::middleware('auth')->group(function () {
     // API docs routes
     Route::get('/api', [ApiDocsController::class, 'redirect']);
     Route::get('/api/docs', [ApiDocsController::class, 'display']);
+    Route::get('/api/docs/download', [ApiDocsController::class, 'download']);
 
     Route::get('/pages/recently-updated', [EntityControllers\PageController::class, 'showRecentlyUpdated']);
 
@@ -198,6 +200,7 @@ Route::middleware('auth')->group(function () {
 
     // User Search
     Route::get('/search/users/select', [UserControllers\UserSearchController::class, 'forSelect']);
+    Route::get('/search/users/mention', [UserControllers\UserSearchController::class, 'forMentions']);
 
     // Template System
     Route::get('/templates', [EntityControllers\PageTemplateController::class, 'list']);
@@ -250,6 +253,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings/users/{id}', [UserControllers\UserController::class, 'edit']);
     Route::put('/settings/users/{id}', [UserControllers\UserController::class, 'update']);
     Route::delete('/settings/users/{id}', [UserControllers\UserController::class, 'destroy']);
+    Route::delete('/settings/users/{id}/mfa', [UserControllers\UserController::class, 'resetMfa']);
 
     // User Account
     Route::get('/my-account', [UserControllers\UserAccountController::class, 'redirect']);
@@ -259,6 +263,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/my-account/shortcuts', [UserControllers\UserAccountController::class, 'updateShortcuts']);
     Route::get('/my-account/notifications', [UserControllers\UserAccountController::class, 'showNotifications']);
     Route::put('/my-account/notifications', [UserControllers\UserAccountController::class, 'updateNotifications']);
+    Route::get('/my-account/interface', [UserControllers\UserAccountController::class, 'showInterface']);
+    Route::put('/my-account/interface', [UserControllers\UserAccountController::class, 'updateInterface']);
     Route::get('/my-account/auth', [UserControllers\UserAccountController::class, 'showAuth']);
     Route::put('/my-account/auth/password', [UserControllers\UserAccountController::class, 'updatePassword']);
     Route::get('/my-account/delete', [UserControllers\UserAccountController::class, 'delete']);
@@ -270,6 +276,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/preferences/change-expansion/{type}', [UserControllers\UserPreferencesController::class, 'changeExpansion']);
     Route::patch('/preferences/toggle-dark-mode', [UserControllers\UserPreferencesController::class, 'toggleDarkMode']);
     Route::patch('/preferences/update-code-language-favourite', [UserControllers\UserPreferencesController::class, 'updateCodeLanguageFavourite']);
+
+    // Layout endpoints
+    Route::get('/layouts/{location}', [LayoutController::class, 'edit']);
+    Route::put('/layouts/{location}', [LayoutController::class, 'update']);
+    Route::put('/layouts/{location}/reset', [LayoutController::class, 'reset']);
 
     // User API Tokens
     Route::get('/api-tokens/{userId}/create', [UserApiTokenController::class, 'create']);

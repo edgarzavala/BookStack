@@ -30,6 +30,8 @@ return [
     'create' => 'Búa til',
     'update' => 'Uppfæra',
     'edit' => 'Breyta',
+    'archive' => 'Archive',
+    'unarchive' => 'Un-Archive',
     'sort' => 'Flokka',
     'move' => 'Færa',
     'copy' => 'Afrita',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Óvirkt',
     'never' => 'Aldrei',
     'none' => 'Engin',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Forsíða',

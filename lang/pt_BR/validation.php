@@ -16,6 +16,7 @@ return [
     'alpha_num'            => 'O campo :attribute deve conter apenas letras e números.',
     'array'                => 'O campo :attribute deve ser uma array.',
     'backup_codes'         => 'O código fornecido não é válido ou já foi usado.',
+    'base64_uri_mime'      => 'O :attribute deve ser um URI base64 válido contendo dados de tipo :mime mime type .',
     'before'               => 'O campo :attribute deve ser uma data anterior à data :date.',
     'between'              => [
         'numeric' => 'O campo :attribute deve estar entre :min e :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => 'O campo :attribute deve ser verdadeiro ou falso.',
     'confirmed'            => 'O campo :attribute não é igual à sua confirmação.',
+    'current_password'     => 'Isso não corresponde à sua senha atual.',
     'date'                 => 'O campo :attribute não está em um formato de data válido.',
     'date_format'          => 'O campo :attribute não tem a formatação :format.',
     'different'            => 'O campo :attribute e o campo :other devem ser diferentes.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'O arquivo não pôde ser carregado. O servidor pode não aceitar arquivos deste tamanho.',
 
     'zip_file' => 'O :attribute precisa fazer referência a um arquivo do ZIP.',
+    'zip_file_size' => 'O arquivo :attribute não deve exceder :size MB.',
     'zip_file_mime' => 'O :attribute precisa fazer referência a um arquivo do tipo :validTypes, encontrado :foundType.',
     'zip_model_expected' => 'Objeto de dados esperado, mas ":type" encontrado.',
     'zip_unique' => 'O :attribute deve ser único para o tipo de objeto dentro do ZIP.',

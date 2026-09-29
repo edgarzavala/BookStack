@@ -4,6 +4,7 @@ namespace Tests\Search;
 
 use BookStack\Activity\Models\Tag;
 use BookStack\Entities\Models\Book;
+use BookStack\Entities\Models\Page;
 use Tests\TestCase;
 
 class EntitySearchTest extends TestCase
@@ -25,6 +26,20 @@ class EntitySearchTest extends TestCase
         $search = $this->asEditor()->get('/search?term=' . urlencode($shelf->name) . '  {type:bookshelf}');
         $search->assertSee('Search Results');
         $search->assertSeeText($shelf->name, true);
+    }
+
+    public function test_search_shows_pagination()
+    {
+        $search = $this->asEditor()->get('/search?term=a');
+        $this->withHtml($search)->assertLinkExists(url('/search?term=a&page=2'), '2');
+    }
+
+    public function test_pagination_considers_sub_path_url_handling()
+    {
+        $this->runWithEnv(['APP_URL' => 'https://example.com/subpath'], function () {
+            $search = $this->asEditor()->get('https://example.com/search?term=a');
+            $this->withHtml($search)->assertLinkExists('https://example.com/subpath/search?term=a&page=2', '2');
+        });
     }
 
     public function test_invalid_page_search()
@@ -122,17 +137,21 @@ class EntitySearchTest extends TestCase
         $page->tags()->saveMany([new Tag(['name' => 'DonkCount', 'value' => '500'])]);
         $page->created_by = $this->users->admin()->id;
         $page->save();
+        $otherPage = $this->entities->newPage(['name' => 'A different page in negation tests', 'html' => '<p>A different page in negation tests</p>']);
 
         $editor = $this->users->editor();
         $this->actingAs($editor);
 
         $exactSearch = $this->get('/search?term=' . urlencode('negation -"tortoise"'));
         $exactSearch->assertStatus(200)->assertDontSeeText($page->name);
+        $exactSearch->assertSeeText($otherPage->name);
 
         $tagSearchA = $this->get('/search?term=' . urlencode('negation [DonkCount=500]'));
         $tagSearchA->assertStatus(200)->assertSeeText($page->name);
+        $tagSearchA->assertDontSeeText($otherPage->name);
         $tagSearchB = $this->get('/search?term=' . urlencode('negation -[DonkCount=500]'));
         $tagSearchB->assertStatus(200)->assertDontSeeText($page->name);
+        $tagSearchB->assertSeeText($otherPage->name);
 
         $filterSearchA = $this->get('/search?term=' . urlencode('negation -{created_by:me}'));
         $filterSearchA->assertStatus(200)->assertSeeText($page->name);
@@ -213,6 +232,18 @@ class EntitySearchTest extends TestCase
         $page->save();
         $this->get('/search?term=' . urlencode('danzorbhsing {created_after:2037-01-01}'))->assertSee($page->name);
         $this->get('/search?term=' . urlencode('danzorbhsing {created_before:2037-01-01}'))->assertDontSee($page->name);
+    }
+
+    public function test_search_tags_with_unexpected_numeric_values_does_not_cause_error()
+    {
+        $pageA = $this->entities->page();
+        $pageA->name = 'MyTestPageWithAwkwardNumericTagValue';
+        $pageA->save();
+        $pageA->tags()->save(new Tag(['name' => 'Count', 'value' => '1E999']));
+
+        $resp = $this->asEditor()->get('/search?term=' . urlencode('[Count=1E999]'));
+        $resp->assertStatus(200);
+        $resp->assertSee('MyTestPageWithAwkwardNumericTagValue');
     }
 
     public function test_entity_selector_search()
@@ -372,6 +403,21 @@ class EntitySearchTest extends TestCase
         $search->assertSee('<strong>На</strong> <strong>мен</strong> <strong>ми</strong> <strong>трябва</strong> <strong>нещо</strong> <strong>добро</strong> test', false);
     }
 
+    public function test_match_highlighting_is_efficient_with_large_frequency_in_content()
+    {
+        $content = str_repeat('superbeans ', 10000);
+        $this->entities->newPage([
+            'name' => 'Test Page',
+            'html' => "<p>{$content}</p>",
+        ]);
+
+        $time = microtime(true);
+        $resp = $this->asEditor()->get('/search?term=' . urlencode('superbeans'));
+        $this->assertLessThan(0.5, microtime(true) - $time);
+
+        $resp->assertSee('<strong>superbeans</strong>', false);
+    }
+
     public function test_html_entities_in_item_details_remains_escaped_in_search_results()
     {
         $this->entities->newPage(['name' => 'My <cool> TestPageContent', 'html' => '<p>My supercool &lt;great&gt; TestPageContent page</p>']);
@@ -452,5 +498,17 @@ class EntitySearchTest extends TestCase
         $resp = $this->asEditor()->get('/search/suggest?term=spaghettisaurusrex');
         $this->withHtml($resp)->assertElementCount('a', 0);
         $resp->assertSee('No items available');
+    }
+
+    public function test_draft_pages_not_visible_to_others_in_results()
+    {
+        $editor = $this->users->editor();
+        $creator = $this->users->newUser();
+        $creator->roles()->sync([$editor->roles()->first()->id]);
+        $this->actingAs($creator);
+        $page = $this->entities->newDraftPage(['name' => 'Editors draft page', 'html' => '<p>My supercool draft page</p>']);
+
+        $resp = $this->actingAs($editor)->get('/search?term=' . urlencode("{type:page} {created_by:{$creator->slug}}"));
+        $resp->assertDontSee('Editors draft page');
     }
 }

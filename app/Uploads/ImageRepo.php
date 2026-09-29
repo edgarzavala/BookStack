@@ -27,6 +27,13 @@ class ImageRepo
         return Image::query()->findOrFail($id);
     }
 
+    public function getVisiblePageImageById($id): Image
+    {
+        return Image::query()
+            ->scopes('visible')
+            ->findOrFail($id);
+    }
+
     /**
      * Execute a paginated query, returning in a standard format.
      * Also runs the query through the restriction system.
@@ -91,7 +98,7 @@ class ImageRepo
             $parentFilter = function (Builder $query) use ($filterType, $contextPage) {
                 if ($filterType === 'page') {
                     $query->where('uploaded_to', '=', $contextPage->id);
-                } else if ($filterType === 'book') {
+                } else {
                     $validPageIds = $contextPage->book->pages()
                         ->scopes('visible')
                         ->pluck('id')

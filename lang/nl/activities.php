@@ -99,6 +99,8 @@ return [
     'user_update_notification' => 'Gebruiker succesvol bijgewerkt',
     'user_delete' => 'verwijderde gebruiker',
     'user_delete_notification' => 'Gebruiker succesvol verwijderd',
+    'user_mfa_reset' => 'herstel meervoudige verificatie voor gebruiker',
+    'user_mfa_reset_notification' => 'Meervoudige verificatie methodes hersteld',
 
     // API Tokens
     'api_token_create' => 'API-token aangemaakt',
@@ -122,7 +124,7 @@ return [
     'recycle_bin_destroy' => 'verwijderde van prullenbak',
 
     // Comments
-    'commented_on'                => 'reageerde op',
+    'commented_on'                => 'plaatste opmerking in',
     'comment_create'              => 'voegde opmerking toe',
     'comment_update'              => 'paste opmerking aan',
     'comment_delete'              => 'verwijderde opmerking',

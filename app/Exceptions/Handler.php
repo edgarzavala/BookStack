@@ -2,7 +2,6 @@
 
 namespace BookStack\Exceptions;
 
-use Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
@@ -12,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\ErrorHandler\Error\FatalError;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
@@ -20,11 +20,12 @@ class Handler extends ExceptionHandler
     /**
      * A list of the exception types that are not reported.
      *
-     * @var array<int, class-string<\Throwable>>
+     * @var array<int, class-string<Throwable>>
      */
     protected $dontReport = [
         NotFoundException::class,
         StoppedAuthenticationException::class,
+        NotifyException::class,
     ];
 
     /**
@@ -50,11 +51,11 @@ class Handler extends ExceptionHandler
     /**
      * Report or log an exception.
      *
-     * @param \Throwable $exception
-     *
-     * @throws \Throwable
+     * @param Throwable $exception
      *
      * @return void
+     *@throws Throwable
+     *
      */
     public function report(Throwable $exception)
     {
@@ -64,12 +65,9 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param Exception                $e
-     *
-     * @return \Illuminate\Http\Response
+     * @param Request $request
      */
-    public function render($request, Throwable $e)
+    public function render($request, Throwable $e): SymfonyResponse
     {
         if ($e instanceof FatalError && str_contains($e->getMessage(), 'bytes exhausted (tried to allocate') && $this->onOutOfMemory) {
             $response = call_user_func($this->onOutOfMemory);
@@ -94,7 +92,7 @@ class Handler extends ExceptionHandler
      * If the callable returns a response, this response will be returned
      * to the request upon error.
      */
-    public function prepareForOutOfMemory(callable $onOutOfMemory)
+    public function prepareForOutOfMemory(callable $onOutOfMemory): void
     {
         $this->onOutOfMemory = $onOutOfMemory;
     }
@@ -102,7 +100,7 @@ class Handler extends ExceptionHandler
     /**
      * Forget the current out of memory handler, if existing.
      */
-    public function forgetOutOfMemoryHandler()
+    public function forgetOutOfMemoryHandler(): void
     {
         $this->onOutOfMemory = null;
     }
@@ -128,15 +126,24 @@ class Handler extends ExceptionHandler
             $headers = $e->getHeaders();
         }
 
+        $responseData = [
+            'error' => [
+                'message' => 'An error occurred',
+            ],
+        ];
+
         if ($e instanceof ModelNotFoundException) {
+            $responseData['error']['message'] = 'The requested resource could not be found.';
             $code = 404;
         }
 
-        $responseData = [
-            'error' => [
-                'message' => $e->getMessage(),
-            ],
-        ];
+        if ($e instanceof ShowsApiExceptionMessage) {
+            $responseData['error']['message'] = $e->getMessageForApi();
+        }
+
+        if (app()->hasDebugModeEnabled()) {
+            $responseData['error']['message'] = $e->getMessage();
+        }
 
         if ($e instanceof ValidationException) {
             $responseData['error']['message'] = 'The given data was invalid.';
@@ -152,30 +159,14 @@ class Handler extends ExceptionHandler
     /**
      * Convert an authentication exception into an unauthenticated response.
      *
-     * @param \Illuminate\Http\Request                 $request
-     * @param \Illuminate\Auth\AuthenticationException $exception
-     *
-     * @return \Illuminate\Http\Response
+     * @param Request $request
      */
-    protected function unauthenticated($request, AuthenticationException $exception)
+    protected function unauthenticated($request, AuthenticationException $exception): SymfonyResponse
     {
         if ($request->expectsJson()) {
             return response()->json(['error' => 'Unauthenticated.'], 401);
         }
 
         return redirect()->guest('login');
-    }
-
-    /**
-     * Convert a validation exception into a JSON response.
-     *
-     * @param \Illuminate\Http\Request                   $request
-     * @param \Illuminate\Validation\ValidationException $exception
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function invalidJson($request, ValidationException $exception)
-    {
-        return response()->json($exception->errors(), $exception->status);
     }
 }

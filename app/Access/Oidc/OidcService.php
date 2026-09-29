@@ -49,6 +49,11 @@ class OidcService
         $url = $provider->getAuthorizationUrl();
         session()->put('oidc_pkce_code', $provider->getPkceCode() ?? '');
 
+        $returnUrl = Theme::dispatch(ThemeEvents::OIDC_AUTH_PRE_REDIRECT, $url);
+        if (is_string($returnUrl)) {
+            $url = $returnUrl;
+        }
+
         return [
             'url'   => $url,
             'state' => $provider->getState(),
@@ -75,6 +80,7 @@ class OidcService
         $provider->setPkceCode($pkceCode);
 
         // Try to exchange authorization code for access token
+        /** @var OidcAccessToken $accessToken */
         $accessToken = $provider->getAccessToken('authorization_code', [
             'code' => $authorizationCode,
         ]);

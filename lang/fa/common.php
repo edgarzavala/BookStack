@@ -30,6 +30,8 @@ return [
     'create' => 'ایجاد',
     'update' => 'به‌روز رسانی',
     'edit' => 'ويرايش',
+    'archive' => 'انتقال به بایگانی',
+    'unarchive' => 'فعّال‌سازی دوباره (خروج از بایگانی)',
     'sort' => 'مرتب سازی',
     'move' => 'جابجایی',
     'copy' => 'کپی',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'غیر فعال',
     'never' => 'هرگز',
     'none' => 'هیچکدام',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'صفحه اصلی',
@@ -109,5 +113,5 @@ return [
     'terms_of_service' => 'شرایط خدمات',
 
     // OpenSearch
-    'opensearch_description' => 'Search :appName',
+    'opensearch_description' => 'جست‌وجو در :appName',
 ];

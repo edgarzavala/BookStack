@@ -20,7 +20,7 @@ return [
     'description' => 'Leírás',
     'role' => 'Szerepkör',
     'cover_image' => 'Borítókép',
-    'cover_image_description' => 'Ennek a képnek körülbelül 440 x 250 képpont méretűnek kell lennie, bár rugalmasan méretezhető és levágható, hogy a felhasználói felülethez illeszkedjen a különböző lehetőségek esetén, így a megjelenítés tényleges méretei eltérőek lesznek.',
+    'cover_image_description' => 'Ennek a képnek körülbelül 440 x 250 pixel méretűnek kell lennie, bár rugalmasan méretezhető és levágható, hogy a felhasználói felülethez illeszkedjen a különböző alkalmazások esetén, így a megjelenítés tényleges méretei eltérőek lesznek.',
 
     // Actions
     'actions' => 'Műveletek',
@@ -30,6 +30,8 @@ return [
     'create' => 'Létrehozás',
     'update' => 'Frissítés',
     'edit' => 'Szerkesztés',
+    'archive' => 'Archiválás',
+    'unarchive' => 'Archiválás visszavonása',
     'sort' => 'Rendezés',
     'move' => 'Áthelyezés',
     'copy' => 'Másolás',
@@ -51,7 +53,7 @@ return [
     'filter_active' => 'Aktív szűrő:',
     'filter_clear' => 'Szűrő törlése',
     'download' => 'Letöltés',
-    'open_in_tab' => 'Megnyitás új tab-on',
+    'open_in_tab' => 'Megnyitás új fülön',
     'open' => 'Megnyitás',
 
     // Sort Options
@@ -68,7 +70,7 @@ return [
     'deleted_user' => 'Törölt felhasználó',
     'no_activity' => 'Nincs megjeleníthető aktivitás',
     'no_items' => 'Nincsenek elérhető elemek',
-    'back_to_top' => 'Oldal eleje',
+    'back_to_top' => 'Oldal tetejére',
     'skip_to_main_content' => 'Ugrás a fő tartalomra',
     'toggle_details' => 'Részletek átkapcsolása',
     'toggle_thumbnails' => 'Bélyegképek átkapcsolása',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Inaktív',
     'never' => 'Soha',
     'none' => 'Egyik sem',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Kezdőlap',
@@ -95,12 +99,12 @@ return [
 
     // Layout tabs
     'tab_info' => 'Információ',
-    'tab_info_label' => 'Tab: Másodlagos információk megjelenítése',
+    'tab_info_label' => 'Fül: Másodlagos információk megjelenítése',
     'tab_content' => 'Tartalom',
-    'tab_content_label' => 'Tab: Elsődleges információk megjelenítése',
+    'tab_content_label' => 'Fül: Elsődleges információk megjelenítése',
 
     // Email Content
-    'email_action_help' => 'Probléma esetén a lenti ":actionText" gombra kell kattintani, majd ki kell másolni a lenti webcímet és be kell illeszteni egy böngészőbe:',
+    'email_action_help' => 'Ha problémája van a(z) ":actionText" gombra kattintással, akkor másolja ki az URL-t, és illessze be a böngészőbe:',
     'email_rights' => 'Minden jog fenntartva',
 
     // Footer Link Options
@@ -109,5 +113,5 @@ return [
     'terms_of_service' => 'Felhasználási feltételek',
 
     // OpenSearch
-    'opensearch_description' => 'Search :appName',
+    'opensearch_description' => 'Keresés :appName',
 ];

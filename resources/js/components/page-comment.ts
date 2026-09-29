@@ -1,8 +1,9 @@
 import {Component} from './component';
 import {getLoading, htmlToDom} from '../services/dom';
-import {buildForInput} from '../wysiwyg-tinymce/config';
 import {PageCommentReference} from "./page-comment-reference";
 import {HttpError} from "../services/http";
+import {createCommentEditorInstance, SimpleWysiwygEditorInterface} from "../wysiwyg";
+import {el} from "../wysiwyg/utils/dom";
 
 export interface PageCommentReplyEventData {
     id: string; // ID of comment being replied to
@@ -21,8 +22,7 @@ export class PageComment extends Component {
     protected updatedText!: string;
     protected archiveText!: string;
 
-    protected wysiwygEditor: any = null;
-    protected wysiwygLanguage!: string;
+    protected wysiwygEditor: SimpleWysiwygEditorInterface|null = null;
     protected wysiwygTextDirection!: string;
 
     protected container!: HTMLElement;
@@ -40,11 +40,10 @@ export class PageComment extends Component {
         this.commentId = this.$opts.commentId;
         this.commentLocalId = this.$opts.commentLocalId;
         this.deletedText = this.$opts.deletedText;
-        this.deletedText = this.$opts.deletedText;
+        this.updatedText = this.$opts.updatedText;
         this.archiveText = this.$opts.archiveText;
 
         // Editor reference and text options
-        this.wysiwygLanguage = this.$opts.wysiwygLanguage;
         this.wysiwygTextDirection = this.$opts.wysiwygTextDirection;
 
         // Element references
@@ -90,7 +89,7 @@ export class PageComment extends Component {
         this.form.toggleAttribute('hidden', !show);
     }
 
-    protected startEdit() : void {
+    protected async startEdit(): Promise<void> {
         this.toggleEditMode(true);
 
         if (this.wysiwygEditor) {
@@ -98,21 +97,20 @@ export class PageComment extends Component {
             return;
         }
 
-        const config = buildForInput({
-            language: this.wysiwygLanguage,
-            containerElement: this.input,
+        type WysiwygModule = typeof import('../wysiwyg');
+        const wysiwygModule = (await window.importVersioned('wysiwyg')) as WysiwygModule;
+        const editorContent = this.input.value;
+        const container = el('div', {class: 'comment-editor-container'});
+        this.input.parentElement?.appendChild(container);
+        this.input.hidden = true;
+
+        this.wysiwygEditor = wysiwygModule.createCommentEditorInstance(container as HTMLElement, editorContent, {
             darkMode: document.documentElement.classList.contains('dark-mode'),
-            textDirection: this.wysiwygTextDirection,
-            drawioUrl: '',
-            pageId: 0,
-            translations: {},
-            translationMap: (window as unknown as Record<string, Object>).editor_translations,
+            textDirection: this.$opts.textDirection,
+            translations: (window as unknown as Record<string, Object>).editor_translations,
         });
 
-        (window as unknown as {tinymce: {init: (arg0: Object) => Promise<any>}}).tinymce.init(config).then(editors => {
-            this.wysiwygEditor = editors[0];
-            setTimeout(() => this.wysiwygEditor.focus(), 50);
-        });
+        this.wysiwygEditor.focus();
     }
 
     protected async update(event: Event): Promise<void> {
@@ -121,7 +119,7 @@ export class PageComment extends Component {
         this.form.toggleAttribute('hidden', true);
 
         const reqData = {
-            html: this.wysiwygEditor.getContent(),
+            html: await this.wysiwygEditor?.getContentAsHtml() || '',
         };
 
         try {

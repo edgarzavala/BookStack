@@ -67,7 +67,7 @@ import {
   SELECTION_CHANGE_COMMAND,
   UNDO_COMMAND,
 } from '.';
-import {KEY_MODIFIER_COMMAND, SELECT_ALL_COMMAND} from './LexicalCommands';
+import {KEY_AT_COMMAND, KEY_MODIFIER_COMMAND, SELECT_ALL_COMMAND} from './LexicalCommands';
 import {
   COMPOSITION_START_CHAR,
   DOM_ELEMENT_TYPE,
@@ -97,9 +97,8 @@ import {
   getEditorPropertyFromDOMNode,
   getEditorsToPropagate,
   getNearestEditorFromDOMNode,
-  getWindow,
+  getWindow, isAt,
   isBackspace,
-  isBold,
   isCopy,
   isCut,
   isDelete,
@@ -111,7 +110,6 @@ import {
   isDeleteWordForward,
   isEscape,
   isFirefoxClipboardEvents,
-  isItalic,
   isLexicalEditor,
   isLineBreak,
   isModifier,
@@ -128,7 +126,6 @@ import {
   isSelectionWithinEditor,
   isSpace,
   isTab,
-  isUnderline,
   isUndo,
 } from './LexicalUtils';
 
@@ -355,6 +352,7 @@ function onSelectionChange(
               lastNode instanceof ParagraphNode &&
               lastNode.getChildrenSize() === 0
             ) {
+              selection.format = lastNode.getTextFormat();
               selection.style = lastNode.getTextStyle();
             } else {
               selection.format = 0;
@@ -478,7 +476,6 @@ function onClick(event: PointerEvent, editor: LexicalEditor): void {
 }
 
 function onPointerDown(event: PointerEvent, editor: LexicalEditor) {
-  // TODO implement text drag & drop
   const target = event.target;
   const pointerType = event.pointerType;
   if (target instanceof Node && pointerType !== 'touch') {
@@ -1061,15 +1058,8 @@ function onKeyDown(event: KeyboardEvent, editor: LexicalEditor): void {
   } else if (isDeleteLineForward(key, metaKey)) {
     event.preventDefault();
     dispatchCommand(editor, DELETE_LINE_COMMAND, false);
-  } else if (isBold(key, altKey, metaKey, ctrlKey)) {
-    event.preventDefault();
-    dispatchCommand(editor, FORMAT_TEXT_COMMAND, 'bold');
-  } else if (isUnderline(key, altKey, metaKey, ctrlKey)) {
-    event.preventDefault();
-    dispatchCommand(editor, FORMAT_TEXT_COMMAND, 'underline');
-  } else if (isItalic(key, altKey, metaKey, ctrlKey)) {
-    event.preventDefault();
-    dispatchCommand(editor, FORMAT_TEXT_COMMAND, 'italic');
+  } else if (isAt(key)) {
+    dispatchCommand(editor, KEY_AT_COMMAND, event);
   } else if (isTab(key, altKey, ctrlKey, metaKey)) {
     dispatchCommand(editor, KEY_TAB_COMMAND, event);
   } else if (isUndo(key, shiftKey, metaKey, ctrlKey)) {

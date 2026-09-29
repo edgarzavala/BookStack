@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Uppgifterna stämmer inte överens med våra register.',
     'throttle' => 'För många inloggningsförsök. Prova igen om :seconds sekunder.',
+    'mfa_throttle' => 'För många försök till multifaktorverifiering. Försök igen om :seconds sekunder.',
 
     // Login & Register
     'sign_up' => 'Skapa konto',
@@ -20,6 +21,9 @@ return [
     'username' => 'Användarnamn',
     'email' => 'E-post',
     'password' => 'Lösenord',
+    'password_new' => 'Nytt lösenord',
+    'password_new_confirm' => 'Bekräfta nytt lösenord',
+    'password_current' => 'Bekräfta nuvarande lösenord',
     'password_confirm' => 'Bekräfta lösenord',
     'password_hint' => 'Måste vara minst 8 tecken',
     'forgot_password' => 'Glömt lösenord?',

@@ -67,9 +67,9 @@ return [
     'auth_password_reset_request' => 'jelszó visszaállítást kért',
     'auth_password_reset_update' => 'felhasználói jelszó visszaállítás',
     'mfa_setup_method' => 'MFA módszert állított be',
-    'mfa_setup_method_notification' => 'Többfaktoros azonosítás sikeresen beállítva',
+    'mfa_setup_method_notification' => 'Többlépcsős azonosítás sikeresen beállítva',
     'mfa_remove_method' => 'MFA módszert törölt',
-    'mfa_remove_method_notification' => 'Többfaktoros azonosítás sikeresen törölve',
+    'mfa_remove_method_notification' => 'Többlépcsős azonosítás sikeresen törölve',
 
     // Settings
     'settings_update' => 'frissítette a beállításokat',
@@ -85,12 +85,12 @@ return [
     'webhook_delete_notification' => 'Webhook sikeresen törölve',
 
     // Imports
-    'import_create' => 'created import',
-    'import_create_notification' => 'Import successfully uploaded',
-    'import_run' => 'updated import',
-    'import_run_notification' => 'Content successfully imported',
-    'import_delete' => 'deleted import',
-    'import_delete_notification' => 'Import successfully deleted',
+    'import_create' => 'import elkészült',
+    'import_create_notification' => 'Az import sikeresen feltöltve',
+    'import_run' => 'import frissítve',
+    'import_run_notification' => 'A tartalom sikeresen importálva',
+    'import_delete' => 'import törölve',
+    'import_delete_notification' => 'Az import sikeresen törölve',
 
     // Users
     'user_create' => 'létrehozta a felhasználót',
@@ -99,14 +99,16 @@ return [
     'user_update_notification' => 'Felhasználó sikeresen frissítve',
     'user_delete' => 'felhasználót törölt',
     'user_delete_notification' => 'Felhasználó sikeresen eltávolítva',
+    'user_mfa_reset' => 'MFA alaphelyzetbe állítva felhasználónak',
+    'user_mfa_reset_notification' => 'Többlépcsős azonosítási módok alaphelyzetbe állítva',
 
     // API Tokens
-    'api_token_create' => 'létrehozta az API tokent',
-    'api_token_create_notification' => 'API token sikeresen létrehozva',
-    'api_token_update' => 'frissítette az API tokent',
-    'api_token_update_notification' => 'API token sikeresen frissítve',
-    'api_token_delete' => 'törölte az API tokent',
-    'api_token_delete_notification' => 'API token sikeresen törölve',
+    'api_token_create' => 'létrehozta az API kulcsot',
+    'api_token_create_notification' => 'API kulcs sikeresen létrehozva',
+    'api_token_update' => 'frissítette az API kulcsot',
+    'api_token_update_notification' => 'API kulcs sikeresen frissítve',
+    'api_token_delete' => 'törölte az API kulcsot',
+    'api_token_delete_notification' => 'API kulcs sikeresen törölve',
 
     // Roles
     'role_create' => 'szerepkört hozott létre',
@@ -118,14 +120,14 @@ return [
 
     // Recycle Bin
     'recycle_bin_empty' => 'kiürítette a lomtárat',
-    'recycle_bin_restore' => 'lomtárból visszaállítva',
-    'recycle_bin_destroy' => 'lomtárból törölve',
+    'recycle_bin_restore' => 'visszaállított a lomtárból',
+    'recycle_bin_destroy' => 'törölte a lomtárból',
 
     // Comments
-    'commented_on'                => 'megjegyzést fűzött hozzá:',
-    'comment_create'              => 'hozzáadott hozzászólás',
-    'comment_update'              => 'frissített hozzászólás',
-    'comment_delete'              => 'megjegyzés törlése',
+    'commented_on'                => 'megjegyzést fűzött hozzá',
+    'comment_create'              => 'hozzáadott egy hozzászólást',
+    'comment_update'              => 'frissített egy hozzászólást',
+    'comment_delete'              => 'törölt egy hozzászólást',
 
     // Sort Rules
     'sort_rule_create' => 'létrehozta a rendezési szabályt',
@@ -136,5 +138,5 @@ return [
     'sort_rule_delete_notification' => 'Rendezési szabály sikeresen törölve',
 
     // Other
-    'permissions_update'          => 'engedélyek frissítve',
+    'permissions_update'          => 'frissítette ez engedélyeket',
 ];

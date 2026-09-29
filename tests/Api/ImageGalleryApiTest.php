@@ -154,6 +154,34 @@ class ImageGalleryApiTest extends TestCase
         $resp->assertStatus(404);
     }
 
+    public function test_create_requires_update_permission_for_the_target_page()
+    {
+        $editor = $this->users->editor();
+        $this->actingAsForApi($editor);
+
+        $makeRequest = function (int $uploadedTo) {
+            return $this->call('POST', $this->baseEndpoint, [
+                'type' => 'gallery',
+                'uploaded_to' => $uploadedTo,
+                'name' => 'My awesome image!',
+            ], [], [
+                'image' => $this->files->uploadedImage('my-cool-image.png'),
+            ]);
+        };
+
+        $page = $this->entities->page();
+        $this->permissions->disableEntityInheritedPermissions($page);
+        $this->permissions->setEntityPermissionsForRole($page, ['view'], $editor->roles()->first());
+
+        $resp = $makeRequest($page->id);
+        $resp->assertStatus(403);
+
+        $this->permissions->setEntityPermissionsForRole($page, ['view', 'update'], $editor->roles()->first());
+
+        $resp = $makeRequest($page->id);
+        $resp->assertStatus(200);
+    }
+
     public function test_create_has_restricted_types()
     {
         $this->actingAsApiEditor();
@@ -275,6 +303,85 @@ class ImageGalleryApiTest extends TestCase
         $resp->assertStatus(404);
     }
 
+    public function test_read_data_endpoint()
+    {
+        $this->actingAsApiAdmin();
+        $imagePage = $this->entities->page();
+        $data = $this->files->uploadGalleryImageToPage($this, $imagePage, 'test-image.png');
+        $image = Image::findOrFail($data['response']->id);
+
+        $resp = $this->get("{$this->baseEndpoint}/{$image->id}/data");
+        $resp->assertStatus(200);
+        $resp->assertHeader('Content-Type', 'image/png');
+
+        $respData = $resp->streamedContent();
+        $this->assertEquals(file_get_contents($this->files->testFilePath('test-image.png')), $respData);
+    }
+
+    public function test_read_data_endpoint_permission_controlled()
+    {
+        $this->actingAsApiEditor();
+        $imagePage = $this->entities->page();
+        $data = $this->files->uploadGalleryImageToPage($this, $imagePage, 'test-image.png');
+        $image = Image::findOrFail($data['response']->id);
+
+        $this->get("{$this->baseEndpoint}/{$image->id}/data")->assertOk();
+
+        $this->permissions->disableEntityInheritedPermissions($imagePage);
+
+        $resp = $this->get("{$this->baseEndpoint}/{$image->id}/data");
+        $resp->assertStatus(404);
+    }
+
+    public function test_read_data_endpoint_does_not_serve_non_image_files()
+    {
+        $this->actingAsApiAdmin();
+        $imagePage = $this->entities->page();
+        $data = $this->files->uploadGalleryImageToPage($this, $imagePage, 'test-image.png');
+
+        $image = Image::findOrFail($data['response']->id);
+        $storagePath = public_path($image->path);
+        file_put_contents($storagePath, '<html><body><p>This is totally not an image file!</p></body></html>');
+
+        $resp = $this->get("{$this->baseEndpoint}/{$image->id}/data");
+        $resp->assertStatus(415);
+
+        $resp->assertJson($this->errorResponse('Invalid non-image file type when streaming from storage.', 415));
+    }
+
+    public function test_read_url_data_endpoint()
+    {
+        $this->actingAsApiAdmin();
+        $imagePage = $this->entities->page();
+        $data = $this->files->uploadGalleryImageToPage($this, $imagePage, 'test-image.png');
+
+        $url = url($data['response']->path);
+        $resp = $this->get("{$this->baseEndpoint}/url/data?url=" . urlencode($url));
+        $resp->assertStatus(200);
+        $resp->assertHeader('Content-Type', 'image/png');
+
+        $respData = $resp->streamedContent();
+        $this->assertEquals(file_get_contents($this->files->testFilePath('test-image.png')), $respData);
+    }
+
+    public function test_read_url_data_endpoint_permission_controlled_when_local_secure_restricted_storage_is_used()
+    {
+        config()->set('filesystems.images', 'local_secure_restricted');
+
+        $this->actingAsApiEditor();
+        $imagePage = $this->entities->page();
+        $data = $this->files->uploadGalleryImageToPage($this, $imagePage, 'test-image.png');
+
+        $url = url($data['response']->path);
+        $resp = $this->get("{$this->baseEndpoint}/url/data?url=" . urlencode($url));
+        $resp->assertStatus(200);
+
+        $this->permissions->disableEntityInheritedPermissions($imagePage);
+
+        $resp = $this->get("{$this->baseEndpoint}/url/data?url=" . urlencode($url));
+        $resp->assertStatus(404);
+    }
+
     public function test_update_endpoint()
     {
         $this->actingAsApiAdmin();
@@ -332,6 +439,32 @@ class ImageGalleryApiTest extends TestCase
         $resp->assertStatus(200);
     }
 
+    public function test_update_endpoint_only_works_on_gallery_and_drawio_images()
+    {
+        $this->actingAsApiAdmin();
+        $imagePage = $this->entities->page();
+        $data = $this->files->uploadGalleryImageToPage($this, $imagePage);
+        $image = Image::findOrFail($data['response']->id);
+
+        $statusByImageType = [
+            'gallery' => 200,
+            'drawio' => 200,
+            'cover_book' => 404,
+            'user' => 404,
+            'system' => 404,
+        ];
+
+        foreach ($statusByImageType as $type => $status) {
+            $image->type = $type;
+            $image->save();
+
+            $resp = $this->putJson($this->baseEndpoint . "/{$image->id}", [
+                'name' => "My updated {$type} image!",
+            ]);
+            $resp->assertStatus($status);
+        }
+    }
+
     public function test_delete_endpoint()
     {
         $this->actingAsApiAdmin();
@@ -362,5 +495,20 @@ class ImageGalleryApiTest extends TestCase
         $this->permissions->grantUserRolePermissions($user, ['image-delete-all']);
         $resp = $this->deleteJson($this->baseEndpoint . "/{$image->id}");
         $resp->assertStatus(204);
+    }
+
+    public function test_delete_limited_to_visible_images()
+    {
+        $this->actingAsApiAdmin();
+        $imagePage = $this->entities->page();
+        $data = $this->files->uploadGalleryImageToPage($this, $imagePage);
+
+        $image = Image::query()->findOrFail($data['response']->id);
+
+        $this->entities->destroy($imagePage);
+
+        $resp = $this->deleteJson($this->baseEndpoint . "/{$image->id}");
+
+        $resp->assertStatus(404);
     }
 }

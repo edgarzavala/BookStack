@@ -16,6 +16,7 @@ return [
     'alpha_num'            => 'El camp :attribute només pot contenir lletres, xifres.',
     'array'                => 'El camp :attribute ha de ser una matriu.',
     'backup_codes'         => 'El codi que heu proporcionat no és vàlid o ja s’ha utilitzat.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => 'El camp :attribute ha de ser una data posterior a :date.',
     'between'              => [
         'numeric' => 'El camp :attribute ha de ser un nombre entre :min i :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => 'El camp :attribute ha de ser cert o fals.',
     'confirmed'            => 'La confirmació del camp :attribute no coincideix.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => 'El camp :attribute no és una data vàlida.',
     'date_format'          => 'El camp :attribute no coincideix amb el format :format.',
     'different'            => 'El camp :attribute i :other han de ser diferents.',
@@ -105,10 +107,11 @@ return [
     'url'                  => 'El format :attribute no és vàlid.',
     'uploaded'             => 'No s’ha pogut pujar el fitxer. És possible que el servidor no admeti fitxers d’aquesta mida.',
 
-    'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
-    'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
-    'zip_model_expected' => 'Data object expected but ":type" found.',
-    'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',
+    'zip_file' => 'El :attribute necessita fer referència a un arxiu dins del ZIP.',
+    'zip_file_size' => 'The file :attribute must not exceed :size MB.',
+    'zip_file_mime' => 'El :attribute necessita fer referència a un arxiu de tipus :validTyes, trobat :foundType.',
+    'zip_model_expected' => 'S\'esperava un objecte de dades, però s\'ha trobat ":type".',
+    'zip_unique' => 'El :attribute ha de ser únic pel tipus d\'objecte dins del ZIP.',
 
     // Custom validation lines
     'custom' => [

@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Neplatné přihlašovací údaje.',
     'throttle' => 'Příliš mnoho pokusů o přihlášení. Zkuste to prosím znovu za :seconds sekund.',
+    'mfa_throttle' => '{0}Příliš mnoho pokusů o vícefázové ověření. Zkuste to prosím znovu za :seconds sekund.|{1}Příliš mnoho pokusů o vícefázové ověření. Zkuste to prosím znovu za :seconds sekundu.|[2,4]Příliš mnoho pokusů o vícefázové ověření. Zkuste to prosím znovu za :seconds sekundy.|[5,*]Příliš mnoho pokusů o vícefázové ověření. Zkuste to prosím znovu za :seconds sekund.',
 
     // Login & Register
     'sign_up' => 'Registrace',
@@ -20,6 +21,9 @@ return [
     'username' => 'Uživatelské jméno',
     'email' => 'E-mail',
     'password' => 'Heslo',
+    'password_new' => 'Nové heslo',
+    'password_new_confirm' => 'Potvrdit nové heslo',
+    'password_current' => 'Potvrdit aktuální heslo',
     'password_confirm' => 'Potvrzení hesla',
     'password_hint' => 'Musí mít alespoň 8 znaků',
     'forgot_password' => 'Zapomenuté heslo?',

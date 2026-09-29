@@ -1,4 +1,4 @@
-import {onSelect} from '../services/dom.ts';
+import {findClosestScrollContainer, onSelect} from '../services/dom.ts';
 import {KeyboardNavigationHandler} from '../services/keyboard-navigation.ts';
 import {Component} from './component';
 
@@ -12,7 +12,7 @@ export class Dropdown extends Component {
         this.container = this.$el;
         this.menu = this.$refs.menu;
         this.toggle = this.$refs.toggle;
-        this.moveMenu = this.$opts.moveMenu;
+        this.fixedPositionMenu = this.$opts.fixedPositionMenu === 'true';
         this.bubbleEscapes = this.$opts.bubbleEscapes === 'true';
 
         this.direction = (document.dir === 'rtl') ? 'right' : 'left';
@@ -33,12 +33,13 @@ export class Dropdown extends Component {
         const menuOriginalRect = this.menu.getBoundingClientRect();
         let heightOffset = 0;
         const toggleHeight = this.toggle.getBoundingClientRect().height;
-        const dropUpwards = menuOriginalRect.bottom > window.innerHeight;
+        const containerEl = this.fixedPositionMenu ? this.body : findClosestScrollContainer(this.menu);
+        const containerBounds = containerEl.getBoundingClientRect();
+        const dropUpwards = menuOriginalRect.bottom > containerBounds.bottom;
         const containerRect = this.container.getBoundingClientRect();
 
         // If enabled, Move to body to prevent being trapped within scrollable sections
-        if (this.moveMenu) {
-            this.body.appendChild(this.menu);
+        if (this.fixedPositionMenu) {
             this.menu.style.position = 'fixed';
             this.menu.style.width = `${menuOriginalRect.width}px`;
             this.menu.style.left = `${menuOriginalRect.left}px`;
@@ -98,12 +99,11 @@ export class Dropdown extends Component {
         this.menu.style.bottom = '';
         this.menu.style.maxHeight = '';
 
-        if (this.moveMenu) {
+        if (this.fixedPositionMenu) {
             this.menu.style.position = '';
             this.menu.style[this.direction] = '';
             this.menu.style.width = '';
             this.menu.style.left = '';
-            this.container.appendChild(this.menu);
         }
 
         this.showing = false;
@@ -123,10 +123,6 @@ export class Dropdown extends Component {
             }
             this.hide();
         });
-
-        if (this.moveMenu) {
-            keyboardNavHandler.shareHandlingToEl(this.menu);
-        }
 
         // Hide menu on option click
         this.container.addEventListener('click', event => {

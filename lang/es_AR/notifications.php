@@ -5,12 +5,14 @@
 return [
 
     'new_comment_subject' => 'Nuevo comentario en la página: :pageName',
-    'new_comment_intro' => 'Un usuario ha comentado en una página de :appName:',
-    'new_page_subject' => 'Nueva página: :pageName',
-    'new_page_intro' => 'Una nueva página ha sido creada en :appName:',
+    'new_comment_intro' => 'Un usuario comentó en una página de :appName:',
+    'new_page_subject' => 'Página nueva: :pageName',
+    'new_page_intro' => 'Se creó una nueva página en :appName:',
     'updated_page_subject' => 'Página actualizada: :pageName',
-    'updated_page_intro' => 'Una página ha sido actualizada en :appName:',
+    'updated_page_intro' => 'Se actualizó una página en :appName:',
     'updated_page_debounce' => 'Para evitar una avalancha de notificaciones, durante un tiempo no se enviarán notificaciones sobre más ediciones de esta página por el mismo editor.',
+    'comment_mention_subject' => 'Ha sido mencionado en un comentario en la página: :pageName',
+    'comment_mention_intro' => 'Fue mencionado en un comentario en :appName:',
 
     'detail_page_name' => 'Nombre de la página:',
     'detail_page_path' => 'Ruta de la página:',

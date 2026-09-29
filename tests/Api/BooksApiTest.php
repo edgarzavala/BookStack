@@ -5,7 +5,6 @@ namespace Tests\Api;
 use BookStack\Entities\Models\Book;
 use BookStack\Entities\Repos\BaseRepo;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class BooksApiTest extends TestCase
@@ -39,7 +38,7 @@ class BooksApiTest extends TestCase
         $book = $this->entities->book();
 
         $baseRepo = $this->app->make(BaseRepo::class);
-        $image = $this->files->uploadedImage('book_cover');
+        $image = $this->files->uploadedImage('book_cover.png');
         $baseRepo->updateCoverImage($book, $image);
 
         $resp = $this->getJson($this->baseEndpoint . '?filter[id]=' . $book->id);
@@ -47,8 +46,8 @@ class BooksApiTest extends TestCase
             [
                 'id'   => $book->id,
                 'cover' => [
-                    'id' => $book->cover->id,
-                    'url' => $book->cover->url,
+                    'id' => $book->coverInfo()->getImage()->id,
+                    'url' => $book->coverInfo()->getImage()->url,
                 ],
             ],
         ]]);
@@ -94,7 +93,7 @@ class BooksApiTest extends TestCase
         ]);
 
         $resp->assertJson($expectedDetails);
-        $this->assertDatabaseHas('books', $expectedDetails);
+        $this->assertDatabaseHasEntityData('book', $expectedDetails);
     }
 
     public function test_book_name_needed_to_create()
@@ -153,23 +152,23 @@ class BooksApiTest extends TestCase
         $directChildCount = $book->directPages()->count() + $book->chapters()->count();
         $resp->assertStatus(200);
         $resp->assertJsonCount($directChildCount, 'contents');
-        $resp->assertJson([
-            'contents' => [
-                [
-                    'type' => 'chapter',
-                    'id' => $chapter->id,
-                    'name' => $chapter->name,
-                    'slug' => $chapter->slug,
-                    'pages' => [
-                        [
-                            'id' => $chapterPage->id,
-                            'name' => $chapterPage->name,
-                            'slug' => $chapterPage->slug,
-                        ]
-                    ]
-                ]
-            ]
-        ]);
+
+        $contents = $resp->json('contents');
+        $respChapter = array_values(array_filter($contents, fn ($item) =>  ($item['id'] === $chapter->id && $item['type'] === 'chapter')))[0];
+        $this->assertArrayMapIncludes([
+            'id' => $chapter->id,
+            'type' => 'chapter',
+            'name' => $chapter->name,
+            'slug' => $chapter->slug,
+        ], $respChapter);
+
+        $respPage = array_values(array_filter($respChapter['pages'], fn ($item) =>  ($item['id'] === $chapterPage->id)))[0];
+
+        $this->assertArrayMapIncludes([
+            'id' => $chapterPage->id,
+            'name' => $chapterPage->name,
+            'slug' => $chapterPage->slug,
+        ], $respPage);
     }
 
     public function test_read_endpoint_contents_nested_pages_has_permissions_applied()
@@ -187,6 +186,37 @@ class BooksApiTest extends TestCase
 
         $resp = $this->getJson($this->baseEndpoint . "/{$book->id}");
         $resp->assertJsonMissing(['name' => $customName]);
+    }
+
+    public function test_read_endpoint_lists_visible_shelves_the_book_is_assigned_to()
+    {
+        $this->actingAsApiEditor();
+        $shelf = $this->entities->shelf();
+        $otherShelf = $this->entities->shelf();
+        $book = $this->entities->book();
+        $book->shelves()->detach();
+
+        $book->shelves()->attach($shelf);
+        $book->shelves()->attach($otherShelf);
+
+        $this->assertEquals(2, $book->shelves()->count());
+
+        $this->permissions->disableEntityInheritedPermissions($otherShelf);
+
+        $resp = $this->getJson("{$this->baseEndpoint}/{$book->id}");
+        $resp->assertOk();
+        $resp->assertJsonCount(1, 'shelves');
+        $resp->assertJson([
+            'shelves' => [
+                [
+                    'id' => $shelf->id,
+                    'name' => $shelf->name,
+                    'slug' => $shelf->slug,
+                ]
+            ]
+        ]);
+        $resp->assertJsonMissingPath('shelves.0.description');
+        $resp->assertJsonMissingPath('shelves.0.pivot');
     }
 
     public function test_update_endpoint()
@@ -224,14 +254,14 @@ class BooksApiTest extends TestCase
         $resp = $this->putJson($this->baseEndpoint . "/{$book->id}", $details);
         $resp->assertStatus(200);
 
-        $this->assertDatabaseHas('books', array_merge($details, ['id' => $book->id, 'description' => 'A book updated via the API']));
+        $this->assertDatabaseHasEntityData('book', array_merge($details, ['id' => $book->id, 'description' => 'A book updated via the API']));
     }
 
     public function test_update_increments_updated_date_if_only_tags_are_sent()
     {
         $this->actingAsApiEditor();
         $book = $this->entities->book();
-        DB::table('books')->where('id', '=', $book->id)->update(['updated_at' => Carbon::now()->subWeek()]);
+        Book::query()->where('id', '=', $book->id)->update(['updated_at' => Carbon::now()->subWeek()]);
 
         $details = [
             'tags' => [['name' => 'Category', 'value' => 'Testing']],
@@ -247,7 +277,7 @@ class BooksApiTest extends TestCase
         $this->actingAsApiEditor();
         /** @var Book $book */
         $book = $this->entities->book();
-        $this->assertNull($book->cover);
+        $this->assertNull($book->coverInfo()->getImage());
         $file = $this->files->uploadedImage('image.png');
 
         // Ensure cover image can be set via API
@@ -257,7 +287,7 @@ class BooksApiTest extends TestCase
         $book->refresh();
 
         $resp->assertStatus(200);
-        $this->assertNotNull($book->cover);
+        $this->assertNotNull($book->coverInfo()->getImage());
 
         // Ensure further updates without image do not clear cover image
         $resp = $this->put($this->baseEndpoint . "/{$book->id}", [
@@ -266,7 +296,7 @@ class BooksApiTest extends TestCase
         $book->refresh();
 
         $resp->assertStatus(200);
-        $this->assertNotNull($book->cover);
+        $this->assertNotNull($book->coverInfo()->getImage());
 
         // Ensure update with null image property clears image
         $resp = $this->put($this->baseEndpoint . "/{$book->id}", [
@@ -275,7 +305,7 @@ class BooksApiTest extends TestCase
         $book->refresh();
 
         $resp->assertStatus(200);
-        $this->assertNull($book->cover);
+        $this->assertNull($book->coverInfo()->getImage());
     }
 
     public function test_delete_endpoint()
@@ -286,63 +316,5 @@ class BooksApiTest extends TestCase
 
         $resp->assertStatus(204);
         $this->assertActivityExists('book_delete');
-    }
-
-    public function test_export_html_endpoint()
-    {
-        $this->actingAsApiEditor();
-        $book = $this->entities->book();
-
-        $resp = $this->get($this->baseEndpoint . "/{$book->id}/export/html");
-        $resp->assertStatus(200);
-        $resp->assertSee($book->name);
-        $resp->assertHeader('Content-Disposition', 'attachment; filename="' . $book->slug . '.html"');
-    }
-
-    public function test_export_plain_text_endpoint()
-    {
-        $this->actingAsApiEditor();
-        $book = $this->entities->book();
-
-        $resp = $this->get($this->baseEndpoint . "/{$book->id}/export/plaintext");
-        $resp->assertStatus(200);
-        $resp->assertSee($book->name);
-        $resp->assertHeader('Content-Disposition', 'attachment; filename="' . $book->slug . '.txt"');
-    }
-
-    public function test_export_pdf_endpoint()
-    {
-        $this->actingAsApiEditor();
-        $book = $this->entities->book();
-
-        $resp = $this->get($this->baseEndpoint . "/{$book->id}/export/pdf");
-        $resp->assertStatus(200);
-        $resp->assertHeader('Content-Disposition', 'attachment; filename="' . $book->slug . '.pdf"');
-    }
-
-    public function test_export_markdown_endpoint()
-    {
-        $this->actingAsApiEditor();
-        $book = Book::visible()->has('pages')->has('chapters')->first();
-
-        $resp = $this->get($this->baseEndpoint . "/{$book->id}/export/markdown");
-        $resp->assertStatus(200);
-        $resp->assertHeader('Content-Disposition', 'attachment; filename="' . $book->slug . '.md"');
-        $resp->assertSee('# ' . $book->name);
-        $resp->assertSee('# ' . $book->pages()->first()->name);
-        $resp->assertSee('# ' . $book->chapters()->first()->name);
-    }
-
-    public function test_cant_export_when_not_have_permission()
-    {
-        $types = ['html', 'plaintext', 'pdf', 'markdown'];
-        $this->actingAsApiEditor();
-        $this->permissions->removeUserRolePermissions($this->users->editor(), ['content-export']);
-
-        $book = $this->entities->book();
-        foreach ($types as $type) {
-            $resp = $this->get($this->baseEndpoint . "/{$book->id}/export/{$type}");
-            $this->assertPermissionError($resp);
-        }
     }
 }

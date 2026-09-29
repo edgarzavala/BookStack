@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute lahko vsebuje samo črke in številke.',
     'array'                => ':attribute mora biti niz.',
     'backup_codes'         => 'Podana koda ni veljavna ali je že uporabljena.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute mora biti datum pred :date.',
     'between'              => [
         'numeric' => ':attribute mora biti med :min in :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute polje mora biti pravilno ali napačno.',
     'confirmed'            => ':attribute potrditev se ne ujema.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute ni veljaven datum.',
     'date_format'          => ':attribute se ne ujema z obliko :format.',
     'different'            => ':attribute in :other morata biti različna.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'Datoteke ni bilo mogoče naložiti. Strežnik morda ne sprejema datotek te velikosti.',
 
     'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
+    'zip_file_size' => 'The file :attribute must not exceed :size MB.',
     'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
     'zip_model_expected' => 'Data object expected but ":type" found.',
     'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',

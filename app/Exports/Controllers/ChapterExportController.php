@@ -7,6 +7,7 @@ use BookStack\Exceptions\NotFoundException;
 use BookStack\Exports\ExportFormatter;
 use BookStack\Exports\ZipExports\ZipExportBuilder;
 use BookStack\Http\Controller;
+use BookStack\Permissions\Permission;
 use Throwable;
 
 class ChapterExportController extends Controller
@@ -15,7 +16,7 @@ class ChapterExportController extends Controller
         protected ChapterQueries $queries,
         protected ExportFormatter $exportFormatter,
     ) {
-        $this->middleware('can:content-export');
+        $this->middleware(Permission::ContentExport->middleware());
         $this->middleware('throttle:exports');
     }
 
@@ -30,7 +31,7 @@ class ChapterExportController extends Controller
         $chapter = $this->queries->findVisibleBySlugsOrFail($bookSlug, $chapterSlug);
         $pdfContent = $this->exportFormatter->chapterToPdf($chapter);
 
-        return $this->download()->directly($pdfContent, $chapterSlug . '.pdf');
+        return $this->createDownload()->directly($pdfContent, $chapterSlug . '.pdf');
     }
 
     /**
@@ -44,7 +45,7 @@ class ChapterExportController extends Controller
         $chapter = $this->queries->findVisibleBySlugsOrFail($bookSlug, $chapterSlug);
         $containedHtml = $this->exportFormatter->chapterToContainedHtml($chapter);
 
-        return $this->download()->directly($containedHtml, $chapterSlug . '.html');
+        return $this->createDownload()->directly($containedHtml, $chapterSlug . '.html');
     }
 
     /**
@@ -57,7 +58,7 @@ class ChapterExportController extends Controller
         $chapter = $this->queries->findVisibleBySlugsOrFail($bookSlug, $chapterSlug);
         $chapterText = $this->exportFormatter->chapterToPlainText($chapter);
 
-        return $this->download()->directly($chapterText, $chapterSlug . '.txt');
+        return $this->createDownload()->directly($chapterText, $chapterSlug . '.txt');
     }
 
     /**
@@ -70,7 +71,7 @@ class ChapterExportController extends Controller
         $chapter = $this->queries->findVisibleBySlugsOrFail($bookSlug, $chapterSlug);
         $chapterText = $this->exportFormatter->chapterToMarkdown($chapter);
 
-        return $this->download()->directly($chapterText, $chapterSlug . '.md');
+        return $this->createDownload()->directly($chapterText, $chapterSlug . '.md');
     }
 
     /**
@@ -82,6 +83,6 @@ class ChapterExportController extends Controller
         $chapter = $this->queries->findVisibleBySlugsOrFail($bookSlug, $chapterSlug);
         $zip = $builder->buildForChapter($chapter);
 
-        return $this->download()->streamedFileDirectly($zip, $chapterSlug . '.zip', true);
+        return $this->createDownload()->streamedFileDirectly($zip, $chapterSlug . '.zip', true);
     }
 }

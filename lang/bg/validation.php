@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute може да съдържа само букви и числа.',
     'array'                => ':attribute трябва да е масив (array).',
     'backup_codes'         => 'Предоставеният код не е валиден или вече е бил използван.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute трябва да е дата след :date.',
     'between'              => [
         'numeric' => ':attribute трябва да е между :min и :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => 'Полето :attribute трябва да съдържа булева стойност (true или false).',
     'confirmed'            => 'Потвърждението на :attribute не съвпада.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute не е валидна дата.',
     'date_format'          => ':attribute не е в посоченият формат - :format.',
     'different'            => ':attribute и :other трябва да са различни.',
@@ -105,10 +107,11 @@ return [
     'url'                  => 'Форматът на :attribute не е валиден.',
     'uploaded'             => 'Файлът не можа да бъде качен. Сървърът може да не приема файлове с такъв размер.',
 
-    'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
-    'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
-    'zip_model_expected' => 'Data object expected but ":type" found.',
-    'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',
+    'zip_file' => ':attribute трябва да реферира към файл в ZIP архива.',
+    'zip_file_size' => 'Файла :attribute не трябва да надвишава :size MB.',
+    'zip_file_mime' => ':attribute трябва да реферира към файл от тип :validTypes, а е намерен :foundType.',
+    'zip_model_expected' => 'Очаква се обект с данни, но е открит ":type".',
+    'zip_unique' => ':attribute трябва да бъде уникален за типа на обекта в ZIP архива.',
 
     // Custom validation lines
     'custom' => [

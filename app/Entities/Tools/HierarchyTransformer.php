@@ -13,17 +13,13 @@ use BookStack\Facades\Activity;
 
 class HierarchyTransformer
 {
-    protected BookRepo $bookRepo;
-    protected BookshelfRepo $shelfRepo;
-    protected Cloner $cloner;
-    protected TrashCan $trashCan;
-
-    public function __construct(BookRepo $bookRepo, BookshelfRepo $shelfRepo, Cloner $cloner, TrashCan $trashCan)
-    {
-        $this->bookRepo = $bookRepo;
-        $this->shelfRepo = $shelfRepo;
-        $this->cloner = $cloner;
-        $this->trashCan = $trashCan;
+    public function __construct(
+        protected BookRepo $bookRepo,
+        protected BookshelfRepo $shelfRepo,
+        protected Cloner $cloner,
+        protected TrashCan $trashCan,
+        protected ParentChanger $parentChanger,
+    ) {
     }
 
     /**
@@ -39,12 +35,14 @@ class HierarchyTransformer
         /** @var Page $page */
         foreach ($chapter->pages as $page) {
             $page->chapter_id = 0;
-            $page->changeBook($book->id);
+            $page->save();
+            $this->parentChanger->changeBook($page, $book->id);
         }
 
         $this->trashCan->destroyEntity($chapter);
 
         Activity::add(ActivityType::BOOK_CREATE_FROM_CHAPTER, $book);
+        $book->rebuildPermissions();
 
         return $book;
     }

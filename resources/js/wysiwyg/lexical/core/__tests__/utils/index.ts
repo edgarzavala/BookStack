@@ -38,6 +38,10 @@ import {DetailsNode} from "@lexical/rich-text/LexicalDetailsNode";
 import {EditorUiContext} from "../../../../ui/framework/core";
 import {EditorUIManager} from "../../../../ui/framework/manager";
 import {ImageNode} from "@lexical/rich-text/LexicalImageNode";
+import {MediaNode} from "@lexical/rich-text/LexicalMediaNode";
+import {DiagramNode} from "@lexical/rich-text/LexicalDiagramNode";
+import {DiagramDecorator} from "../../../../ui/decorators/DiagramDecorator";
+import {$generateHtmlFromNodes} from "@lexical/html";
 
 type TestEnv = {
   readonly container: HTMLDivElement;
@@ -487,6 +491,8 @@ export function createTestContext(): EditorUiContext {
     theme: {},
     nodes: [
         ImageNode,
+        MediaNode,
+        DiagramNode,
     ]
   });
 
@@ -502,11 +508,12 @@ export function createTestContext(): EditorUiContext {
     options: {},
     scrollDOM: scrollWrap,
     translate(text: string): string {
-      return "";
+      return text;
     }
   };
 
   context.manager.setContext(context);
+  context.manager.registerDecoratorType('diagram', DiagramDecorator);
 
   return context;
 }
@@ -762,11 +769,19 @@ export function html(
 }
 
 export function expectHtmlToBeEqual(expected: string, actual: string): void {
-  expect(formatHtml(expected)).toBe(formatHtml(actual));
+  expect(formatHtml(actual)).toBe(formatHtml(expected));
+}
+
+export function expectEditorHtmlToBeEqual(editor: LexicalEditor, expected: string): void {
+  const html = editor.read(() => {
+    return $generateHtmlFromNodes(editor, null);
+  });
+  expect(formatHtml(html)).toBe(formatHtml(expected));
 }
 
 type nodeTextShape = {
   text: string;
+  format?: number;
 };
 
 type nodeShape = {
@@ -784,7 +799,13 @@ export function getNodeShape(node: SerializedLexicalNode): nodeShape|nodeTextSha
 
   if (shape.type === 'text') {
     // @ts-ignore
-    return  {text: node.text}
+    const shape: nodeTextShape =  {text: node.text}
+    // @ts-ignore
+    if (node && node.format) {
+      // @ts-ignore
+      shape.format = node.format;
+    }
+    return shape;
   }
 
   if (children.length > 0) {
@@ -828,22 +849,84 @@ function formatHtml(s: string): string {
   return s.replace(/>\s+</g, '><').replace(/\s*\n\s*/g, ' ').trim();
 }
 
-export function dispatchKeydownEventForNode(node: LexicalNode, editor: LexicalEditor, key: string) {
+interface TestKeyboardEventOptions {
+  ctrlKey?: boolean;
+  altKey?: boolean;
+  shiftKey?: boolean;
+  metaKey?: boolean;
+  keyCode?: number;
+}
+
+export function dispatchKeydownEventForNode(node: LexicalNode, editor: LexicalEditor, key: string, options: TestKeyboardEventOptions = {}) {
   const nodeDomEl = editor.getElementByKey(node.getKey());
   const event = new KeyboardEvent('keydown', {
     bubbles: true,
     cancelable: true,
     key,
+    ...options,
   });
   nodeDomEl?.dispatchEvent(event);
   editor.commitUpdates();
 }
 
-export function dispatchKeydownEventForSelectedNode(editor: LexicalEditor, key: string) {
+export function dispatchKeydownEventForSelectedNode(editor: LexicalEditor, key: string, options: TestKeyboardEventOptions = {}) {
   editor.getEditorState().read((): void => {
     const node = $getSelection()?.getNodes()[0] || null;
     if (node) {
-      dispatchKeydownEventForNode(node, editor, key);
+      dispatchKeydownEventForNode(node, editor, key, options);
     }
+  });
+}
+
+export function dispatchEditorMouseClick(editor: LexicalEditor, clientX: number, clientY: number) {
+  const dom = editor.getRootElement();
+  if (!dom) {
+    return;
+  }
+
+  const event = new MouseEvent('click', {
+    clientX: clientX,
+    clientY: clientY,
+    bubbles: true,
+    cancelable: true,
+  });
+  dom?.dispatchEvent(event);
+  editor.commitUpdates();
+}
+
+export function patchRange() {
+    const RangePrototype = Object.getPrototypeOf(document.createRange());
+    RangePrototype.getBoundingClientRect = function (): DOMRect {
+        const rect = {
+            bottom: 0,
+            height: 0,
+            left: 0,
+            right: 0,
+            top: 0,
+            width: 0,
+            x: 0,
+            y: 0,
+        };
+        return {
+            ...rect,
+            toJSON() {
+                return rect;
+            },
+        };
+    };
+}
+
+export function waitAnimationFrames(count: number = 1): Promise<void> {
+  return new Promise((resolve) => {
+    let handled = 0;
+    let tick = () => {
+      if (++handled > count) {
+        resolve();
+      } else {
+        setTimeout(tick, 16);
+      }
+    }
+
+    tick();
   });
 }

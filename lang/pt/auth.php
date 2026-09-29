@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Estas credenciais não coincidem com os nossos registos.',
     'throttle' => 'Demasiadas tentativas de acesso. Tente novamente em :seconds segundos.',
+    'mfa_throttle' => 'Foram efetuadas demasiadas tentativas de verificação multifatorial. Por favor, tente novamente daqui a :seconds segundos.',
 
     // Login & Register
     'sign_up' => 'Registar',
@@ -20,6 +21,9 @@ return [
     'username' => 'Nome de utilizador',
     'email' => 'E-mail',
     'password' => 'Palavra-passe',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Confirmar Palavra-passe',
     'password_hint' => 'Deve ter no mínimo 8 caracteres',
     'forgot_password' => 'Esqueceu-se da palavra-passe?',
@@ -91,7 +95,7 @@ return [
     'mfa_option_totp_title' => 'Aplicação móvel',
     'mfa_option_totp_desc' => 'Para usar a autenticação multi-fator, você precisa de uma aplicação móvel que suporte TOTP como o Autenticador do Google, Authy ou o autenticador Microsoft.',
     'mfa_option_backup_codes_title' => 'Códigos de Backup',
-    'mfa_option_backup_codes_desc' => 'Generates a set of one-time-use backup codes which you\'ll enter on login to verify your identity. Make sure to store these in a safe & secure place.',
+    'mfa_option_backup_codes_desc' => 'Gera um conjunto de códigos de reserva de utilização única, que deverá usar no início de sessão para verificar a sua identidade. Certifique-se de que os guarda num local seguro.',
     'mfa_gen_confirm_and_enable' => 'Confirmar e ativar',
     'mfa_gen_backup_codes_title' => 'Configuração dos Códigos de Backup',
     'mfa_gen_backup_codes_desc' => 'Armazene a lista de códigos abaixo em um lugar seguro. Ao acessar o sistema você poderá usar um dos códigos como um segundo mecanismo de autenticação.',

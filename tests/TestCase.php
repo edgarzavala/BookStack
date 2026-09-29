@@ -6,15 +6,19 @@ use BookStack\Entities\Models\Entity;
 use BookStack\Http\HttpClientHistory;
 use BookStack\Http\HttpRequestService;
 use BookStack\Settings\SettingService;
-use BookStack\Users\Models\User;
+use Exception;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Env;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Testing\Assert as PHPUnit;
+use Illuminate\Testing\Constraints\HasInDatabase;
+use Mockery;
+use Mockery\MockInterface;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use Ssddanbrown\AssertHtml\TestsHtml;
@@ -105,6 +109,19 @@ abstract class TestCase extends BaseTestCase
     }
 
     /**
+     * Creates a partial mock of the given service class from a default
+     * container resolved instance. Compared to the default $this->partialMock function,
+     * this resolves mock of a service with its dependencies resolved from the container.
+     */
+    protected function partialMockService(string $service): MockInterface
+    {
+        $realService = app($service);
+        $serviceMock = Mockery::mock($realService)->makePartial();
+        $this->instance($service, $serviceMock);
+        return $serviceMock;
+    }
+
+    /**
      * Mock the http client used in BookStack http calls.
      */
     protected function mockHttpClient(array $responses = []): HttpClientHistory
@@ -118,15 +135,18 @@ abstract class TestCase extends BaseTestCase
      * Database config is juggled so the value can be restored when
      * parallel testing are used, where multiple databases exist.
      */
-    protected function runWithEnv(string $name, $value, callable $callback, bool $handleDatabase = true)
+    protected function runWithEnv(array $valuesByKey, callable $callback, bool $handleDatabase = true): void
     {
         Env::disablePutenv();
-        $originalVal = $_SERVER[$name] ?? null;
+        $originals = [];
+        foreach ($valuesByKey as $key => $value) {
+            $originals[$key] = $_SERVER[$key] ?? null;
 
-        if (is_null($value)) {
-            unset($_SERVER[$name]);
-        } else {
-            $_SERVER[$name] = $value;
+            if (is_null($value)) {
+                unset($_SERVER[$key]);
+            } else {
+                $_SERVER[$key] = $value;
+            }
         }
 
         $database = config('database.connections.mysql_testing.database');
@@ -144,11 +164,30 @@ abstract class TestCase extends BaseTestCase
             DB::rollBack();
         }
 
-        if (is_null($originalVal)) {
-            unset($_SERVER[$name]);
-        } else {
-            $_SERVER[$name] = $originalVal;
+        foreach ($originals as $key => $value) {
+            if (is_null($value)) {
+                unset($_SERVER[$key]);
+            } else {
+                $_SERVER[$key] = $value;
+            }
         }
+    }
+
+    protected function usingThemeFolder(callable $callback): void
+    {
+        // Create a folder and configure a theme
+        $themeFolderName = 'testing_theme_' . str_shuffle(rtrim(base64_encode(time()), '='));
+        config()->set('view.theme', $themeFolderName);
+        $themeFolderPath = theme_path('');
+
+        // Create a theme folder and clean it up on application tear-down
+        File::makeDirectory($themeFolderPath);
+        $this->beforeApplicationDestroyed(fn() => File::deleteDirectory($themeFolderPath));
+
+        // Run provided callback with the theme env option set
+        $this->runWithEnv(['APP_THEME' => $themeFolderName], function () use ($callback, $themeFolderName) {
+            call_user_func($callback, $themeFolderName);
+        });
     }
 
     /**
@@ -193,7 +232,7 @@ abstract class TestCase extends BaseTestCase
     {
         if ($response->status() === 403 && $response instanceof JsonResponse) {
             $errMessage = $response->getData(true)['error']['message'] ?? '';
-            return $errMessage === 'You do not have permission to perform the requested action.';
+            return str_contains($errMessage, 'do not have permission');
         }
 
         return $response->status() === 302
@@ -261,5 +300,43 @@ abstract class TestCase extends BaseTestCase
         }
 
         $this->assertDatabaseHas('activities', $detailsToCheck);
+    }
+
+    /**
+     * Assert the database has the given data for an entity type.
+     */
+    protected function assertDatabaseHasEntityData(string $type, array $data = []): self
+    {
+        $entityFields = array_intersect_key($data, array_flip(Entity::$commonFields));
+        $extraFields = array_diff_key($data, $entityFields);
+        $extraTable = $type === 'page' ? 'entity_page_data' : 'entity_container_data';
+        $entityFields['type'] = $type;
+
+        $this->assertThat(
+            $this->getTable('entities'),
+            new HasInDatabase($this->getConnection(null, 'entities'), $entityFields)
+        );
+
+        if (!empty($extraFields)) {
+            $id = $entityFields['id'] ?? DB::table($this->getTable('entities'))
+                ->where($entityFields)->orderByDesc('id')->first()->id ?? null;
+            if (is_null($id)) {
+                throw new Exception('Failed to find entity id for asserting database data');
+            }
+
+            if ($type !== 'page') {
+                $extraFields['entity_id'] = $id;
+                $extraFields['entity_type'] = $type;
+            } else {
+                $extraFields['page_id'] = $id;
+            }
+
+            $this->assertThat(
+                $this->getTable($extraTable),
+                new HasInDatabase($this->getConnection(null, $extraTable), $extraFields)
+            );
+        }
+
+        return $this;
     }
 }

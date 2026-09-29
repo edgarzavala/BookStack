@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Tieto údaje sa nezhodujú s našimi záznamami.',
     'throttle' => 'Priveľa pokusov o prihlásenie. Skúste znova o :seconds sekúnd.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'Registrácia',
@@ -20,6 +21,9 @@ return [
     'username' => 'Používateľské meno',
     'email' => 'E-mail',
     'password' => 'Heslo',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Potvrdiť heslo',
     'password_hint' => 'Musí obsahovať aspoň 8 znakov',
     'forgot_password' => 'Zabudli ste heslo?',

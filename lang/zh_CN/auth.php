@@ -8,6 +8,7 @@ return [
 
     'failed' => '用户名或密码错误。',
     'throttle' => '您的登录次数过多，请在:seconds秒后重试。',
+    'mfa_throttle' => '多因子认证尝试次数过多，请在 :seconds 秒后重试。',
 
     // Login & Register
     'sign_up' => '注册',
@@ -20,6 +21,9 @@ return [
     'username' => '用户名',
     'email' => 'Email地址',
     'password' => '密码',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => '确认密码',
     'password_hint' => '必须至少有 8 个字符',
     'forgot_password' => '忘记密码?',

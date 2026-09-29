@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute 只能包含字母和數字。',
     'array'                => ':attribute 必須是陣列。',
     'backup_codes'         => '提供的代碼無效或已被使用。',
+    'base64_uri_mime'      => ':attribute 必須是有效的 Base64 URI，其中包含 :mime MIME 類型的資料。',
     'before'               => ':attribute 必須是在 :date 前的日期。',
     'between'              => [
         'numeric' => ':attribute 必須在 :min 到 :max 之間。',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute 欄位必須為 true 或 false。',
     'confirmed'            => ':attribute 確認不符。',
+    'current_password'     => '這不符合您目前的密碼。',
     'date'                 => ':attribute 並非有效的日期。',
     'date_format'          => ':attribute 與 :format 格式不相符。',
     'different'            => ':attribute 和 :other 必須不同。',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => '無法上傳文檔案， 伺服器可能不接受此大小的檔案。',
 
     'zip_file' => ':attribute 需要參照 ZIP 中的檔案。',
+    'zip_file_size' => '檔案 :attribute 不能超過 :size MB。',
     'zip_file_mime' => ':attribute 需要參照類型為 :validTypes 的檔案，找到 :foundType。',
     'zip_model_expected' => '預期為資料物件，但找到「:type」。',
     'zip_unique' => '對於 ZIP 中的物件類型，:attribute 必須是唯一的。',

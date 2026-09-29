@@ -1,0 +1,45 @@
+name: analyse-php
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**.php'
+  pull_request:
+    paths:
+      - '**.php'
+
+jobs:
+  build:
+    if: ${{ github.ref != 'refs/heads/l10n_development' }}
+    runs-on: docker
+    container:
+      image: docker.io/library/node:24-trixie
+    steps:
+    - uses: https://code.forgejo.org/actions/checkout@v6
+
+    - name: Setup PHP
+      uses: https://github.com/shivammathur/setup-php@v2
+      with:
+        php-version: 8.5
+        extensions: gd, mbstring, json, curl, xml, dom, mysql, ldap
+
+    - name: Get Composer Cache Directory
+      id: composer-cache
+      run: |
+        echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+    - name: Cache composer packages
+      uses: https://code.forgejo.org/actions/cache@v5
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-8.5
+        restore-keys: ${{ runner.os }}-composer-
+
+    - name: Install composer dependencies
+      run: composer install --prefer-dist --no-interaction --ansi
+      env:
+        COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{ secrets.GH_TOKEN }}"}}'
+
+    - name: Run static analysis check
+      run: composer check-static

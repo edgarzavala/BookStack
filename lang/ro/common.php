@@ -30,6 +30,8 @@ return [
     'create' => 'Crează',
     'update' => 'Actualzează',
     'edit' => 'Editează',
+    'archive' => 'Archive',
+    'unarchive' => 'Un-Archive',
     'sort' => 'Sortează',
     'move' => 'Mută',
     'copy' => 'Copiază',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Inactiv',
     'never' => 'Niciodată',
     'none' => 'Niciunul',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Acasă',

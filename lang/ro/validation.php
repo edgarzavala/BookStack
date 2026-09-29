@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute poate conține doar litere și cifre.',
     'array'                => ':attribute trebuie să fie un array.',
     'backup_codes'         => 'Codul furnizat nu este valid sau a fost deja folosit.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute trebuie să fie o dată înainte de :date.',
     'between'              => [
         'numeric' => ':attribute trebuie să fie între :min şi :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => 'Câmpul :attribute trebuie să fie adevărat sau fals.',
     'confirmed'            => 'Confirmarea :attribute nu se potrivește.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute nu este o dată validă.',
     'date_format'          => ':attribute nu se potrivește cu formatul :format.',
     'different'            => ':attribute și :other trebuie să fie diferite.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'Fişierul nu a putut fi încărcat. Serverul nu poate accepta fişiere de această dimensiune.',
 
     'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
+    'zip_file_size' => 'The file :attribute must not exceed :size MB.',
     'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
     'zip_model_expected' => 'Data object expected but ":type" found.',
     'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',

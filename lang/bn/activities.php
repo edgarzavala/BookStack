@@ -99,6 +99,8 @@ return [
     'user_update_notification' => 'ব্যবহারকারীটি সার্থকভাবে হালনাগাদ করা হয়েছে',
     'user_delete' => 'ব্যবহারকারীটি মুছে ফেলেছেন',
     'user_delete_notification' => 'ব্যবহারকারীটি সার্থকভাবে মুছে ফেলা হয়েছে',
+    'user_mfa_reset' => 'reset MFA for user',
+    'user_mfa_reset_notification' => 'Multi-factor authentication methods reset',
 
     // API Tokens
     'api_token_create' => 'এপিআই টোকেনটি তৈরী করেছেন',
@@ -131,7 +133,7 @@ return [
     'sort_rule_create' => 'created sort rule',
     'sort_rule_create_notification' => 'Sort rule successfully created',
     'sort_rule_update' => 'updated sort rule',
-    'sort_rule_update_notification' => 'Sort rule successfully updated',
+    'sort_rule_update_notification' => 'রোলটি সার্থকভাবে হালনাগাদ করা হয়েছে',
     'sort_rule_delete' => 'deleted sort rule',
     'sort_rule_delete_notification' => 'Sort rule successfully deleted',
 

@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Poverilnice se ne ujemajo s podatki v naši bazi.',
     'throttle' => 'Prekoračili ste število možnih prijav. Poskusite znova čez :seconds sekund.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'Registracija',
@@ -20,6 +21,9 @@ return [
     'username' => 'Uporabniško ime',
     'email' => 'E-pošta',
     'password' => 'Geslo',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Potrdi geslo',
     'password_hint' => 'Must be at least 8 characters',
     'forgot_password' => 'Pozabljeno geslo?',

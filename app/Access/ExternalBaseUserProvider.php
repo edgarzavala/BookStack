@@ -2,25 +2,16 @@
 
 namespace BookStack\Access;
 
+use BookStack\Users\Models\User;
+use BookStack\Users\UserRepo;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
-use Illuminate\Database\Eloquent\Model;
 
 class ExternalBaseUserProvider implements UserProvider
 {
     public function __construct(
-        protected string $model
+        protected UserRepo $userRepo,
     ) {
-    }
-
-    /**
-     * Create a new instance of the model.
-     */
-    public function createModel(): Model
-    {
-        $class = '\\' . ltrim($this->model, '\\');
-
-        return new $class();
     }
 
     /**
@@ -28,7 +19,7 @@ class ExternalBaseUserProvider implements UserProvider
      */
     public function retrieveById(mixed $identifier): ?Authenticatable
     {
-        return $this->createModel()->newQuery()->find($identifier);
+        return User::query()->find($identifier);
     }
 
     /**
@@ -57,14 +48,9 @@ class ExternalBaseUserProvider implements UserProvider
     /**
      * Retrieve a user by the given credentials.
      */
-    public function retrieveByCredentials(array $credentials): ?Authenticatable
+    public function retrieveByCredentials(array $credentials): ?User
     {
-        // Search current user base by looking up a uid
-        $model = $this->createModel();
-
-        return $model->newQuery()
-            ->where('external_auth_id', $credentials['external_auth_id'])
-            ->first();
+        return $this->userRepo->getByExternalAuthId($credentials['external_auth_id']);
     }
 
     /**

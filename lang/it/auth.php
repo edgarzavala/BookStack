@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Credenziali errate.',
     'throttle' => 'Troppi tentativi di login. Riprova in :seconds secondi.',
+    'mfa_throttle' => 'Troppi tentativi di verifica multi-fattore. Riprova tra :seconds secondi.',
 
     // Login & Register
     'sign_up' => 'Registrati',
@@ -20,6 +21,9 @@ return [
     'username' => 'Username',
     'email' => 'Email',
     'password' => 'Password',
+    'password_new' => 'Nuova Password',
+    'password_new_confirm' => 'Conferma Nuova Password',
+    'password_current' => 'Conferma Password Corrente',
     'password_confirm' => 'Conferma password',
     'password_hint' => 'Deve essere lunga almeno 8 caratteri',
     'forgot_password' => 'Password dimenticata?',

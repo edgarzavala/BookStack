@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Šie reģistrācijas dati neatbilst mūsu ierakstiem.',
     'throttle' => 'Pārāk daudz pieteikšanās mēģinājumu. Lūdzu, mēģiniet vēlreiz pēc :seconds seconds.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'Reģistrēties',
@@ -20,6 +21,9 @@ return [
     'username' => 'Lietotājvārds',
     'email' => 'E-pasts',
     'password' => 'Parole',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Apstiprināt paroli',
     'password_hint' => 'Jābūt vismaz 8 rakstzīmēm',
     'forgot_password' => 'Aizmirsta parole?',

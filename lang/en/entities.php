@@ -63,6 +63,10 @@ return [
     'import_delete_desc' => 'This will delete the uploaded import ZIP file, and cannot be undone.',
     'import_errors' => 'Import Errors',
     'import_errors_desc' => 'The follow errors occurred during the import attempt:',
+    'breadcrumb_siblings_for_page' => 'Navigate siblings for page',
+    'breadcrumb_siblings_for_chapter' => 'Navigate siblings for chapter',
+    'breadcrumb_siblings_for_book' => 'Navigate siblings for book',
+    'breadcrumb_siblings_for_bookshelf' => 'Navigate siblings for shelf',
 
     // Permissions and restrictions
     'permissions' => 'Permissions',
@@ -169,6 +173,7 @@ return [
     'books_sort_desc' => 'Move chapters and pages within a book to reorganise its contents. Other books can be added which allows easy moving of chapters and pages between books. Optionally an auto sort rule can be set to automatically sort this book\'s contents upon changes.',
     'books_sort_auto_sort' => 'Auto Sort Option',
     'books_sort_auto_sort_active' => 'Auto Sort Active: :sortName',
+    'books_sort_auto_sort_creation_hint' => 'Auto sort option rules can be created in the "Lists & Sorting" settings area by a user with the relevant permissions.',
     'books_sort_named' => 'Sort Book :bookName',
     'books_sort_name' => 'Sort by Name',
     'books_sort_created' => 'Sort by Created Date',
@@ -248,7 +253,7 @@ return [
     'pages_edit_switch_to_markdown_stable' => '(Stable Content)',
     'pages_edit_switch_to_wysiwyg' => 'Switch to WYSIWYG Editor',
     'pages_edit_switch_to_new_wysiwyg' => 'Switch to new WYSIWYG',
-    'pages_edit_switch_to_new_wysiwyg_desc' => '(In Alpha Testing)',
+    'pages_edit_switch_to_new_wysiwyg_desc' => '(In Beta Testing)',
     'pages_edit_set_changelog' => 'Set Changelog',
     'pages_edit_enter_changelog_desc' => 'Enter a brief description of the changes you\'ve made',
     'pages_edit_enter_changelog' => 'Enter Changelog',
@@ -268,6 +273,7 @@ return [
     'pages_md_insert_drawing' => 'Insert Drawing',
     'pages_md_show_preview' => 'Show preview',
     'pages_md_sync_scroll' => 'Sync preview scroll',
+    'pages_md_plain_editor' => 'Plaintext editor',
     'pages_drawing_unsaved' => 'Unsaved Drawing Found',
     'pages_drawing_unsaved_confirm' => 'Unsaved drawing data was found from a previous failed drawing save attempt. Would you like to restore and continue editing this unsaved drawing?',
     'pages_not_in_chapter' => 'Page is not in a chapter',
@@ -325,6 +331,9 @@ return [
 
     // Editor Sidebar
     'toggle_sidebar' => 'Toggle Sidebar',
+    'page_contents' => 'Page Contents',
+    'page_contents_none' => 'No headings were found in the page content.',
+    'page_contents_info' => 'The contents menu is generated from any heading formats used in the page.',
     'page_tags' => 'Page Tags',
     'chapter_tags' => 'Chapter Tags',
     'book_tags' => 'Book Tags',

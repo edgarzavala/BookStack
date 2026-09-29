@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Nid yw\'r manylion hyn yn cyfateb i\'n cofnodion.',
     'throttle' => 'Gormod o ymdrechion mewngofnodi. Rhowch gynnig arall arni o gwmpas :seconds eiliadau.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'Cofrestru',
@@ -20,6 +21,9 @@ return [
     'username' => 'Enw defnyddiwr',
     'email' => 'Ebost',
     'password' => 'Cyfrinair',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Cadarnhau cyfrinair',
     'password_hint' => 'Rhaid bod o leiaf 8 nod',
     'forgot_password' => 'Wedi anghofio cyfrinair?',

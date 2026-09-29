@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute var saturēt tikai burtus un ciparus.',
     'array'                => ':attribute ir jābūt masīvam.',
     'backup_codes'         => 'Ievadītais kods nav derīgs vai arī jau ir izmantots.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute jābūt datumam pirms :date.',
     'between'              => [
         'numeric' => ':attribute jābūt starp :min un :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute jābūt True vai False.',
     'confirmed'            => ':attribute apstiprinājums nesakrīt.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute nav derīgs datums.',
     'date_format'          => ':attribute neatbilst formātam :format.',
     'different'            => ':attribute un :other jābūt atšķirīgiem.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'Fails netika ielādēts. Serveris nevar pieņemt šāda izmēra failus.',
 
     'zip_file' => ':attribute ir jāatsaucas uz failu ZIP arhīvā.',
+    'zip_file_size' => 'The file :attribute must not exceed :size MB.',
     'zip_file_mime' => ':attribute ir jāatsaucas uz failu ar tipu :validTypes, bet atrasts :foundType.',
     'zip_model_expected' => 'Sagaidīts datu objekts, bet atrasts ":type".',
     'zip_unique' => ':attribute jābūt unikālam šim objekta tipam ZIP arhīvā.',

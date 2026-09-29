@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute må kun indeholde bogstaver og tal.',
     'array'                => ':attribute skal være et array.',
     'backup_codes'         => 'Den angivne kode er ikke gyldig eller er allerede brugt.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute skal være en dato før :date.',
     'between'              => [
         'numeric' => ':attribute skal være mellem :min og :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute-feltet skal være enten sandt eller falsk.',
     'confirmed'            => ':attribute-bekræftelsen matcher ikke.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute er ikke en gyldig dato.',
     'date_format'          => ':attribute matcher ikke formatet :format.',
     'different'            => ':attribute og :other skal være forskellige.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'Filen kunne ikke oploades. Serveren accepterer muligvis ikke filer af denne størrelse.',
 
     'zip_file' => 'Attributten skal henvise til en fil i ZIP.',
+    'zip_file_size' => 'Filen :attribute må ikke overstige: størrelse MB.',
     'zip_file_mime' => 'Attributten skal henvise til en fil af typen: validTypes, fundet:foundType.',
     'zip_model_expected' => 'Data objekt forventet men ":type" fundet.',
     'zip_unique' => 'Attributten skal være unik for objekttypen i ZIP.',

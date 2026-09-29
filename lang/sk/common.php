@@ -30,6 +30,8 @@ return [
     'create' => 'Vytvoriť',
     'update' => 'Aktualizovať',
     'edit' => 'Editovať',
+    'archive' => 'Archive',
+    'unarchive' => 'Un-Archive',
     'sort' => 'Zoradiť',
     'move' => 'Presunúť',
     'copy' => 'Kopírovať',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Neaktívny',
     'never' => 'Nikdy',
     'none' => 'Žiadne',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Domovská stránka',

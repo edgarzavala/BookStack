@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute voi sisältää vain kirjaimia ja numeroita.',
     'array'                => ':attribute tulee olla taulukkomuuttuja.',
     'backup_codes'         => 'Annettu koodi ei ole kelvollinen tai se on jo käytetty.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute päiväyksen tulee olla ennen :date.',
     'between'              => [
         'numeric' => ':attribute tulee olla välillä :min ja :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute tulee olla tosi tai epätosi.',
     'confirmed'            => ':attribute vahvistus ei täsmää.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute ei ole kelvollinen päiväys.',
     'date_format'          => ':attribute ei täsmää muodon :format kanssa.',
     'different'            => ':attribute ja :other tulee erota toisistaan.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'Tiedostoa ei voitu ladata. Palvelin ei ehkä hyväksy tämän kokoisia tiedostoja.',
 
     'zip_file' => 'Attribuutin :attribute on viitattava tiedostoon ZIP-tiedoston sisällä.',
+    'zip_file_size' => 'The file :attribute must not exceed :size MB.',
     'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
     'zip_model_expected' => 'Data object expected but ":type" found.',
     'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',

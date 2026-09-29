@@ -4,6 +4,8 @@ namespace BookStack\Uploads;
 
 use BookStack\Entities\Queries\EntityQueries;
 use BookStack\Exceptions\ImageUploadException;
+use BookStack\Exceptions\PrettyException;
+use BookStack\Http\DownloadResponseFactory;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -34,9 +36,8 @@ class ImageService
         ?int $resizeWidth = null,
         ?int $resizeHeight = null,
         bool $keepRatio = true,
-        string $imageName = '',
     ): Image {
-        $imageName = $imageName ?: $uploadedFile->getClientOriginalName();
+        $imageName = $uploadedFile->getClientOriginalName();
         $imageData = file_get_contents($uploadedFile->getRealPath());
 
         if ($resizeWidth !== null || $resizeHeight !== null) {
@@ -138,7 +139,7 @@ class ImageService
      * Get the raw data content from an image.
      *
      * @throws Exception
-     * @returns ?resource
+     * @return ?resource
      */
     public function getImageStream(Image $image): mixed
     {
@@ -148,7 +149,7 @@ class ImageService
     }
 
     /**
-     * Destroy an image along with its revisions, thumbnails and remaining folders.
+     * Destroy an image along with its revisions, thumbnails, and remaining folders.
      *
      * @throws Exception
      */
@@ -184,7 +185,7 @@ class ImageService
                 /** @var Image $image */
                 foreach ($images as $image) {
                     $searchQuery = '%' . basename($image->path) . '%';
-                    $inPage = DB::table('pages')
+                    $inPage = DB::table('entity_page_data')
                             ->where('html', 'like', $searchQuery)->count() > 0;
 
                     $inRevision = false;
@@ -252,16 +253,59 @@ class ImageService
     {
         $disk = $this->storage->getDisk('gallery');
 
+        return $disk->usingSecureImages() && $this->pathAccessible($imagePath);
+    }
+
+    /**
+     * Check if the given path exists and is accessible depending on the current settings.
+     */
+    public function pathAccessible(string $imagePath): bool
+    {
         if ($this->storage->usingSecureRestrictedImages() && !$this->checkUserHasAccessToRelationOfImageAtPath($imagePath)) {
             return false;
         }
 
-        // Check local_secure is active
-        return $disk->usingSecureImages()
-            // Check the image file exists
-            && $disk->exists($imagePath)
-            // Check the file is likely an image file
-            && str_starts_with($disk->mimeType($imagePath), 'image/');
+        if ($this->blockedBySecureImages()) {
+            return false;
+        }
+
+        return $this->imageFileExists($imagePath, 'gallery');
+    }
+
+    /**
+     * Check if the given image should be accessible to the current user.
+     */
+    public function imageAccessible(Image $image): bool
+    {
+        if ($this->storage->usingSecureRestrictedImages() && !$this->checkUserHasAccessToRelationOfImage($image)) {
+            return false;
+        }
+
+        if ($this->blockedBySecureImages()) {
+            return false;
+        }
+
+        return $this->imageFileExists($image->path, $image->type);
+    }
+
+    /**
+     * Check if the current user should be blocked from accessing images based on if secure images are enabled
+     * and if public access is enabled for the application.
+     */
+    protected function blockedBySecureImages(): bool
+    {
+        $enforced = $this->storage->usingSecureImages() && !setting('app-public');
+
+        return $enforced && user()->isGuest();
+    }
+
+    /**
+     * Check if the given image path exists for the given image type and that it is likely an image file.
+     */
+    protected function imageFileExists(string $imagePath, string $imageType): bool
+    {
+        $disk = $this->storage->getDisk($imageType);
+        return $disk->exists($imagePath) && str_starts_with($disk->mimeType($imagePath), 'image/');
     }
 
     /**
@@ -290,6 +334,11 @@ class ImageService
             return false;
         }
 
+        return $this->checkUserHasAccessToRelationOfImage($image);
+    }
+
+    protected function checkUserHasAccessToRelationOfImage(Image $image): bool
+    {
         $imageType = $image->type;
 
         // Allow user or system (logo) images
@@ -320,7 +369,18 @@ class ImageService
     {
         $disk = $this->storage->getDisk($imageType);
 
-        return $disk->response($path);
+        $stream = $disk->stream($path);
+        $fileSize = $disk->size($path);
+        $imageName = basename($path);
+        $downloadResponseFactory = new DownloadResponseFactory(request());
+        $response = $downloadResponseFactory->streamedInline($stream, $imageName, $fileSize);
+
+        $contentType = $response->headers->get('Content-Type');
+        if (!str_starts_with($contentType, 'image/')) {
+            throw new PrettyException('Invalid non-image file type when streaming from storage', 415);
+        }
+
+        return $response;
     }
 
     /**
@@ -330,6 +390,14 @@ class ImageService
      */
     public static function isExtensionSupported(string $extension): bool
     {
-        return in_array($extension, static::$supportedExtensions);
+        return in_array(strtolower($extension), static::$supportedExtensions);
+    }
+
+    /**
+     * Get all mime-types for images formats which BookStack supports.
+     */
+    public static function getSupportedMimeTypes(): array
+    {
+        return array_map(fn($ext) => 'image/' . $ext, static::$supportedExtensions);
     }
 }

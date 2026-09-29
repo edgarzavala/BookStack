@@ -1,0 +1,28 @@
+name: lint-php
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**.php'
+  pull_request:
+    paths:
+      - '**.php'
+
+jobs:
+  build:
+    if: ${{ github.ref != 'refs/heads/l10n_development' }}
+    runs-on: docker
+    container:
+      image: docker.io/library/node:24-trixie
+    steps:
+    - uses: https://code.forgejo.org/actions/checkout@v6
+
+    - name: Setup PHP
+      uses: https://github.com/shivammathur/setup-php@v2
+      with:
+        php-version: 8.5
+        tools: phpcs
+
+    - name: Run formatting check
+      run: composer lint

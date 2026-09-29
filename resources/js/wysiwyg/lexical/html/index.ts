@@ -85,6 +85,26 @@ export function $generateHtmlFromNodes(
     $appendNodesToHTML(editor, topLevelNode, container, selection);
   }
 
+  const nodeCode = [];
+  for (const node of container.childNodes) {
+    if ("outerHTML" in node) {
+      nodeCode.push(node.outerHTML)
+    } else {
+      const wrap = document.createElement('div');
+      wrap.appendChild(node.cloneNode(true));
+      nodeCode.push(wrap.innerHTML);
+    }
+  }
+
+  return nodeCode.join('\n');
+}
+
+/**
+ * Generates HTML from a single given node (and its children), regardless of selection.
+ */
+export function $generateHtmlFromNode(editor: LexicalEditor, node: LexicalNode): string {
+  const container = document.createElement('div');
+  $appendNodesToHTML(editor, node, container);
   return container.innerHTML;
 }
 

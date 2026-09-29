@@ -6,7 +6,7 @@
 return [
 
     // Pages
-    'page_create'                 => 'تاریخ ایجاد',
+    'page_create'                 => 'صفحه ایجاد شد',
     'page_create_notification'    => 'صفحه با موفقیت ایجاد شد',
     'page_update'                 => 'به روزرسانی صفحه',
     'page_update_notification'    => 'صفحه با موفقیت به روزرسانی شد',
@@ -36,8 +36,8 @@ return [
     'book_update_notification'    => 'کتاب با موفقیت به روزرسانی شد',
     'book_delete'                 => 'حذف کتاب',
     'book_delete_notification'    => 'کتاب با موفقیت حذف شد',
-    'book_sort'                   => 'مرتب سازی کتاب',
-    'book_sort_notification'      => 'کتاب با موفقیت مرتب سازی شد',
+    'book_sort'                   => 'کتاب‌های مرتب‌شده',
+    'book_sort_notification'      => 'کتاب با موفقیت مجددا مرتب شد',
 
     // Bookshelves
     'bookshelf_create'            => 'ایجاد قفسه',
@@ -85,12 +85,12 @@ return [
     'webhook_delete_notification' => 'وب هوک با موفقیت حذف شد',
 
     // Imports
-    'import_create' => 'created import',
-    'import_create_notification' => 'Import successfully uploaded',
-    'import_run' => 'updated import',
-    'import_run_notification' => 'Content successfully imported',
-    'import_delete' => 'deleted import',
-    'import_delete_notification' => 'Import successfully deleted',
+    'import_create' => 'ورودی ایجاد شد',
+    'import_create_notification' => 'فایل با موفقیت آپلود شد',
+    'import_run' => 'آیتم واردشده بروزرسانی شد',
+    'import_run_notification' => 'محتوا با موفقیت انتقال یافت',
+    'import_delete' => 'آیتم ورودی حدف شده',
+    'import_delete_notification' => 'آیتم واردشده با موفقیت حذف شد',
 
     // Users
     'user_create' => 'کاربر ایجاد شده',
@@ -99,6 +99,8 @@ return [
     'user_update_notification' => 'کاربر با موفقیت به روز شد',
     'user_delete' => 'کاربر حذف شده',
     'user_delete_notification' => 'کاربر با موفقیت حذف شد',
+    'user_mfa_reset' => 'بازنشانی احراز هویت چندمرحله ای برای کاربر',
+    'user_mfa_reset_notification' => 'بازنشانی روش‌های احراز هویت چندمرحله‌ای',
 
     // API Tokens
     'api_token_create' => 'ایجاد توکن API',
@@ -128,12 +130,12 @@ return [
     'comment_delete'              => 'نظر حذف شده',
 
     // Sort Rules
-    'sort_rule_create' => 'created sort rule',
-    'sort_rule_create_notification' => 'Sort rule successfully created',
-    'sort_rule_update' => 'updated sort rule',
-    'sort_rule_update_notification' => 'Sort rule successfully updated',
-    'sort_rule_delete' => 'deleted sort rule',
-    'sort_rule_delete_notification' => 'Sort rule successfully deleted',
+    'sort_rule_create' => 'قانون مرتب‌سازی ایجاد شد',
+    'sort_rule_create_notification' => 'قانون مرتب‌سازی با موفقیت ایجاد شد',
+    'sort_rule_update' => 'قانون مرتب‌سازی به‌روزرسانی شد',
+    'sort_rule_update_notification' => 'قانون مرتب‌سازی با موفقیت به‌روزرسانی شد',
+    'sort_rule_delete' => 'قانون مرتب‌سازی حذف شد',
+    'sort_rule_delete_notification' => 'قانون مرتب‌سازی با موفقیت حذف شد',
 
     // Other
     'permissions_update'          => 'به روزرسانی مجوزها',

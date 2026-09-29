@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute mag alleen letters en nummers bevatten.',
     'array'                => ':attribute moet een reeks zijn.',
     'backup_codes'         => 'De opgegeven code is niet geldig of eerder al gebruikt.',
+    'base64_uri_mime'      => ':attribute moet een geldige base64 URI zijn met data van het :mime mime type.',
     'before'               => ':attribute moet een datum zijn voor :date.',
     'between'              => [
         'numeric' => ':attribute moet tussen de :min en :max zijn.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute moet ja of nee zijn.',
     'confirmed'            => ':attribute bevestiging komt niet overeen.',
+    'current_password'     => 'Dit komt niet overeen met je huidige wachtwoord.',
     'date'                 => ':attribute is geen geldige datum.',
     'date_format'          => ':attribute komt niet overeen met het formaat :format.',
     'different'            => ':attribute en :other moeten verschillend zijn.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'Het bestand kon niet worden geüpload. De server accepteert mogelijk geen bestanden van deze grootte.',
 
     'zip_file' => 'Het \':attribute\' veld moet verwijzen naar een bestand in de ZIP.',
+    'zip_file_size' => 'Het bestand :attribute mag niet groter zijn dan :size MB.',
     'zip_file_mime' => 'Het \':attribute\' veld moet verwijzen naar een bestand met het type :validTypes, vond :foundType.',
     'zip_model_expected' => 'Dataobject verwacht maar vond ":type".',
     'zip_unique' => ':attribute moet uniek zijn voor het objecttype binnen de ZIP.',

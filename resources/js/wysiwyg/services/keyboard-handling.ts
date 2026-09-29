@@ -1,8 +1,8 @@
 import {EditorUiContext} from "../ui/framework/core";
 import {
-    $createParagraphNode,
+    $createLineBreakNode,
+    $createParagraphNode, $createTextNode,
     $getSelection,
-    $isDecoratorNode,
     COMMAND_PRIORITY_LOW, KEY_ARROW_DOWN_COMMAND, KEY_ARROW_UP_COMMAND,
     KEY_BACKSPACE_COMMAND,
     KEY_DELETE_COMMAND,
@@ -10,24 +10,19 @@ import {
     LexicalEditor,
     LexicalNode
 } from "lexical";
-import {$isImageNode} from "@lexical/rich-text/LexicalImageNode";
-import {$isMediaNode} from "@lexical/rich-text/LexicalMediaNode";
 import {getLastSelection} from "../utils/selection";
-import {$getNearestNodeBlockParent, $getParentOfType} from "../utils/nodes";
+import {
+    $getNearestNodeBlockParent,
+    $getParentOfType,
+    $isSingleSelectableNode,
+    $selectOrCreateAdjacent
+} from "../utils/nodes";
 import {$setInsetForSelection} from "../utils/lists";
 import {$isListItemNode} from "@lexical/list";
 import {$isDetailsNode, DetailsNode} from "@lexical/rich-text/LexicalDetailsNode";
-
-function isSingleSelectedNode(nodes: LexicalNode[]): boolean {
-    if (nodes.length === 1) {
-        const node = nodes[0];
-        if ($isDecoratorNode(node) || $isImageNode(node) || $isMediaNode(node)) {
-            return true;
-        }
-    }
-
-    return false;
-}
+import {$unwrapDetailsNode} from "../utils/details";
+import {$isLinkNode} from "@lexical/link";
+import {$isLinkedImageNode} from "../utils/images";
 
 /**
  * Delete the current node in the selection if the selection contains a single
@@ -35,7 +30,7 @@ function isSingleSelectedNode(nodes: LexicalNode[]): boolean {
  */
 function deleteSingleSelectedNode(editor: LexicalEditor) {
     const selectionNodes = getLastSelection(editor)?.getNodes() || [];
-    if (isSingleSelectedNode(selectionNodes)) {
+    if ($isSingleSelectableNode(selectionNodes)) {
         editor.update(() => {
             selectionNodes[0].remove();
         });
@@ -46,50 +41,62 @@ function deleteSingleSelectedNode(editor: LexicalEditor) {
  * Insert a new empty node before/after the selection if the selection contains a single
  * selected node (like image, media etc...).
  */
-function insertAfterSingleSelectedNode(editor: LexicalEditor, event: KeyboardEvent|null): boolean {
+function insertAdjacentToSingleSelectedNode(editor: LexicalEditor, event: KeyboardEvent|null): boolean {
     const selectionNodes = getLastSelection(editor)?.getNodes() || [];
-    if (isSingleSelectedNode(selectionNodes)) {
-        const node = selectionNodes[0];
-        const nearestBlock = $getNearestNodeBlockParent(node) || node;
-        if (nearestBlock) {
-            requestAnimationFrame(() => {
-                editor.update(() => {
-                    const newParagraph = $createParagraphNode();
-                    nearestBlock.insertAfter(newParagraph);
-                    newParagraph.select();
-                });
-            });
-            event?.preventDefault();
-            return true;
-        }
+    if (!$isSingleSelectableNode(selectionNodes)) {
+        return false;
     }
 
-    return false;
+    const node = selectionNodes[0];
+    const nearestBlock = $getNearestNodeBlockParent(node) || node;
+    const insertBefore = event?.shiftKey === true;
+
+    let action: null|(()=>void) = null;
+
+    if ($isListItemNode(nearestBlock)) {
+        // If we're in a list item, we'd instead want to keep within the item and insert
+        // adjacent to the selected block.
+        action = () => {
+            const textNode = $createTextNode('');
+            const lineBreak = $createLineBreakNode();
+            const nodeParent = node.getParent();
+            let target = node;
+            if ($isLinkNode(nodeParent) && $isLinkedImageNode(node)) {
+                target = nodeParent;
+            }
+            const insertAction = insertBefore ? target.insertBefore : target.insertAfter;
+            insertAction.bind(target)(textNode);
+            insertAction.bind(target)(lineBreak);
+            textNode.selectStart();
+        };
+    } else if (nearestBlock) {
+        action = () => {
+            const newParagraph = $createParagraphNode();
+            const insertAction = insertBefore ? nearestBlock.insertBefore : nearestBlock.insertAfter;
+            insertAction.bind(nearestBlock)(newParagraph);
+            newParagraph.select();
+        };
+    }
+
+    if (!action) {
+        return false;
+    }
+
+    requestAnimationFrame(() => editor.update(action));
+    event?.preventDefault();
+    return true;
 }
 
 function focusAdjacentOrInsertForSingleSelectNode(editor: LexicalEditor, event: KeyboardEvent|null, after: boolean = true): boolean {
     const selectionNodes = getLastSelection(editor)?.getNodes() || [];
-    if (!isSingleSelectedNode(selectionNodes)) {
+    if (!$isSingleSelectableNode(selectionNodes)) {
         return false;
     }
 
     event?.preventDefault();
-
     const node = selectionNodes[0];
-    const nearestBlock = $getNearestNodeBlockParent(node) || node;
-    let target = after ? nearestBlock.getNextSibling() : nearestBlock.getPreviousSibling();
-
     editor.update(() => {
-        if (!target) {
-            target = $createParagraphNode();
-            if (after) {
-                nearestBlock.insertAfter(target)
-            } else {
-                nearestBlock.insertBefore(target);
-            }
-        }
-
-        target.selectStart();
+        $selectOrCreateAdjacent(node, after);
     });
 
     return true;
@@ -179,6 +186,35 @@ function getDetailsScenario(editor: LexicalEditor): {
     }
 }
 
+function unwrapDetailsNode(context: EditorUiContext, event: KeyboardEvent): boolean {
+    const selection = $getSelection();
+    const nodes = selection?.getNodes() || [];
+
+    if (nodes.length !== 1) {
+        return false;
+    }
+
+    const selectedNearestBlock = $getNearestNodeBlockParent(nodes[0]);
+    if (!selectedNearestBlock) {
+        return false;
+    }
+
+    const selectedParentBlock = selectedNearestBlock.getParent();
+    const selectRange = selection?.getStartEndPoints();
+
+    if (selectRange && $isDetailsNode(selectedParentBlock) && selectRange[0].offset === 0 && selectedNearestBlock.getIndexWithinParent() === 0) {
+        event.preventDefault();
+        context.editor.update(() => {
+            $unwrapDetailsNode(selectedParentBlock);
+            selectedNearestBlock.selectStart();
+            context.manager.triggerLayoutUpdate();
+        });
+        return true;
+    }
+
+    return false;
+}
+
 function $isSingleListItem(nodes: LexicalNode[]): boolean {
     if (nodes.length !== 1) {
         return false;
@@ -208,9 +244,9 @@ function handleInsetOnTab(editor: LexicalEditor, event: KeyboardEvent|null): boo
 }
 
 export function registerKeyboardHandling(context: EditorUiContext): () => void {
-    const unregisterBackspace = context.editor.registerCommand(KEY_BACKSPACE_COMMAND, (): boolean => {
+    const unregisterBackspace = context.editor.registerCommand(KEY_BACKSPACE_COMMAND, (event): boolean => {
         deleteSingleSelectedNode(context.editor);
-        return false;
+        return unwrapDetailsNode(context, event);
     }, COMMAND_PRIORITY_LOW);
 
     const unregisterDelete = context.editor.registerCommand(KEY_DELETE_COMMAND, (): boolean => {
@@ -219,7 +255,7 @@ export function registerKeyboardHandling(context: EditorUiContext): () => void {
     }, COMMAND_PRIORITY_LOW);
 
     const unregisterEnter = context.editor.registerCommand(KEY_ENTER_COMMAND, (event): boolean => {
-        return insertAfterSingleSelectedNode(context.editor, event)
+        return insertAdjacentToSingleSelectedNode(context.editor, event)
             || moveAfterDetailsOnEmptyLine(context.editor, event);
     }, COMMAND_PRIORITY_LOW);
 

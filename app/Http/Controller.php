@@ -6,6 +6,8 @@ use BookStack\Activity\Models\Loggable;
 use BookStack\App\Model;
 use BookStack\Exceptions\NotifyException;
 use BookStack\Facades\Activity;
+use BookStack\Permissions\Permission;
+use BookStack\Users\Models\OwnableInterface;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
@@ -27,10 +29,9 @@ abstract class Controller extends BaseController
     }
 
     /**
-     * Stops the application and shows a permission error if
-     * the application is in demo mode.
+     * Stops the application and shows a permission error if the application is in demo mode.
      */
-    protected function preventAccessInDemoMode()
+    protected function preventAccessInDemoMode(): void
     {
         if (config('app.env') === 'demo') {
             $this->showPermissionError();
@@ -40,14 +41,13 @@ abstract class Controller extends BaseController
     /**
      * Adds the page title into the view.
      */
-    public function setPageTitle(string $title)
+    public function setPageTitle(string $title): void
     {
         view()->share('pageTitle', $title);
     }
 
     /**
-     * On a permission error redirect to home and display.
-     * the error as a notification.
+     * On a permission error redirect to home and display the error as a notification.
      *
      * @throws NotifyException
      */
@@ -61,9 +61,9 @@ abstract class Controller extends BaseController
     /**
      * Checks that the current user has the given permission otherwise throw an exception.
      */
-    protected function checkPermission(string $permission): void
+    protected function checkPermission(string|Permission $permission): void
     {
-        if (!user() || !user()->can($permission)) {
+        if (!user()->can($permission)) {
             $this->showPermissionError();
         }
     }
@@ -81,7 +81,7 @@ abstract class Controller extends BaseController
     /**
      * Check the current user's permissions against an ownable item otherwise throw an exception.
      */
-    protected function checkOwnablePermission(string $permission, Model $ownable, string $redirectLocation = '/'): void
+    protected function checkOwnablePermission(string|Permission $permission, Model&OwnableInterface $ownable, string $redirectLocation = '/'): void
     {
         if (!userCan($permission, $ownable)) {
             $this->showPermissionError($redirectLocation);
@@ -92,7 +92,7 @@ abstract class Controller extends BaseController
      * Check if a user has a permission or bypass the permission
      * check if the given callback resolves true.
      */
-    protected function checkPermissionOr(string $permission, callable $callback): void
+    protected function checkPermissionOr(string|Permission $permission, callable $callback): void
     {
         if ($callback() !== true) {
             $this->checkPermission($permission);
@@ -103,7 +103,7 @@ abstract class Controller extends BaseController
      * Check if the current user has a permission or bypass if the provided user
      * id matches the current user.
      */
-    protected function checkPermissionOrCurrentUser(string $permission, int $userId): void
+    protected function checkPermissionOrCurrentUser(string|Permission $permission, int $userId): void
     {
         $this->checkPermissionOr($permission, function () use ($userId) {
             return $userId === user()->id;
@@ -111,7 +111,7 @@ abstract class Controller extends BaseController
     }
 
     /**
-     * Send back a json error message.
+     * Send back a JSON error message.
      */
     protected function jsonError(string $messageText = '', int $statusCode = 500): JsonResponse
     {
@@ -121,13 +121,13 @@ abstract class Controller extends BaseController
     /**
      * Create and return a new download response factory using the current request.
      */
-    protected function download(): DownloadResponseFactory
+    protected function createDownload(): DownloadResponseFactory
     {
         return new DownloadResponseFactory(request());
     }
 
     /**
-     * Show a positive, successful notification to the user on next view load.
+     * Show a positive, successful notification to the user on the next view load.
      */
     protected function showSuccessNotification(string $message): void
     {
@@ -135,7 +135,7 @@ abstract class Controller extends BaseController
     }
 
     /**
-     * Show a warning notification to the user on next view load.
+     * Show a warning notification to the user on the next view load.
      */
     protected function showWarningNotification(string $message): void
     {
@@ -143,7 +143,7 @@ abstract class Controller extends BaseController
     }
 
     /**
-     * Show an error notification to the user on next view load.
+     * Show an error notification to the user on the next view load.
      */
     protected function showErrorNotification(string $message): void
     {
@@ -168,14 +168,26 @@ abstract class Controller extends BaseController
 
     /**
      * Redirect to the URL provided in the request as a '_return' parameter.
-     * Will check that the parameter leads to a URL under the root path of the system.
+     * Will check that the parameter leads to a URL under the same origin as the application.
      */
     protected function redirectToRequest(Request $request): RedirectResponse
     {
         $basePath = url('/');
         $returnUrl = $request->input('_return') ?? $basePath;
 
-        if (!str_starts_with($returnUrl, $basePath)) {
+        // Only allow use of _return on requests where we expect CSRF to be active
+        // to prevent it potentially being used as an open redirect
+        $allowedMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+        if (!in_array($request->getMethod(), $allowedMethods)) {
+            return redirect($basePath);
+        }
+
+        $intendedUrl = parse_url($returnUrl);
+        $baseUrl = parse_url($basePath);
+        $isSameOrigin = ($intendedUrl['host'] ?? '') === ($baseUrl['host'] ?? '')
+            && ($intendedUrl['scheme'] ?? '') === ($baseUrl['scheme'] ?? '')
+            && ($intendedUrl['port'] ?? 0) === ($baseUrl['port'] ?? 0);
+        if (!$isSameOrigin) {
             return redirect($basePath);
         }
 

@@ -23,7 +23,7 @@ class RecycleBinApiTest extends TestCase
     {
         $editor = $this->users->editor();
         $this->permissions->grantUserRolePermissions($editor, ['settings-manage']);
-        $this->actingAs($editor);
+        $this->actingAsForApi($editor);
 
         foreach ($this->endpointMap as [$method, $uri]) {
             $resp = $this->json($method, $uri);
@@ -36,7 +36,7 @@ class RecycleBinApiTest extends TestCase
     {
         $editor = $this->users->editor();
         $this->permissions->grantUserRolePermissions($editor, ['restrictions-manage-all']);
-        $this->actingAs($editor);
+        $this->actingAsForApi($editor);
 
         foreach ($this->endpointMap as [$method, $uri]) {
             $resp = $this->json($method, $uri);
@@ -53,6 +53,7 @@ class RecycleBinApiTest extends TestCase
         $book = $this->entities->book();
         $this->actingAs($admin)->delete($page->getUrl());
         $this->delete($book->getUrl());
+        $this->actingAsForApi($admin);
 
         $deletions = Deletion::query()->orderBy('id')->get();
 
@@ -89,7 +90,7 @@ class RecycleBinApiTest extends TestCase
 
         $deletion = Deletion::query()->orderBy('id')->first();
 
-        $resp = $this->getJson($this->baseEndpoint);
+        $resp = $this->actingAsForApi($admin)->getJson($this->baseEndpoint);
 
         $expectedData = [
             [
@@ -115,6 +116,7 @@ class RecycleBinApiTest extends TestCase
         $this->actingAs($admin)->delete($page->getUrl());
         $deletion = Deletion::query()->orderBy('id')->first();
 
+        $this->actingAsForApi($admin);
         $resp = $this->getJson($this->baseEndpoint);
 
         $expectedData = [
@@ -141,10 +143,11 @@ class RecycleBinApiTest extends TestCase
         $page = $this->entities->page();
         $this->asAdmin()->delete($page->getUrl());
         $page->refresh();
+        $this->actingAsApiAdmin();
 
         $deletion = Deletion::query()->orderBy('id')->first();
 
-        $this->assertDatabaseHas('pages', [
+        $this->assertDatabaseHasEntityData('page', [
             'id'            => $page->id,
             'deleted_at'    => $page->deleted_at,
         ]);
@@ -154,7 +157,7 @@ class RecycleBinApiTest extends TestCase
             'restore_count' => 1,
         ]);
 
-        $this->assertDatabaseHas('pages', [
+        $this->assertDatabaseHasEntityData('page', [
             'id'            => $page->id,
             'deleted_at'    => null,
         ]);
@@ -165,10 +168,11 @@ class RecycleBinApiTest extends TestCase
         $page = $this->entities->page();
         $this->asAdmin()->delete($page->getUrl());
         $page->refresh();
+        $this->actingAsApiAdmin();
 
         $deletion = Deletion::query()->orderBy('id')->first();
 
-        $this->assertDatabaseHas('pages', [
+        $this->assertDatabaseHasEntityData('page', [
             'id'            => $page->id,
             'deleted_at'    => $page->deleted_at,
         ]);
@@ -178,6 +182,6 @@ class RecycleBinApiTest extends TestCase
             'delete_count' => 1,
         ]);
 
-        $this->assertDatabaseMissing('pages', ['id' => $page->id]);
+        $this->assertDatabaseMissing('entities', ['id' => $page->id, 'type' => 'page']);
     }
 }

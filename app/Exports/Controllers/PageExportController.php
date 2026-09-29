@@ -8,6 +8,7 @@ use BookStack\Exceptions\NotFoundException;
 use BookStack\Exports\ExportFormatter;
 use BookStack\Exports\ZipExports\ZipExportBuilder;
 use BookStack\Http\Controller;
+use BookStack\Permissions\Permission;
 use Throwable;
 
 class PageExportController extends Controller
@@ -16,7 +17,7 @@ class PageExportController extends Controller
         protected PageQueries $queries,
         protected ExportFormatter $exportFormatter,
     ) {
-        $this->middleware('can:content-export');
+        $this->middleware(Permission::ContentExport->middleware());
         $this->middleware('throttle:exports');
     }
 
@@ -33,7 +34,7 @@ class PageExportController extends Controller
         $page->html = (new PageContent($page))->render();
         $pdfContent = $this->exportFormatter->pageToPdf($page);
 
-        return $this->download()->directly($pdfContent, $pageSlug . '.pdf');
+        return $this->createDownload()->directly($pdfContent, $pageSlug . '.pdf');
     }
 
     /**
@@ -48,7 +49,7 @@ class PageExportController extends Controller
         $page->html = (new PageContent($page))->render();
         $containedHtml = $this->exportFormatter->pageToContainedHtml($page);
 
-        return $this->download()->directly($containedHtml, $pageSlug . '.html');
+        return $this->createDownload()->directly($containedHtml, $pageSlug . '.html');
     }
 
     /**
@@ -61,7 +62,7 @@ class PageExportController extends Controller
         $page = $this->queries->findVisibleBySlugsOrFail($bookSlug, $pageSlug);
         $pageText = $this->exportFormatter->pageToPlainText($page);
 
-        return $this->download()->directly($pageText, $pageSlug . '.txt');
+        return $this->createDownload()->directly($pageText, $pageSlug . '.txt');
     }
 
     /**
@@ -74,7 +75,7 @@ class PageExportController extends Controller
         $page = $this->queries->findVisibleBySlugsOrFail($bookSlug, $pageSlug);
         $pageText = $this->exportFormatter->pageToMarkdown($page);
 
-        return $this->download()->directly($pageText, $pageSlug . '.md');
+        return $this->createDownload()->directly($pageText, $pageSlug . '.md');
     }
 
     /**
@@ -86,6 +87,6 @@ class PageExportController extends Controller
         $page = $this->queries->findVisibleBySlugsOrFail($bookSlug, $pageSlug);
         $zip = $builder->buildForPage($page);
 
-        return $this->download()->streamedFileDirectly($zip, $pageSlug . '.zip', true);
+        return $this->createDownload()->streamedFileDirectly($zip, $pageSlug . '.zip', true);
     }
 }

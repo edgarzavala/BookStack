@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute(을)를 문자, 숫자로만 구성하세요.',
     'array'                => ':attribute(을)를 배열로 구성하세요.',
     'backup_codes'         => '유효하지 않거나 사용 중인 코드입니다.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute(을)를 :date 전으로 설정하세요.',
     'between'              => [
         'numeric' => ':attribute(을)를 :min~:max(으)로 구성하세요.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute(을)를 true나 false로만 구성하세요.',
     'confirmed'            => ':attribute(와)과 다릅니다.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute(을)를 유효한 날짜로 구성하세요.',
     'date_format'          => ':attribute(은)는 :format(와)과 다릅니다.',
     'different'            => ':attribute(와)과 :other(을)를 다르게 구성하세요.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => '파일 크기가 서버에서 허용하는 수치를 넘습니다.',
 
     'zip_file' => ':attribute은(는) 컨텐츠 ZIP 파일 내의 객체 유형에 대해 고유해야 합니다.',
+    'zip_file_size' => 'The file :attribute must not exceed :size MB.',
     'zip_file_mime' => ':attribute은(는)  :validTypes, found :foundType 유형의 파일을 참조해야 합니다.',
     'zip_model_expected' => '데이터 객체가 필요하지만 ":type" 타입이 발견되었습니다.',
     'zip_unique' => ':attribute은(는) 컨텐츠 ZIP 파일 내의 객체 유형에 대해 고유해야 합니다.',

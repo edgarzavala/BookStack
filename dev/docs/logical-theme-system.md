@@ -74,7 +74,7 @@ Theme::registerCommand(new SayHelloCommand());
 
 ## Available Events
 
-All available events dispatched by BookStack are exposed as static properties on the `\BookStack\Theming\ThemeEvents` class, which can be found within the file `app/Theming/ThemeEvents.php` relative to your root BookStack folder. Alternatively, the events for the latest release can be [seen on GitHub here](https://github.com/BookStackApp/BookStack/blob/release/app/Theming/ThemeEvents.php).
+All available events dispatched by BookStack are exposed as static properties on the `\BookStack\Theming\ThemeEvents` class, which can be found within the file `app/Theming/ThemeEvents.php` relative to your root BookStack folder. Alternatively, the events for the latest release can be [seen on Codeberg here](https://codeberg.org/bookstack/bookstack/src/branch/release/app/Theming/ThemeEvents.php).
 
 The comments above each constant with the `ThemeEvents.php` file describe the dispatch conditions of the event, in addition to the arguments the action will receive. The comments may also describe any ways the return value of the action may be used. 
 
@@ -98,6 +98,41 @@ Theme::listen(ThemeEvents::APP_BOOT, function($app) {
     });
 });
 ```
+
+## Custom View Registration Example
+
+Using the logical theme system, you can register custom views to be rendered before/after other existing views, providing a flexible way to add content without needing to override and/or replicate existing content. This is done by listening to the `THEME_REGISTER_VIEWS`.
+
+**Note:** You don't need to use this to override existing views, or register whole new main views to use, since that's done automatically based on their existence. This is just for advanced capabilities like inserting before/after existing views.
+
+This event provides a `ThemeViews` instance which has the following methods made available:
+
+- `renderBefore(string $targetView, string $localView, int $priority)`
+- `renderAfter(string $targetView, string $localView, int $priority)`
+
+The target view is the name of that which we want to insert our custom view relative to.
+The local view is the name of the view we want to add and render.
+The priority provides a suggestion to the ordering of view display, with lower numbers being shown first. This defaults to 50 if not provided.
+
+Here's an example of this in use:
+
+```php
+<?php
+
+use BookStack\Facades\Theme;
+use BookStack\Theming\ThemeEvents;
+use BookStack\Theming\ThemeViews;
+
+Theme::listen(ThemeEvents::THEME_REGISTER_VIEWS, function (ThemeViews $themeViews) {
+    $themeViews->renderBefore('layouts.parts.header', 'welcome-banner', 4);
+    $themeViews->renderAfter('layouts.parts.header', 'information-alert');
+    $themeViews->renderAfter('layouts.parts.header', 'additions.password-notice', 20);
+});
+```
+
+In this example, we're inserting custom views before and after the main header bar.
+BookStack will look for a `welcome-banner.blade.php` file within our theme folder (or a theme module view folder) to render before the header. It'll look for the `information-alert.blade.php` and `additions/password-notice.blade.php` views to render afterwards.
+The password notice will be shown above the information alert view, since it has a specified priority of 20, whereas the information alert view would default to a priority of 50.
 
 ## Custom Command Registration Example
 
@@ -159,3 +194,110 @@ Theme::addSocialDriver('reddit', [
     $driver->scopes(['open_id']);
 });
 ```
+
+## Custom View Layout Block Example
+
+By listening to the `ThemeEvents::VIEW_BLOCKS_REGISTER` event, it's possible to register
+custom view blocks which can be shown in a layout in the application. View blocks are typically the sections shown in the sidebar,
+or the cards shown on the home view.
+
+As an example of using this system, we'll define a custom view block which will show on the default home view to state how many
+books there are in the system.
+To start, we'll need to create a custom class to represent our view block.
+This must implement `\BookStack\View\ViewBlockInterface`, but we'd advise extending `\BookStack\View\BaseViewBlock` since this will
+be used as a core reference implementation, and is intended to be forward compatible with future changes:
+
+```php
+use BookStack\Entities\Queries\BookQueries;
+use BookStack\View\BaseViewBlock;
+use BookStack\View\ViewBlockManager;
+
+class BookTotalBlock extends BaseViewBlock {
+
+    public function __construct(
+        protected BookQueries $bookQueries
+    ) {
+    }
+
+    public static function getId(): string
+    {
+        return 'custom_book_total_block';
+    }
+
+    public static function getLabel(): string
+    {
+        return 'Total books display';
+    }
+
+    public function getView(array $viewData): string
+    {
+        return 'blocks.total-books';
+    }
+
+    public function getViewData(array $viewData): array
+    {
+        $totalBooks = $this->bookQueries->visibleForList()->count();
+        return [
+            'totalBooks' => $totalBooks,
+        ];
+    }
+}
+```
+
+The interface has a few required methods:
+
+- The `getId` method must provide a unique per-block-type string ID.
+- The `getLabel` method must provide a general string label for the block.
+- The `getView` method provides a string path to a view file (Can be one custom registered).
+  - This is provided the available view data at time of render, so it can be dynamic based on context. 
+- The `getViewData` method is called when the block is being rendered, and it should return an array of data which will be merged with existing view data.
+  - This is also provided with the available view data, for use as context.
+
+In this example, we're also making use of the `BookQueries` internal BookStack class.
+You're able to inject any other dependent classes/services via the constructor like this, and BookStack will attempt to auto-resolve them.
+_Keep in mind that any used internal BookStack services or classes are not assured to be stable, so may receive breaking changes on update._
+
+We can then register our custom block class using the logical theme system like so:
+
+```php
+use BookStack\Facades\Theme;
+use BookStack\Theming\ThemeEvents;
+use BookStack\View\ViewBlockManager;
+
+Theme::listen(ThemeEvents::VIEW_BLOCKS_REGISTER, function (ViewBlockManager $manager) {
+    $manager->register(
+        'home-default',       // The location/layout where this block will be displayed
+        'right',              // The default position for the block within the location
+        BookTotalBlock::class // The block class to register
+    );
+});
+```
+
+Available locations and positions can be found in the [ViewBlockDefaults](../../app/View/ViewBlockDefaults.php)
+class, with locations being the top-level keys, and positions for each location being the nested keys.
+
+The above registration code would typically be within your `functions.php` theme file.
+You could also define the above block class in the same file, or separate it into its own class file
+and include it from the `functions.php` via a `require_once()` call.
+
+Lastly, we'll need to create the view for the registered block.
+In our example we return `blocks.total-books` from the `getView` method, so our view needs to be located at
+`blocks/total-books.blade.php` from a view providing directory. 
+In a theme folder, we can just create it at `blocks/total-books.blade.php` within the folder path.
+If we were building in a module, we'd need to create this at `views/blocks/total-books.blade.php` within our module folder.
+For our example, we'll use this content to make use of the data we're passing to the view:
+
+```html
+<div class="card mb-xl">
+  <h3 class="card-title">Total Books</h3>
+  <div class="px-m pb-xs">
+    <p>
+      There are currently {{ $totalBooks }} books in the system!
+    </p>
+  </div>
+</div>
+```
+
+This will then show up on the default home grid view, in the right column.
+The exact position within that location may change depending on user preferences, but the block will be limited
+to the layout location provided during registration unless it has also been registered for other locations.

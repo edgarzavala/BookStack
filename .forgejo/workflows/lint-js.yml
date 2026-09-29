@@ -1,0 +1,27 @@
+name: lint-js
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**.js'
+      - '**.json'
+  pull_request:
+    paths:
+      - '**.js'
+      - '**.json'
+
+jobs:
+  build:
+    if: ${{ github.ref != 'refs/heads/l10n_development' }}
+    runs-on: docker
+    container:
+      image: docker.io/library/node:24-trixie
+    steps:
+    - uses: https://code.forgejo.org/actions/checkout@v6
+
+    - name: Install NPM deps
+      run: npm ci
+
+    - name: Run formatting check
+      run: npm run lint

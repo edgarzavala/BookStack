@@ -6,10 +6,13 @@ import {DecoratorListener} from "lexical/LexicalEditor";
 import type {NodeKey} from "lexical/LexicalNode";
 import {EditorContextToolbar, EditorContextToolbarDefinition} from "./toolbars";
 import {getLastSelection, setLastSelection} from "../../utils/selection";
+import {DropDownManager} from "./helpers/dropdowns";
 
 export type SelectionChangeHandler = (selection: BaseSelection|null) => void;
 
 export class EditorUIManager {
+
+    public dropdowns: DropDownManager = new DropDownManager();
 
     protected modalDefinitionsByKey: Record<string, EditorFormModalDefinition> = {};
     protected activeModalsByKey: Record<string, EditorFormModal> = {};
@@ -20,11 +23,15 @@ export class EditorUIManager {
     protected contextToolbarDefinitionsByKey: Record<string, EditorContextToolbarDefinition> = {};
     protected activeContextToolbars: EditorContextToolbar[] = [];
     protected selectionChangeHandlers: Set<SelectionChangeHandler> = new Set();
+    protected layoutUpdateHandlers: Set<() => void> = new Set();
+    protected domEventAbortController = new AbortController();
+    protected teardownCallbacks: (()=>void)[] = [];
 
     setContext(context: EditorUiContext) {
         this.context = context;
-        this.setupEventListeners(context);
-        this.setupEditor(context.editor);
+        this.setupEventListeners();
+        this.setupEditor(context.editor, context);
+        this.dropdowns.setIsRTL(this.context.manager.getDefaultDirection() === 'rtl');
     }
 
     getContext(): EditorUiContext {
@@ -85,7 +92,7 @@ export class EditorUIManager {
         }
 
         // @ts-ignore
-        const decorator = new decoratorClass(nodeKey);
+        const decorator = new decoratorClass(this.getContext());
         this.decoratorInstancesByNodeKey[nodeKey] = decorator;
         return decorator;
     }
@@ -96,12 +103,16 @@ export class EditorUIManager {
 
     setToolbar(toolbar: EditorContainerUiElement) {
         if (this.toolbar) {
-            this.toolbar.getDOMElement().remove();
+            this.toolbar.teardown();
         }
 
         this.toolbar = toolbar;
         toolbar.setContext(this.getContext());
         this.getContext().containerDOM.prepend(toolbar.getDOMElement());
+    }
+
+    getToolbar(): EditorContainerUiElement|null {
+        return this.toolbar;
     }
 
     registerContextToolbar(key: string, definition: EditorContextToolbarDefinition) {
@@ -155,10 +166,24 @@ export class EditorUIManager {
         this.selectionChangeHandlers.delete(handler);
     }
 
+    onLayoutUpdate(handler: () => void): void {
+        this.layoutUpdateHandlers.add(handler);
+    }
+
+    offLayoutUpdate(handler: () => void): void {
+        this.layoutUpdateHandlers.delete(handler);
+    }
+
     triggerLayoutUpdate(): void {
         window.requestAnimationFrame(() => {
+            const toolbarBounds: (DOMRect|null)[] = [];
             for (const toolbar of this.activeContextToolbars) {
-                toolbar.updatePosition();
+                const bounds = toolbar.updatePosition(toolbarBounds);
+                toolbarBounds.push(bounds);
+            }
+
+            for (const handler of this.layoutUpdateHandlers) {
+                handler();
             }
         });
     }
@@ -167,10 +192,48 @@ export class EditorUIManager {
         return this.getContext().options.textDirection === 'rtl' ? 'rtl' : 'ltr';
     }
 
+    onTeardown(callback: () => void): void {
+        this.teardownCallbacks.push(callback);
+    }
+
+    teardown(): void {
+        this.domEventAbortController.abort('teardown');
+
+        for (const [_, modal] of Object.entries(this.activeModalsByKey)) {
+            modal.teardown();
+        }
+
+        for (const [_, decorator] of Object.entries(this.decoratorInstancesByNodeKey)) {
+            decorator.teardown();
+        }
+
+        if (this.toolbar) {
+            this.toolbar.teardown();
+        }
+
+        for (const toolbar of this.activeContextToolbars) {
+            toolbar.teardown();
+        }
+
+        this.dropdowns.teardown();
+
+        for (const callback of this.teardownCallbacks) {
+            callback();
+        }
+    }
+
+    /**
+     * Set the UI focus to the editor.
+     */
+    focus(): void {
+        this.getContext().editorDOM.focus();
+        this.getContext().editor.focus();
+    }
+
     protected updateContextToolbars(update: EditorUiStateUpdate): void {
         for (let i = this.activeContextToolbars.length - 1; i >= 0; i--) {
             const toolbar = this.activeContextToolbars[i];
-            toolbar.destroy();
+            toolbar.teardown();
             this.activeContextToolbars.splice(i, 1);
         }
 
@@ -195,21 +258,26 @@ export class EditorUIManager {
                     contentByTarget.set(targetEl, [])
                 }
                 // @ts-ignore
-                contentByTarget.get(targetEl).push(...definition.content);
+                contentByTarget.get(targetEl).push(...definition.content());
             }
         }
 
+        const toolbarBounds: (DOMRect|null)[] = [];
         for (const [target, contents] of contentByTarget) {
             const toolbar = new EditorContextToolbar(target, contents);
             toolbar.setContext(this.getContext());
             this.activeContextToolbars.push(toolbar);
 
             this.getContext().containerDOM.append(toolbar.getDOMElement());
-            toolbar.updatePosition();
+            const bounds = toolbar.updatePosition(toolbarBounds);
+            toolbarBounds.push(bounds);
         }
     }
 
-    protected setupEditor(editor: LexicalEditor) {
+    protected setupEditor(editor: LexicalEditor, context: EditorUiContext) {
+        // Pass the context to the editor
+        editor.setUiContext(context);
+
         // Register our DOM decorate listener with the editor
         const domDecorateListener: DecoratorListener<EditorDecoratorAdapter> = (decorators: Record<NodeKey, EditorDecoratorAdapter>) => {
             editor.getEditorState().read(() => {
@@ -223,7 +291,7 @@ export class EditorUIManager {
                     const adapter = decorators[key];
                     const decorator = this.getDecorator(adapter.type, key);
                     decorator.setNode(adapter.getNode());
-                    const decoratorEl = decorator.render(this.getContext(), decoratedEl);
+                    const decoratorEl = decorator.render(decoratedEl);
                     if (decoratorEl) {
                         decoratedEl.append(decoratorEl);
                     }
@@ -241,6 +309,7 @@ export class EditorUIManager {
             if (selectionChange) {
                 editor.update(() => {
                     const selection = $getSelection();
+                    // console.log('manager::selection', selection);
                     this.triggerStateUpdate({
                         editor, selection,
                     });
@@ -249,9 +318,9 @@ export class EditorUIManager {
         });
     }
 
-    protected setupEventListeners(context: EditorUiContext) {
+    protected setupEventListeners() {
         const layoutUpdate = this.triggerLayoutUpdate.bind(this);
-        window.addEventListener('scroll', layoutUpdate, {capture: true, passive: true});
-        window.addEventListener('resize', layoutUpdate, {passive: true});
+        window.addEventListener('scroll', layoutUpdate, {capture: true, passive: true, signal: this.domEventAbortController.signal});
+        window.addEventListener('resize', layoutUpdate, {passive: true, signal: this.domEventAbortController.signal});
     }
 }

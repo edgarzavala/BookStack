@@ -63,6 +63,10 @@ return [
     'import_delete_desc' => 'Isto irá excluir o arquivo ZIP de importação carregado e não poderá ser desfeito.',
     'import_errors' => 'Erros de importação',
     'import_errors_desc' => 'Os seguintes erros ocorreram durante a tentativa de importação:',
+    'breadcrumb_siblings_for_page' => 'Navegue pelas páginas relacionadas',
+    'breadcrumb_siblings_for_chapter' => 'Navegue pelos capítulos relacionados',
+    'breadcrumb_siblings_for_book' => 'Navegue pelos livros relacionados',
+    'breadcrumb_siblings_for_bookshelf' => 'Navegue pelas estantes relacionadas',
 
     // Permissions and restrictions
     'permissions' => 'Permissões',
@@ -169,6 +173,7 @@ return [
     'books_sort_desc' => 'Mova capítulos e páginas de um livro para reorganizar seu conteúdo. É possível acrescentar outros livros, o que permite uma movimentação fácil de capítulos e páginas entre livros. Opcionalmente, uma regra de ordenação automática pode ser definida para ordenar automaticamente o conteúdo deste livro após alterações.',
     'books_sort_auto_sort' => 'Opção de ordenação automática',
     'books_sort_auto_sort_active' => 'Ordenação automática ativa: :sortName',
+    'books_sort_auto_sort_creation_hint' => 'Regras de ordenação automática podem ser criadas na área de configurações "Lista e Classificação" por um usuário com as permissões relevantes.',
     'books_sort_named' => 'Ordenar Livro :bookName',
     'books_sort_name' => 'Ordernar por Nome',
     'books_sort_created' => 'Ordenar por Data de Criação',
@@ -214,7 +219,7 @@ return [
     'chapters_permissions_active' => 'Permissões de Capítulo Ativas',
     'chapters_permissions_success' => 'Permissões de Capítulo Atualizadas',
     'chapters_search_this' => 'Pesquisar neste Capítulo',
-    'chapter_sort_book' => 'Classificar livro',
+    'chapter_sort_book' => 'Ordenar livro',
 
     // Pages
     'page' => 'Página',
@@ -248,7 +253,7 @@ return [
     'pages_edit_switch_to_markdown_stable' => '(Conteúdo Estável)',
     'pages_edit_switch_to_wysiwyg' => 'Alternar para o Editor WYSIWYG',
     'pages_edit_switch_to_new_wysiwyg' => 'Mudar para o novo WYSIWYG',
-    'pages_edit_switch_to_new_wysiwyg_desc' => '(Em teste alfa)',
+    'pages_edit_switch_to_new_wysiwyg_desc' => '(Em teste beta)',
     'pages_edit_set_changelog' => 'Relatar Alterações',
     'pages_edit_enter_changelog_desc' => 'Digite uma breve descrição das alterações efetuadas por você',
     'pages_edit_enter_changelog' => 'Insira Alterações',
@@ -268,6 +273,7 @@ return [
     'pages_md_insert_drawing' => 'Inserir Diagrama',
     'pages_md_show_preview' => 'Mostrar pré-visualização',
     'pages_md_sync_scroll' => 'Sincronizar pré-visualização',
+    'pages_md_plain_editor' => 'Editor de texto simples',
     'pages_drawing_unsaved' => 'Diagrama não-salvo encontrado',
     'pages_drawing_unsaved_confirm' => 'Foram encontrados dados não-salvos de uma tentativa anterior de salvar o diagrama. Você gostaria de restaurá-los e continuar editando este diagrama?',
     'pages_not_in_chapter' => 'Página não está dentro de um capítulo',
@@ -325,6 +331,9 @@ return [
 
     // Editor Sidebar
     'toggle_sidebar' => '',
+    'page_contents' => 'Conteúdos da página',
+    'page_contents_none' => 'Nenhum título foi encontrado no conteúdo da página.',
+    'page_contents_info' => 'O menu de conteúdo é gerado a partir de qualquer formato de cabeçalho usado na página.',
     'page_tags' => 'Marcadores de Página',
     'chapter_tags' => 'Marcadores de Capítulo',
     'book_tags' => 'Marcadores de Livro',
@@ -392,8 +401,11 @@ return [
     'comment' => 'Comentário',
     'comments' => 'Comentários',
     'comment_add' => 'Adicionar Comentário',
+    'comment_none' => 'Nenhum comentário para exibir',
     'comment_placeholder' => 'Digite seus comentários aqui',
-    'comment_count' => '{0} Nenhum comentário|{1} 1 Comentário|[2,*] :count Comentários',
+    'comment_thread_count' => ':count Tópico de Comentário|:count Tópicos de Comentários',
+    'comment_archived_count' => ':count Arquivado',
+    'comment_archived_threads' => 'Tópicos Arquivados',
     'comment_save' => 'Salvar comentário',
     'comment_new' => 'Novo Comentário',
     'comment_created' => 'comentado :createDiff',
@@ -402,8 +414,14 @@ return [
     'comment_deleted_success' => 'Comentário removido',
     'comment_created_success' => 'Comentário adicionado',
     'comment_updated_success' => 'Comentário editado',
+    'comment_archive_success' => 'Comentário arquivado',
+    'comment_unarchive_success' => 'Comentário desarquivado',
+    'comment_view' => 'Ver comentário',
+    'comment_jump_to_thread' => 'Ir para o tópico',
     'comment_delete_confirm' => 'Você tem certeza de que deseja excluir este comentário?',
     'comment_in_reply_to' => 'Em resposta à :commentId',
+    'comment_reference' => 'Referência',
+    'comment_reference_outdated' => '(Desatualizado)',
     'comment_editor_explain' => 'Aqui estão os comentários que foram deixados nesta página. Comentários podem ser adicionados e gerenciados ao visualizar a página salva.',
 
     // Revision

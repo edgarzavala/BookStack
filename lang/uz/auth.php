@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Uchbu ma‘lumotlar, bizdagi ma‘lumotlarga mos kelmadi.',
     'throttle' => 'Kirishga urinishlar juda ko‘p. Iltimos :seconds soniyadan so‘ng urinib ko‘ring.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'Ro‘yxatdan o‘tish',
@@ -20,6 +21,9 @@ return [
     'username' => 'Foydalanuvchi nomi',
     'email' => 'Elektron pochta',
     'password' => 'Parol',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Parolni tasdiqlash',
     'password_hint' => 'Kamida 8 belgi bo‘lishi kerak',
     'forgot_password' => 'Parolni unutdingizmi?',
@@ -91,7 +95,7 @@ return [
     'mfa_option_totp_title' => 'Mobil ilova',
     'mfa_option_totp_desc' => 'Ko‘p faktorli autentifikatsiyadan foydalanish uchun sizga Google Authenticator, Authy yoki Microsoft Authenticator kabi OTPni qo‘llab-quvvatlaydigan mobil ilova kerak bo‘ladi.',
     'mfa_option_backup_codes_title' => 'Zaxira kodlari',
-    'mfa_option_backup_codes_desc' => 'Generates a set of one-time-use backup codes which you\'ll enter on login to verify your identity. Make sure to store these in a safe & secure place.',
+    'mfa_option_backup_codes_desc' => 'Shaxsingizni tasdiqlash uchun tizimga kirishda kiritadigan bir martalik zaxira kodlari to\'plamini yaratadi. Bularni xavfsiz va ishonchli joyda saqlang.',
     'mfa_gen_confirm_and_enable' => 'Tasdiqlash va yoqish',
     'mfa_gen_backup_codes_title' => 'Zaxira kodlarini sozlash',
     'mfa_gen_backup_codes_desc' => 'Quyidagi kodlar ro‘yxatini xavfsiz joyda saqlang. Tizimga kirishda siz kodlardan birini ikkinchi autentifikatsiya mexanizmi sifatida ishlatishingiz mumkin.',

@@ -88,7 +88,11 @@
                 @foreach($activities as $activity)
                     <div class="item-list-row flex-container-row items-center wrap py-xxs">
                         <div class="flex-2 px-m py-xxs flex-container-row items-center min-width-m">
-                            @include('settings.parts.table-user', ['user' => $activity->user, 'user_id' => $activity->user_id])
+                            @if($activity->user && $activity->user->created_at <= $activity->created_at)
+                                @include('settings.parts.table-user', ['user' => $activity->user])
+                            @else
+                                [ID: {{ $activity->user_id }}] {{ trans('common.deleted_user') }}
+                            @endif
                         </div>
                         <div class="flex-2 px-m py-xxs min-width-m"><strong
                                     class="mr-xs hide-over-m">{{ trans('settings.audit_table_event') }}
@@ -111,7 +115,7 @@
                                     :<br></strong> {{ $activity->ip }}</div>
                             <div class="flex-3 px-m py-xxs text-m-right min-width-xs"><strong
                                         class="mr-xs hide-over-m">{{ trans('settings.audit_table_date') }}
-                                    :<br></strong> {{ $activity->created_at }}</div>
+                                    :<br></strong> {{ $dates->absolute($activity->created_at) }}</div>
                         </div>
                     </div>
                 @endforeach

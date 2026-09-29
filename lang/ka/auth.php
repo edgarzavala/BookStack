@@ -8,6 +8,7 @@ return [
 
     'failed' => 'These credentials do not match our records.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'Sign up',
@@ -20,6 +21,9 @@ return [
     'username' => 'Username',
     'email' => 'Email',
     'password' => 'Password',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Confirm Password',
     'password_hint' => 'Must be at least 8 characters',
     'forgot_password' => 'Forgot Password?',

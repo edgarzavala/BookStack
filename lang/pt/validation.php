@@ -16,6 +16,7 @@ return [
     'alpha_num'            => 'O campo :attribute deve conter apenas letras e números.',
     'array'                => 'O campo :attribute deve ser uma lista(array).',
     'backup_codes'         => 'O código fornecido não é válido ou já foi utilizado.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => 'O campo :attribute deve ser uma data anterior à data :date.',
     'between'              => [
         'numeric' => 'O campo :attribute deve estar entre :min e :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => 'O campo :attribute deve ser verdadeiro ou falso.',
     'confirmed'            => 'O campo :attribute não é igual à sua confirmação.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => 'O campo :attribute não está num formato de data válido.',
     'date_format'          => 'O campo :attribute não tem a formatação :format.',
     'different'            => 'O campo :attribute e o campo :other devem ser diferentes.',
@@ -105,10 +107,11 @@ return [
     'url'                  => 'O formato da URL :attribute é inválido.',
     'uploaded'             => 'O arquivo não pôde ser carregado. O servidor pode não aceitar arquivos deste tamanho.',
 
-    'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
-    'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
-    'zip_model_expected' => 'Data object expected but ":type" found.',
-    'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',
+    'zip_file' => 'O :attribute deve referenciar um ficheiro dentro do ZIP.',
+    'zip_file_size' => 'O ficheiro :attribute não deve exceder :size MB.',
+    'zip_file_mime' => 'O :attribute deve referenciar um ficheiro do tipo :validTypes, encontrado em :foundType.',
+    'zip_model_expected' => 'Era esperado um objeto de dados, mas foi encontrado “:type”.',
+    'zip_unique' => 'O :attribute deve ser único para o tipo de objeto dentro do ficheiro ZIP.',
 
     // Custom validation lines
     'custom' => [

@@ -30,6 +30,8 @@ return [
     'create' => 'Δημιουργία',
     'update' => 'Ενημέρωση',
     'edit' => 'Επεξεργασία',
+    'archive' => 'Archive',
+    'unarchive' => 'Un-Archive',
     'sort' => 'Ταξινόμηση',
     'move' => 'Μετακίνηση',
     'copy' => 'Αντιγραφή',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Αδρανής',
     'never' => 'Ποτέ',
     'none' => 'Κανένας',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Αρχική σελίδα',

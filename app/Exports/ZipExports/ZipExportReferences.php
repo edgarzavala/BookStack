@@ -14,24 +14,26 @@ use BookStack\Exports\ZipExports\Models\ZipExportModel;
 use BookStack\Exports\ZipExports\Models\ZipExportPage;
 use BookStack\Uploads\Attachment;
 use BookStack\Uploads\Image;
+use BookStack\Uploads\ImageService;
 
 class ZipExportReferences
 {
-    /** @var ZipExportPage[] */
+    /** @var array<int, ZipExportPage> */
     protected array $pages = [];
-    /** @var ZipExportChapter[] */
+    /** @var array<int, ZipExportChapter> */
     protected array $chapters = [];
-    /** @var ZipExportBook[] */
+    /** @var array<int, ZipExportBook> */
     protected array $books = [];
 
-    /** @var ZipExportAttachment[] */
+    /** @var array<int, ZipExportAttachment> */
     protected array $attachments = [];
 
-    /** @var ZipExportImage[] */
+    /** @var array<int, ZipExportImage> */
     protected array $images = [];
 
     public function __construct(
         protected ZipReferenceParser $parser,
+        protected ImageService $imageService,
     ) {
     }
 
@@ -132,16 +134,25 @@ class ZipExportReferences
                 return "[[bsexport:image:{$model->id}]]";
             }
 
-            // Find and include images if in visibility
+            // Get the page which we'll reference this image upon
             $page = $model->getPage();
-            if ($page && userCan('view', $page)) {
+            $pageExportModel = null;
+            if ($page && isset($this->pages[$page->id])) {
+                $pageExportModel = $this->pages[$page->id];
+            } elseif ($exportModel instanceof ZipExportPage) {
+                $pageExportModel = $exportModel;
+            }
+
+            // Add the image to the export if it's accessible or just return the existing reference if already added
+            if (isset($this->images[$model->id]) || ($pageExportModel && $this->imageService->imageAccessible($model))) {
                 if (!isset($this->images[$model->id])) {
                     $exportImage = ZipExportImage::fromModel($model, $files);
                     $this->images[$model->id] = $exportImage;
-                    $exportModel->images[] = $exportImage;
+                    $pageExportModel->images[] = $exportImage;
                 }
                 return "[[bsexport:image:{$model->id}]]";
             }
+
             return null;
         }
 

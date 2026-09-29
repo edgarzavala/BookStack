@@ -30,6 +30,8 @@ return [
     'create' => 'তৈরী করুন',
     'update' => 'হালনাগাদ করুন',
     'edit' => 'সম্পাদন করুন',
+    'archive' => 'Archive',
+    'unarchive' => 'Un-Archive',
     'sort' => 'ক্রমান্বয় করুন',
     'move' => 'স্থানান্তর করুন',
     'copy' => 'অনুলিপি করুন',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'নিষ্ক্রিয়',
     'never' => 'অভূতপূর্ব',
     'none' => 'None',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'নীড়পাতা',

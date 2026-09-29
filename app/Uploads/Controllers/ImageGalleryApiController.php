@@ -3,10 +3,13 @@
 namespace BookStack\Uploads\Controllers;
 
 use BookStack\Entities\Queries\PageQueries;
+use BookStack\Exceptions\NotFoundException;
 use BookStack\Http\ApiController;
+use BookStack\Permissions\Permission;
 use BookStack\Uploads\Image;
 use BookStack\Uploads\ImageRepo;
 use BookStack\Uploads\ImageResizer;
+use BookStack\Uploads\ImageService;
 use Illuminate\Http\Request;
 
 class ImageGalleryApiController extends ApiController
@@ -19,6 +22,7 @@ class ImageGalleryApiController extends ApiController
         protected ImageRepo $imageRepo,
         protected ImageResizer $imageResizer,
         protected PageQueries $pageQueries,
+        protected ImageService $imageService,
     ) {
     }
 
@@ -30,6 +34,9 @@ class ImageGalleryApiController extends ApiController
                 'uploaded_to' => ['required', 'integer'],
                 'image' => ['required', 'file', ...$this->getImageValidationRules()],
                 'name'  => ['string', 'max:180'],
+            ],
+            'readDataForUrl' => [
+                'url' => ['required', 'string', 'url'],
             ],
             'update' => [
                 'name'  => ['string', 'max:180'],
@@ -65,9 +72,10 @@ class ImageGalleryApiController extends ApiController
      */
     public function create(Request $request)
     {
-        $this->checkPermission('image-create-all');
+        $this->checkPermission(Permission::ImageCreateAll);
         $data = $this->validate($request, $this->rules()['create']);
         $page = $this->pageQueries->findVisibleByIdOrFail($data['uploaded_to']);
+        $this->checkOwnablePermission(Permission::PageUpdate, $page);
 
         $image = $this->imageRepo->saveNew($data['image'], $data['type'], $page->id);
 
@@ -84,13 +92,45 @@ class ImageGalleryApiController extends ApiController
      * The "thumbs" response property contains links to scaled variants that BookStack may use in its UI.
      * The "content" response property provides HTML and Markdown content, in the format that BookStack
      * would typically use by default to add the image in page content, as a convenience.
-     * Actual image file data is not provided but can be fetched via the "url" response property.
+     * Actual image file data is not provided but can be fetched via the "url" response property or by
+     * using the "read-data" endpoint.
      */
     public function read(string $id)
     {
-        $image = Image::query()->scopes(['visible'])->findOrFail($id);
+        $image = $this->imageRepo->getVisiblePageImageById($id);
 
         return response()->json($this->formatForSingleResponse($image));
+    }
+
+    /**
+     * Read the image file data for a single image in the system.
+     * The returned response will be a stream of image data instead of a JSON response.
+     */
+    public function readData(string $id)
+    {
+        $image = $this->imageRepo->getVisiblePageImageById($id);
+
+        return $this->imageService->streamImageFromStorageResponse('gallery', $image->path);
+    }
+
+    /**
+     * Read the image file data for a single image in the system, using the provided URL
+     * to identify the image instead of its ID, which is provided as a "URL" query parameter.
+     * The returned response will be a stream of image data instead of a JSON response.
+     */
+    public function readDataForUrl(Request $request)
+    {
+        $data = $this->validate($request, $this->rules()['readDataForUrl']);
+        $basePath = url('/uploads/images/');
+        $imagePath = str_replace($basePath, '', $data['url']);
+
+        if (!$this->imageService->pathAccessible($imagePath)) {
+            throw (new NotFoundException(trans('errors.image_not_found')))
+                ->setSubtitle(trans('errors.image_not_found_subtitle'))
+                ->setDetails(trans('errors.image_not_found_details'));
+        }
+
+        return $this->imageService->streamImageFromStorageResponse('gallery', $imagePath);
     }
 
     /**
@@ -101,9 +141,8 @@ class ImageGalleryApiController extends ApiController
     public function update(Request $request, string $id)
     {
         $data = $this->validate($request, $this->rules()['update']);
-        $image = $this->imageRepo->getById($id);
-        $this->checkOwnablePermission('page-view', $image->getPage());
-        $this->checkOwnablePermission('image-update', $image);
+        $image = $this->imageRepo->getVisiblePageImageById($id);
+        $this->checkOwnablePermission(Permission::ImageUpdate, $image);
 
         $this->imageRepo->updateImageDetails($image, $data);
         if (isset($data['image'])) {
@@ -120,16 +159,16 @@ class ImageGalleryApiController extends ApiController
      */
     public function delete(string $id)
     {
-        $image = $this->imageRepo->getById($id);
-        $this->checkOwnablePermission('page-view', $image->getPage());
-        $this->checkOwnablePermission('image-delete', $image);
+        $image = $this->imageRepo->getVisiblePageImageById($id);
+        $this->checkOwnablePermission(Permission::ImageDelete, $image);
+
         $this->imageRepo->destroyImage($image);
 
         return response('', 204);
     }
 
     /**
-     * Format the given image model for single-result display.
+     * Format the given image model for a single-result display.
      */
     protected function formatForSingleResponse(Image $image): array
     {
@@ -146,10 +185,10 @@ class ImageGalleryApiController extends ApiController
             $data['content']['html'] = "<div drawio-diagram=\"{$image->id}\"><img src=\"{$escapedUrl}\"></div>";
             $data['content']['markdown'] = $data['content']['html'];
         } else {
-            $escapedDisplayThumb = htmlentities($image->thumbs['display']);
+            $escapedDisplayThumb = htmlentities($image->getAttribute('thumbs')['display']);
             $data['content']['html'] = "<a href=\"{$escapedUrl}\" target=\"_blank\"><img src=\"{$escapedDisplayThumb}\" alt=\"{$escapedName}\"></a>";
             $mdEscapedName = str_replace(']', '', str_replace('[', '', $image->name));
-            $mdEscapedThumb = str_replace(']', '', str_replace('[', '', $image->thumbs['display']));
+            $mdEscapedThumb = str_replace(']', '', str_replace('[', '', $image->getAttribute('thumbs')['display']));
             $data['content']['markdown'] = "![{$mdEscapedName}]({$mdEscapedThumb})";
         }
 

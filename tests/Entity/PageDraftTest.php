@@ -5,6 +5,7 @@ namespace Tests\Entity;
 use BookStack\Entities\Models\Page;
 use BookStack\Entities\Models\PageRevision;
 use BookStack\Entities\Repos\PageRepo;
+use BookStack\Exceptions\PermissionsException;
 use Tests\TestCase;
 
 class PageDraftTest extends TestCase
@@ -160,9 +161,11 @@ class PageDraftTest extends TestCase
     {
         $this->asAdmin();
         $page = $this->entities->page();
+        $page->html = '<p>test content<script>hellotherekitty</script></p>';
+        $page->save();
 
         $this->getJson('/ajax/page/' . $page->id)->assertJson([
-            'html' => $page->html,
+            'html' => '<p>test content</p>',
         ]);
     }
 
@@ -204,7 +207,7 @@ class PageDraftTest extends TestCase
         ]);
         $resp->assertOk();
 
-        $this->assertDatabaseHas('pages', [
+        $this->assertDatabaseHasEntityData('page', [
             'id'       => $draft->id,
             'draft'    => true,
             'name'     => 'My updated draft',
@@ -235,10 +238,52 @@ class PageDraftTest extends TestCase
             'markdown' => '# My markdown page',
         ]);
 
-        $this->assertDatabaseHas('pages', [
+        $this->assertDatabaseHasEntityData('page', [
             'id'    => $draft->id,
             'draft' => false,
             'slug'  => 'my-page',
+        ]);
+    }
+
+    public function test_draft_publish_can_only_be_used_on_draft_pages()
+    {
+        $page = $this->entities->page();
+        $this->withoutExceptionHandling();
+
+        $exception = null;
+        try {
+            $this->asEditor()->post($page->book->getUrl("/draft/{$page->id}"), ['name' => 'My published drafty']);
+        } catch (\Exception $e) {
+            $exception = $e;
+        }
+
+        $this->assertInstanceOf(PermissionsException::class, $exception);
+        $this->assertStringContainsString('This page is already published or does not belong to you', $exception->getMessage());
+
+        $page->refresh();
+        $this->assertNotEquals('My published drafty', $page->name);
+    }
+
+    public function test_destroy_draft_can_only_be_used_on_draft_pages()
+    {
+        $page = $this->entities->page();
+        $this->withoutExceptionHandling();
+
+        $exception = null;
+        try {
+            $this->asEditor()->delete($page->book->getUrl("/draft/{$page->id}"));
+        } catch (\Exception $e) {
+            $exception = $e;
+        }
+
+        $this->assertInstanceOf(PermissionsException::class, $exception);
+        $this->assertStringContainsString('This page is already published or does not belong to you', $exception->getMessage());
+
+        $page->refresh();
+        $this->assertDatabaseHas('entities', [
+            'id' => $page->id,
+            'type' => 'page',
+            'deleted_at' => null
         ]);
     }
 }

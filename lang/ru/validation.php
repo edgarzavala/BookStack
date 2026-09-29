@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute должен содержать только буквы и цифры.',
     'array'                => ':attribute должен быть массивом.',
     'backup_codes'         => 'Указанный код недействителен или уже использован.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute дата должна быть до :date.',
     'between'              => [
         'numeric' => ':attribute должен быть между :min и :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute поле может быть только true или false.',
     'confirmed'            => ':attribute подтверждение не совпадает.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute некорректные данные.',
     'date_format'          => ':attribute не соответствует формату :format.',
     'different'            => ':attribute и :other должны быть различны.',
@@ -105,10 +107,11 @@ return [
     'url'                  => 'Формат :attribute некорректен.',
     'uploaded'             => 'Не удалось загрузить файл. Сервер не может принимать файлы такого размера.',
 
-    'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
-    'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
-    'zip_model_expected' => 'Data object expected but ":type" found.',
-    'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',
+    'zip_file' => ':attribute должен ссылаться на файл внутри ZIP.',
+    'zip_file_size' => 'Файл :attribute не должен превышать :size МБ.',
+    'zip_file_mime' => ':attribute должен ссылаться на файл типа :validTypes, найден :foundType.',
+    'zip_model_expected' => 'Ожидался объект данных, но найдено ":type".',
+    'zip_unique' => 'Значение :attribute должно быть уникальным для типа объекта внутри ZIP.',
 
     // Custom validation lines
     'custom' => [

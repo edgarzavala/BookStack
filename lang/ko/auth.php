@@ -8,6 +8,7 @@ return [
 
     'failed' => '자격 증명이 기록과 일치하지 않습니다.',
     'throttle' => '로그인 시도가 너무 많습니다. :seconds초 후에 다시 시도해주세요.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => '가입',
@@ -17,9 +18,12 @@ return [
     'logout' => '로그아웃',
 
     'name' => '이름',
-    'username' => '사용자 이름',
+    'username' => '이용자명',
     'email' => '전자우편 주소',
     'password' => '비밀번호',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => '비밀번호 확인',
     'password_hint' => '8 글자를 넘어야 합니다.',
     'forgot_password' => '비밀번호를 잊으셨나요?',

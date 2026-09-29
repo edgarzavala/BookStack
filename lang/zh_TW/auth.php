@@ -8,6 +8,7 @@ return [
 
     'failed' => '使用者名稱或密碼錯誤。',
     'throttle' => '您的登入次數過多，請在 :seconds 秒後重試。',
+    'mfa_throttle' => '多要素驗證嘗試次數過多。請於 :seconds 秒後再試。',
 
     // Login & Register
     'sign_up' => '註冊',
@@ -20,6 +21,9 @@ return [
     'username' => '使用者名稱',
     'email' => '電子郵件',
     'password' => '密碼',
+    'password_new' => '新密碼',
+    'password_new_confirm' => '確認新密碼',
+    'password_current' => '確認目前密碼',
     'password_confirm' => '確認密碼',
     'password_hint' => '密碼必須至少8個字元',
     'forgot_password' => '忘記密碼？',

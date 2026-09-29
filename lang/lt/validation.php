@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute turi būti sudarytas tik iš raidžių ir skaičių.',
     'array'                => ':attribute turi būti masyvas.',
     'backup_codes'         => 'The provided code is not valid or has already been used.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute turi būti data anksčiau negu :date.',
     'between'              => [
         'numeric' => ':attribute turi būti tarp :min ir :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute laukas turi būti tiesa arba melas.',
     'confirmed'            => ':attribute patvirtinimas nesutampa.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute nėra tinkama data.',
     'date_format'          => ':attribute neatitinka formato :format.',
     'different'            => ':attribute ir :other turi būti skirtingi.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'Šis failas negali būti įkeltas. Serveris gali nepriimti tokio dydžio failų.',
 
     'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
+    'zip_file_size' => 'The file :attribute must not exceed :size MB.',
     'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
     'zip_model_expected' => 'Data object expected but ":type" found.',
     'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',

@@ -14,7 +14,7 @@ class AppSettingsStore
     ) {
     }
 
-    public function storeFromUpdateRequest(Request $request, string $category)
+    public function storeFromUpdateRequest(Request $request, string $category): void
     {
         $this->storeSimpleSettings($request);
         if ($category === 'customization') {
@@ -44,7 +44,7 @@ class AppSettingsStore
         }
 
         // Clear icon image if requested
-        if ($request->get('app_icon_reset')) {
+        if ($request->input('app_icon_reset')) {
             $this->destroyExistingSettingImage('app-icon');
             setting()->remove('app-icon');
             foreach ($sizes as $size) {
@@ -67,7 +67,7 @@ class AppSettingsStore
         }
 
         // Clear logo image if requested
-        if ($request->get('app_logo_reset')) {
+        if ($request->input('app_logo_reset')) {
             $this->destroyExistingSettingImage('app-logo');
             setting()->remove('app-logo');
         }
@@ -76,7 +76,7 @@ class AppSettingsStore
     protected function storeSimpleSettings(Request $request): void
     {
         foreach ($request->all() as $name => $value) {
-            if (strpos($name, 'setting-') !== 0) {
+            if (!str_starts_with($name, 'setting-')) {
                 continue;
             }
 
@@ -85,7 +85,7 @@ class AppSettingsStore
         }
     }
 
-    protected function destroyExistingSettingImage(string $settingKey)
+    protected function destroyExistingSettingImage(string $settingKey): void
     {
         $existingVal = setting()->get($settingKey);
         if ($existingVal) {

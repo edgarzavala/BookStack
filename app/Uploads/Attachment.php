@@ -8,7 +8,9 @@ use BookStack\Entities\Models\Page;
 use BookStack\Permissions\Models\JointPermission;
 use BookStack\Permissions\PermissionApplicator;
 use BookStack\Users\Models\HasCreatorAndUpdater;
+use BookStack\Users\Models\OwnableInterface;
 use BookStack\Users\Models\User;
+use BookStack\Util\UrlFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,7 +29,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @method static Entity|Builder visible()
  */
-class Attachment extends Model
+class Attachment extends Model implements OwnableInterface
 {
     use HasCreatorAndUpdater;
     use HasFactory;
@@ -70,7 +72,7 @@ class Attachment extends Model
     public function getUrl($openInline = false): string
     {
         if ($this->external && !str_starts_with($this->path, 'http')) {
-            return $this->path;
+            return (new UrlFilter($this->path))->clean();
         }
 
         return url('/attachments/' . $this->id . ($openInline ? '?open=true' : ''));

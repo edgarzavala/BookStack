@@ -58,8 +58,20 @@ class ZipExportReader
     {
         $this->open();
 
+        $info = $this->zip->statName('data.json');
+        if ($info === false) {
+            throw new ZipExportException(trans('errors.import_zip_cant_decode_data'));
+        }
+
+        $maxSize = max(intval(config()->get('app.upload_limit')), 1) * 1000000;
+        $dataSize = $info['size'];
+        if ($dataSize > $maxSize) {
+            throw new ZipExportException(trans('errors.import_zip_data_too_large'));
+        }
+
         // Validate json data exists, including metadata
-        $jsonData = $this->zip->getFromName('data.json') ?: '';
+        // The read data size is bound to at least 1 byte to prevent passing 0, which would read without a limit
+        $jsonData = $this->zip->getFromName('data.json', max($dataSize, 1)) ?: '';
         $importData = json_decode($jsonData, true);
         if (!$importData) {
             throw new ZipExportException(trans('errors.import_zip_cant_decode_data'));
@@ -71,6 +83,36 @@ class ZipExportReader
     public function fileExists(string $fileName): bool
     {
         return $this->zip->statName("files/{$fileName}") !== false;
+    }
+
+    /**
+     * Get the DECLARED (not actual) uncompressed size of a file within the ZIP.
+     * Returns -1 if the file does not exist.
+     */
+    public function fileSize(string $fileName): int
+    {
+        $fileInfo = $this->zip->statName("files/{$fileName}");
+        if ($fileInfo === false) {
+            return -1;
+        }
+
+        return $fileInfo['size'];
+    }
+
+    /**
+     * Check that the file of given name within the ZIP is within the app file size limit.
+     * WARNING: This only checks the declared size of the file, not the actual size of the file.
+     * You will then need to ensure the file is read/streamed/copied out with the size as a limit.
+     */
+    public function fileWithinSizeLimit(string $fileName): bool
+    {
+        $fileSize = $this->fileSize($fileName);
+        if ($fileSize < 0) {
+            return false;
+        }
+
+        $maxSize = max(intval(config()->get('app.upload_limit')), 1) * 1000000;
+        return $fileSize <= $maxSize;
     }
 
     /**

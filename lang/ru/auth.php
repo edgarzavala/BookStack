@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Введенные вами данные не найдены в нашей базе.',
     'throttle' => 'Слишком много попыток входа. Пожалуйста, повторите попытку через :seconds секунд.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'Регистрация',
@@ -20,6 +21,9 @@ return [
     'username' => 'Логин',
     'email' => 'Адрес электронной почты',
     'password' => 'Пароль',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Подтверждение пароля',
     'password_hint' => 'Не менее 8 символов',
     'forgot_password' => 'Забыли пароль?',

@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attributeは文字と数値のみが含められます。',
     'array'                => ':attributeは配列である必要があります。',
     'backup_codes'         => '提供されたコードは無効か、またはすでに使用されています。',
+    'base64_uri_mime'      => ':attribute は :mime MIMEタイプのデータを含む有効な base64 URI である必要があります。',
     'before'               => ':attributeは:date以前である必要があります。',
     'between'              => [
         'numeric' => ':attributeは:min〜:maxである必要があります。',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attributeはtrueまたはfalseである必要があります。',
     'confirmed'            => ':attributeの確認が一致しません。',
+    'current_password'     => '現在のパスワードが正しくありません。',
     'date'                 => ':attributeは正しい日時ではありません。',
     'date_format'          => ':attributeが:formatのフォーマットと一致しません。',
     'different'            => ':attributeと:otherは異なる必要があります。',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'ファイルをアップロードできませんでした。サーバーがこのサイズのファイルを受け付けていない可能性があります。',
 
     'zip_file' => ':attribute はZIP 内のファイルを参照する必要があります。',
+    'zip_file_size' => ':attribute は :size MB を超えてはいけません。',
     'zip_file_mime' => ':attribute は種別 :validType のファイルを参照する必要がありますが、種別 :foundType となっています。',
     'zip_model_expected' => 'データオブジェクトが期待されますが、":type" が見つかりました。',
     'zip_unique' => 'ZIP内のオブジェクトタイプに :attribute が一意である必要があります。',

@@ -135,6 +135,8 @@ class UserMyAccountTest extends TestCase
     public function test_auth_password_change()
     {
         $editor = $this->users->editor();
+        $editor->password = Hash::make('password');
+        $editor->save();
 
         $resp = $this->actingAs($editor)->get('/my-account/auth');
         $resp->assertSee('Change Password');
@@ -144,11 +146,34 @@ class UserMyAccountTest extends TestCase
         $resp = $this->put('/my-account/auth/password', [
             'password' => $password,
             'password-confirm' => $password,
+            'password-current' => 'password'
         ]);
         $resp->assertRedirect('/my-account/auth');
 
         $editor->refresh();
         $this->assertTrue(Hash::check($password, $editor->password));
+    }
+
+    public function test_auth_password_change_requires_current_password()
+    {
+        $editor = $this->users->editor();
+        $editor->password = Hash::make('password');
+        $editor->save();
+
+        $this->actingAs($editor)->get('/my-account/auth');
+
+        $password = Str::random();
+        $resp = $this->put('/my-account/auth/password', [
+            'password' => $password,
+            'password-confirm' => $password,
+            'password-current' => 'caterpillar'
+        ]);
+        $resp->assertRedirect('/my-account/auth');
+        $resp->assertSessionHasErrors(['password-current']);
+
+        $editor->refresh();
+        $this->assertFalse(Hash::check($password, $editor->password));
+        $this->assertTrue(Hash::check('password', $editor->password));
     }
 
     public function test_auth_password_change_hides_if_not_using_email_auth()
@@ -329,11 +354,40 @@ class UserMyAccountTest extends TestCase
         $resp = $this->asEditor()->get('/my-account/notifications');
         $resp->assertSee('Notify upon comments');
         $resp->assertSee('Notify upon replies');
+        $resp->assertSee('Notify when I\'m mentioned in a comment');
 
         setting()->put('app-disable-comments', true);
 
         $resp = $this->get('/my-account/notifications');
         $resp->assertDontSee('Notify upon comments');
         $resp->assertDontSee('Notify upon replies');
+        $resp->assertDontSee('Notify when I\'m mentioned in a comment');
+    }
+
+    public function test_notification_comment_mention_option_enabled_by_default()
+    {
+        $resp = $this->asEditor()->get('/my-account/notifications');
+        $this->withHtml($resp)->assertElementExists('input[name="preferences[comment-mentions]"][value="true"]');
+    }
+
+    public function test_update_interface_preferences()
+    {
+        $editor = $this->users->editor();
+        $this->actingAs($editor);
+
+        $this->assertEquals('en', $editor->getLocale()->appLocale());
+        $this->assertFalse(setting()->getUser($editor, 'dark-mode-enabled'));
+
+        $resp = $this->get('/my-account/interface');
+        $resp->assertOk();
+
+        $resp->assertSeeText('Preferred Language');
+        $resp->assertSeeText('UI Layout Preferences');
+
+        $resp = $this->put('/my-account/interface', ['language' => 'fr', 'display_mode' => 'dark']);
+        $resp->assertRedirect('/my-account/interface');
+
+        $this->assertEquals('fr', $editor->getLocale()->appLocale());
+        $this->assertTrue(setting()->getUser($editor, 'dark-mode-enabled'));
     }
 }

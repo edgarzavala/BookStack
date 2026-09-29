@@ -17,7 +17,7 @@ class SecurityHeaderTest extends TestCase
 
     public function test_cookies_samesite_none_when_iframe_hosts_set()
     {
-        $this->runWithEnv('ALLOWED_IFRAME_HOSTS', 'http://example.com', function () {
+        $this->runWithEnv(['ALLOWED_IFRAME_HOSTS' => 'http://example.com'], function () {
             $resp = $this->get('/');
             foreach ($resp->headers->getCookies() as $cookie) {
                 $this->assertEquals('none', $cookie->getSameSite());
@@ -27,14 +27,14 @@ class SecurityHeaderTest extends TestCase
 
     public function test_secure_cookies_controlled_by_app_url()
     {
-        $this->runWithEnv('APP_URL', 'http://example.com', function () {
+        $this->runWithEnv(['APP_URL' => 'http://example.com'], function () {
             $resp = $this->get('/');
             foreach ($resp->headers->getCookies() as $cookie) {
                 $this->assertFalse($cookie->isSecure());
             }
         });
 
-        $this->runWithEnv('APP_URL', 'https://example.com', function () {
+        $this->runWithEnv(['APP_URL' => 'https://example.com'], function () {
             $resp = $this->get('/');
             foreach ($resp->headers->getCookies() as $cookie) {
                 $this->assertTrue($cookie->isSecure());
@@ -52,7 +52,7 @@ class SecurityHeaderTest extends TestCase
 
     public function test_iframe_csp_includes_extra_hosts_if_configured()
     {
-        $this->runWithEnv('ALLOWED_IFRAME_HOSTS', 'https://a.example.com https://b.example.com', function () {
+        $this->runWithEnv(['ALLOWED_IFRAME_HOSTS' => 'https://a.example.com https://b.example.com'], function () {
             $resp = $this->get('/');
             $frameHeader = $this->getCspHeader($resp, 'frame-ancestors');
 
@@ -93,14 +93,14 @@ class SecurityHeaderTest extends TestCase
         $this->assertNotEquals($firstHeader, $secondHeader);
     }
 
-    public function test_allow_content_scripts_settings_controls_csp_script_headers()
+    public function test_content_filtering_config_controls_csp_script_headers()
     {
-        config()->set('app.allow_content_scripts', true);
+        config()->set('app.content_filtering', '');
         $resp = $this->get('/');
         $scriptHeader = $this->getCspHeader($resp, 'script-src');
         $this->assertEmpty($scriptHeader);
 
-        config()->set('app.allow_content_scripts', false);
+        config()->set('app.content_filtering', 'j');
         $resp = $this->get('/');
         $scriptHeader = $this->getCspHeader($resp, 'script-src');
         $this->assertNotEmpty($scriptHeader);
@@ -149,6 +149,73 @@ class SecurityHeaderTest extends TestCase
         $resp = $this->get('/');
         $scriptHeader = $this->getCspHeader($resp, 'frame-src');
         $this->assertEquals('frame-src \'self\' https://example.com https://diagrams.example.com:8080', $scriptHeader);
+    }
+
+    public function test_style_src_csp_header_set_to_permissive_defaults_when_not_configured()
+    {
+        config()->set('app.style_sources', null);
+        $resp = $this->get('/');
+        $header = $this->getCspHeader($resp, 'style-src');
+
+        $this->assertEquals("style-src 'self' 'unsafe-inline' http: https:", $header);
+    }
+
+    public function test_style_src_csp_header_can_be_overridden_by_config()
+    {
+        config()->set('app.style_sources', 'https://fonts.example.com');
+
+        $resp = $this->get('/');
+        $header = $this->getCspHeader($resp, 'style-src');
+
+        $this->assertEquals("style-src 'self' https://fonts.example.com", $header);
+    }
+
+    public function test_style_src_csp_header_unsafe_inline_value_will_be_auto_quoted()
+    {
+        config()->set('app.style_sources', 'unsafe-inline https://css.example.com');
+
+        $resp = $this->get('/');
+        $header = $this->getCspHeader($resp, 'style-src');
+
+        $this->assertEquals("style-src 'self' 'unsafe-inline' https://css.example.com", $header);
+    }
+
+    public function test_style_src_can_be_blank_to_set_no_additions()
+    {
+        config()->set('app.style_sources', '');
+
+        $resp = $this->get('/');
+        $header = $this->getCspHeader($resp, 'style-src');
+
+        $this->assertEquals("style-src 'self'", $header);
+    }
+
+    public function test_img_src_csp_header_set_to_permissive_defaults_when_not_configured()
+    {
+        config()->set('app.image_sources', null);
+        $resp = $this->get('/');
+        $header = $this->getCspHeader($resp, 'img-src');
+
+        $this->assertEquals("img-src 'self' data: blob: http: https:", $header);
+    }
+
+    public function test_img_src_csp_header_can_be_overridden_by_config()
+    {
+        config()->set('app.image_sources', 'https://images.example.com');
+
+        $resp = $this->get('/');
+        $header = $this->getCspHeader($resp, 'img-src');
+
+        $this->assertEquals("img-src 'self' blob: data: https://images.example.com", $header);
+    }
+
+    public function test_img_src_can_be_blank_to_set_no_additions()
+    {
+        config()->set('app.image_sources', '');
+        $resp = $this->get('/');
+        $header = $this->getCspHeader($resp, 'img-src');
+
+        $this->assertEquals("img-src 'self' blob: data:", $header);
     }
 
     public function test_cache_control_headers_are_set_on_responses()

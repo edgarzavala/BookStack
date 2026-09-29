@@ -11,6 +11,9 @@ use BookStack\Entities\Tools\PageContent;
 use BookStack\Exceptions\NotFoundException;
 use BookStack\Facades\Activity;
 use BookStack\Http\Controller;
+use BookStack\Permissions\Permission;
+use BookStack\Util\HtmlContentFilter;
+use BookStack\Util\HtmlContentFilterConfig;
 use BookStack\Util\SimpleListOptions;
 use Illuminate\Http\Request;
 use Ssddanbrown\HtmlDiff\Diff;
@@ -31,6 +34,7 @@ class PageRevisionController extends Controller
      */
     public function index(Request $request, string $bookSlug, string $pageSlug)
     {
+        $this->checkPermission(Permission::RevisionViewAll);
         $page = $this->pageQueries->findVisibleBySlugsOrFail($bookSlug, $pageSlug);
         $listOptions = SimpleListOptions::fromRequest($request, 'page_revisions', true)->withSortOptions([
             'id' => trans('entities.pages_revisions_sort_number')
@@ -62,6 +66,8 @@ class PageRevisionController extends Controller
      */
     public function show(string $bookSlug, string $pageSlug, int $revisionId)
     {
+        $this->checkPermission(Permission::RevisionViewAll);
+
         $page = $this->pageQueries->findVisibleBySlugsOrFail($bookSlug, $pageSlug);
         /** @var ?PageRevision $revision */
         $revision = $page->revisions()->where('id', '=', $revisionId)->first();
@@ -91,6 +97,8 @@ class PageRevisionController extends Controller
      */
     public function changes(string $bookSlug, string $pageSlug, int $revisionId)
     {
+        $this->checkPermission(Permission::RevisionViewAll);
+
         $page = $this->pageQueries->findVisibleBySlugsOrFail($bookSlug, $pageSlug);
         /** @var ?PageRevision $revision */
         $revision = $page->revisions()->where('id', '=', $revisionId)->first();
@@ -98,14 +106,17 @@ class PageRevisionController extends Controller
             throw new NotFoundException();
         }
 
-        $prev = $revision->getPrevious();
+        $prev = $revision->getPreviousRevision();
         $prevContent = $prev->html ?? '';
-        $diff = Diff::excecute($prevContent, $revision->html);
+
+        // TODO - Refactor PageContent so we can de-dupe these steps
+        $rawDiff = Diff::excecute($prevContent, $revision->html);
+        $filterConfig = HtmlContentFilterConfig::fromConfigString(config('app.content_filtering'));
+        $filter = new HtmlContentFilter($filterConfig);
+        $diff = $filter->filterString($rawDiff);
 
         $page->fill($revision->toArray());
-        // TODO - Refactor PageContent so we don't need to juggle this
-        $page->html = $revision->html;
-        $page->html = (new PageContent($page))->render();
+        $page->html = '';
         $this->setPageTitle(trans('entities.pages_revision_named', ['pageName' => $page->getShortName()]));
 
         return view('pages.revision', [
@@ -123,8 +134,9 @@ class PageRevisionController extends Controller
      */
     public function restore(string $bookSlug, string $pageSlug, int $revisionId)
     {
+        $this->checkPermission(Permission::RevisionViewAll);
         $page = $this->pageQueries->findVisibleBySlugsOrFail($bookSlug, $pageSlug);
-        $this->checkOwnablePermission('page-update', $page);
+        $this->checkOwnablePermission(Permission::PageUpdate, $page);
 
         $page = $this->pageRepo->restoreRevision($page, $revisionId);
 
@@ -138,8 +150,9 @@ class PageRevisionController extends Controller
      */
     public function destroy(string $bookSlug, string $pageSlug, int $revId)
     {
+        $this->checkPermission(Permission::RevisionViewAll);
         $page = $this->pageQueries->findVisibleBySlugsOrFail($bookSlug, $pageSlug);
-        $this->checkOwnablePermission('page-delete', $page);
+        $this->checkOwnablePermission(Permission::PageDelete, $page);
 
         $revision = $page->revisions()->where('id', '=', $revId)->first();
         if ($revision === null) {
@@ -164,7 +177,7 @@ class PageRevisionController extends Controller
      */
     public function destroyUserDraft(string $pageId)
     {
-        $page = $this->pageQueries->findVisibleByIdOrFail($pageId);
+        $page = $this->pageQueries->findVisibleByIdOrFail(intval($pageId));
         $this->revisionRepo->deleteDraftsForCurrentUser($page);
 
         return response('', 200);

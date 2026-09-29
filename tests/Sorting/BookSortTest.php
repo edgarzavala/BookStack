@@ -66,7 +66,7 @@ class BookSortTest extends TestCase
         $sortResp = $this->asEditor()->put($newBook->getUrl() . '/sort', ['sort-tree' => json_encode($reqData)]);
         $sortResp->assertRedirect($newBook->getUrl());
         $sortResp->assertStatus(302);
-        $this->assertDatabaseHas('chapters', [
+        $this->assertDatabaseHasEntityData('chapter', [
             'id'       => $chapterToMove->id,
             'book_id'  => $newBook->id,
             'priority' => 0,
@@ -93,7 +93,7 @@ class BookSortTest extends TestCase
         ];
         $this->asEditor()->put($page->book->getUrl('/sort'), ['sort-tree' => json_encode([$sortData])])->assertRedirect();
 
-        $this->assertDatabaseHas('pages', [
+        $this->assertDatabaseHasEntityData('page', [
             'id' => $page->id, 'chapter_id' => $page->chapter_id, 'book_id' => $page->book_id,
         ]);
     }
@@ -114,7 +114,7 @@ class BookSortTest extends TestCase
         ];
         $this->asEditor()->put($page->book->getUrl('/sort'), ['sort-tree' => json_encode([$sortData])])->assertRedirect();
 
-        $this->assertDatabaseHas('pages', [
+        $this->assertDatabaseHasEntityData('page', [
             'id' => $page->id, 'chapter_id' => $page->chapter_id, 'book_id' => $page->book_id,
         ]);
     }
@@ -136,7 +136,7 @@ class BookSortTest extends TestCase
         ];
         $this->actingAs($editor)->put($page->book->getUrl('/sort'), ['sort-tree' => json_encode([$sortData])])->assertRedirect();
 
-        $this->assertDatabaseHas('pages', [
+        $this->assertDatabaseHasEntityData('page', [
             'id' => $page->id, 'chapter_id' => $page->chapter_id, 'book_id' => $page->book_id,
         ]);
     }
@@ -158,7 +158,7 @@ class BookSortTest extends TestCase
         ];
         $this->actingAs($editor)->put($page->book->getUrl('/sort'), ['sort-tree' => json_encode([$sortData])])->assertRedirect();
 
-        $this->assertDatabaseHas('pages', [
+        $this->assertDatabaseHasEntityData('page', [
             'id' => $page->id, 'chapter_id' => $page->chapter_id, 'book_id' => $page->book_id,
         ]);
     }
@@ -180,7 +180,7 @@ class BookSortTest extends TestCase
         ];
         $this->actingAs($editor)->put($page->book->getUrl('/sort'), ['sort-tree' => json_encode([$sortData])])->assertRedirect();
 
-        $this->assertDatabaseHas('pages', [
+        $this->assertDatabaseHasEntityData('page', [
             'id' => $page->id, 'chapter_id' => $page->chapter_id, 'book_id' => $page->book_id,
         ]);
     }
@@ -202,7 +202,7 @@ class BookSortTest extends TestCase
         ];
         $this->actingAs($editor)->put($page->book->getUrl('/sort'), ['sort-tree' => json_encode([$sortData])])->assertRedirect();
 
-        $this->assertDatabaseHas('pages', [
+        $this->assertDatabaseHasEntityData('page', [
             'id' => $page->id, 'chapter_id' => $page->chapter_id, 'book_id' => $page->book_id,
         ]);
     }
@@ -211,7 +211,7 @@ class BookSortTest extends TestCase
     {
         $book = $this->entities->bookHasChaptersAndPages();
         $chapter = $book->chapters()->first();
-        \DB::table('chapters')->where('id', '=', $chapter->id)->update([
+        Chapter::query()->where('id', '=', $chapter->id)->update([
             'priority' => 10001,
             'updated_at' => \Carbon\Carbon::now()->subYear(5),
         ]);
@@ -271,6 +271,21 @@ class BookSortTest extends TestCase
         $this->withHtml($resp)->assertElementExists('select[name="auto-sort"] option[value="' . $sort->id . '"]');
     }
 
+    public function test_auto_sort_rule_create_hint_shown_on_sort_page()
+    {
+        $book = $this->entities->book();
+        $hintText = 'Auto sort option rules can be created in the "Lists & Sorting" settings area by a user with the relevant permissions.';
+
+        // Admin users see link for creating new rule
+        $resp = $this->asAdmin()->get($book->getUrl('/sort'));
+        $this->withHtml($resp)->assertLinkExists(url('/settings/sorting/rules/new'), 'Create Sort Rule');
+        $resp->assertDontSee($hintText);
+
+        // Non-admin users see help text
+        $resp = $this->asEditor()->get($book->getUrl('/sort'));
+        $resp->assertSee($hintText);
+    }
+
     public function test_auto_sort_option_submit_saves_to_book()
     {
         $sort = SortRule::factory()->create();
@@ -299,7 +314,7 @@ class BookSortTest extends TestCase
         $book = $this->entities->bookHasChaptersAndPages();
         $book->chapters()->forceDelete();
         /** @var Page[] $pages */
-        $pages = $book->pages()->where('chapter_id', '=', 0)->take(2)->get();
+        $pages = $book->pages()->whereNull('chapter_id')->take(2)->get();
         $book->pages()->whereNotIn('id', $pages->pluck('id'))->delete();
 
         $resp = $this->asEditor()->get($book->getUrl());

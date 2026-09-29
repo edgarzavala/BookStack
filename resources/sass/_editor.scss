@@ -52,6 +52,25 @@ body.editor-is-fullscreen {
   flex: 1;
 }
 
+// Variation specific styles
+.comment-editor-container,
+.basic-editor-container {
+  border-left: 1px solid #DDD;
+  border-right: 1px solid #DDD;
+  border-bottom: 1px solid #DDD;
+  border-radius: 3px;
+  @include mixins.lightDark(border-color, #DDD, #000);
+
+  .editor-toolbar-main {
+    border-radius: 3px 3px 0 0;
+    justify-content: end;
+  }
+}
+
+.basic-editor-container .editor-content-area {
+  padding-bottom: 0;
+}
+
 // Buttons
 .editor-button {
   font-size: 12px;
@@ -418,13 +437,31 @@ body.editor-is-fullscreen {
 .editor-node-resizer.active .editor-node-resizer-ghost {
   display: block;
 }
+.editor-content-area details[contenteditable="false"],
+.editor-content-area summary[contenteditable="false"] {
+  user-select: none;
+}
+.editor-content-area details[contenteditable="false"] > details * {
+  pointer-events: none;
+}
+.editor-content-area details summary {
+  caret-color: transparent;
+}
+.editor-content-area details.selected {
+  outline: 1px dashed var(--editor-color-primary);
+  outline-offset: 1px;
+}
+.editor-content-area  [drawio-diagram] {
+  cursor: pointer;
+}
 
 .editor-table-marker {
   position: fixed;
   background-color: var(--editor-color-primary);
-  z-index: 99;
+  z-index: 3;
   user-select: none;
   opacity: 0;
+  transition: opacity 120ms ease-in-out;
   &:hover, &.active {
     opacity: 0.4;
   }
@@ -454,7 +491,7 @@ body.editor-is-fullscreen {
 .editor-media-wrap {
   display: inline-block;
   cursor: not-allowed;
-  iframe {
+  iframe, video {
     pointer-events: none;
   }
   &.align-left {
@@ -503,7 +540,7 @@ body.editor-is-fullscreen {
 /**
  * Form elements
  */
-$inputWidth: 260px;
+$inputWidth: 400px;
 
 .editor-form-field-wrapper {
   margin-bottom: .5rem;
@@ -644,6 +681,10 @@ textarea.editor-form-field-input {
   align-items: end;
   justify-content: space-between;
   gap: .1rem;
+  > div:has(input) {
+    flex: 1;
+    min-width: 100px;
+  }
   .editor-button {
     margin-bottom: 12px;
   }
@@ -660,6 +701,14 @@ textarea.editor-form-field-input {
     position: absolute;
     bottom: 0;
   }
+}
+
+// Specific field styles
+textarea.editor-form-field-input[name="source"] {
+  width: 1000px;
+  height: 600px;
+  max-height: 60vh;
+  max-width: 80vw;
 }
 
 // Editor theme styles

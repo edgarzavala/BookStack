@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute 只能包含字母和数字。',
     'array'                => ':attribute 必须是一个数组。',
     'backup_codes'         => '您输入的认证码无效或已被使用。',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute 必须是在 :date 前的日期。',
     'between'              => [
         'numeric' => ':attribute 必须在 :min 到 :max 之间。',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute 字段必须为真或假。',
     'confirmed'            => ':attribute 确认不符。',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute 不是一个有效的日期。',
     'date_format'          => ':attribute 不匹配格式 :format。',
     'different'            => ':attribute 和 :other 必须不同。',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => '无法上传文件。 服务器可能不接受此大小的文件。',
 
     'zip_file' => ':attribute 需要引用 ZIP 内的文件。',
+    'zip_file_size' => ':attribute 不能超过 :size MB 。',
     'zip_file_mime' => ':attribute 需要引用类型为 :validTypes 的文件，找到 :foundType 。',
     'zip_model_expected' => '预期的数据对象，但找到了 ":type" 。',
     'zip_unique' => '对于 ZIP 中的对象类型来说，:attribute 必须是唯一的。',

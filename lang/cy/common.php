@@ -30,6 +30,8 @@ return [
     'create' => 'Creu',
     'update' => 'Diweddaru',
     'edit' => 'Golygu',
+    'archive' => 'Archive',
+    'unarchive' => 'Un-Archive',
     'sort' => 'Trefnu',
     'move' => 'Symud',
     'copy' => 'Copïo',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Anweithredol',
     'never' => 'Byth',
     'none' => 'Dim un',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Tudalen cartref',

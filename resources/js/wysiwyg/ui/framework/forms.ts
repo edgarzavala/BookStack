@@ -11,7 +11,7 @@ import {el} from "../../utils/dom";
 export interface EditorFormFieldDefinition {
     label: string;
     name: string;
-    type: 'text' | 'select' | 'textarea' | 'checkbox';
+    type: 'text' | 'select' | 'textarea' | 'checkbox' | 'hidden';
 }
 
 export interface EditorSelectFormFieldDefinition extends EditorFormFieldDefinition {
@@ -67,6 +67,9 @@ export class EditorFormField extends EditorUiElement {
             input = el('textarea', {id, name: this.definition.name, class: 'editor-form-field-input'});
         } else if (this.definition.type === 'checkbox') {
             input = el('input', {id, name: this.definition.name, type: 'checkbox', class: 'editor-form-field-input-checkbox', value: 'true'});
+        } else if (this.definition.type === 'hidden') {
+            input = el('input', {id, name: this.definition.name, type: 'hidden'});
+            return el('div', {hidden: 'true'}, [input]);
         } else {
             input = el('input', {id, name: this.definition.name, class: 'editor-form-field-input'});
         }
@@ -93,6 +96,23 @@ export class EditorForm extends EditorContainerUiElement {
 
         super(children);
         this.definition = definition;
+    }
+
+    focusOnFirst() {
+        const focusable = this.getDOMElement().querySelector('input,select,textarea');
+        if (focusable) {
+            (focusable as HTMLElement).focus();
+        }
+    }
+
+    getValues(): Record<string, string> {
+        const values: Record<string, string> = {};
+        const formEl = this.getDOMElement() as HTMLFormElement;
+        const formData = new FormData(formEl);
+        for (const [name, value] of formData.entries()) {
+            values[name] = value as string;
+        }
+        return values;
     }
 
     setValues(values: Record<string, string>) {

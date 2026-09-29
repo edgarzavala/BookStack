@@ -30,6 +30,8 @@ return [
     'create' => 'Izveidot',
     'update' => 'Atjaunināt',
     'edit' => 'Rediģēt',
+    'archive' => 'Archive',
+    'unarchive' => 'Un-Archive',
     'sort' => 'Kārtot',
     'move' => 'Pārvietot',
     'copy' => 'Kopēt',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Neaktīvs',
     'never' => 'Nekad',
     'none' => 'Neviens',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Sākumlapa',

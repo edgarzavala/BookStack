@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Aceste credenţiale nu se potrivesc cu înregistrările noastre.',
     'throttle' => 'Prea multe încercări de conectare. Vă rugăm să încercați din nou în :seconds secunde.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'Inregistrează-te',
@@ -20,6 +21,9 @@ return [
     'username' => 'Nume utilizator',
     'email' => 'E-mail',
     'password' => 'Parolă',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Confirmă parola',
     'password_hint' => 'Trebuie să aibă cel puțin 8 caractere',
     'forgot_password' => 'Ai uitat parola?',

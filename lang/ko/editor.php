@@ -48,6 +48,7 @@ return [
     'superscript' => '윗첨자',
     'subscript' => '아랫첨자',
     'text_color' => '글자 색상',
+    'highlight_color' => 'Highlight color',
     'custom_color' => '사용자 지정 색상',
     'remove_color' => '색상 제거',
     'background_color' => '배경 색상',
@@ -177,5 +178,5 @@ return [
     'shortcuts_intro' => '편집기에서 사용할 수 있는 바로 가기는 다음과 같습니다:',
     'windows_linux' => '(윈도우/리눅스)',
     'mac' => '(맥)',
-    'description' => '상세정보',
+    'description' => '설명',
 ];

@@ -30,6 +30,7 @@ export function isUiBuilderDefinition(object: any): object is EditorUiBuilderDef
 export abstract class EditorUiElement {
     protected dom: HTMLElement|null = null;
     private context: EditorUiContext|null = null;
+    protected abortController: AbortController = new AbortController();
 
     protected abstract buildDOM(): HTMLElement;
 
@@ -66,6 +67,28 @@ export abstract class EditorUiElement {
 
     updateState(state: EditorUiStateUpdate): void {
         return;
+    }
+
+    emitEvent(name: string, data: object = {}): void {
+        if (this.dom) {
+            this.dom.dispatchEvent(new CustomEvent('editor::' + name, {detail: data, bubbles: true}));
+        }
+    }
+
+    onEvent(name: string, callback: (data: object) => any, listenTarget: HTMLElement|null = null): void {
+        const target = listenTarget || this.dom;
+        if (target) {
+            target.addEventListener('editor::' + name, ((event: CustomEvent) => {
+                callback(event.detail);
+            }) as EventListener, { signal: this.abortController.signal });
+        }
+    }
+
+    teardown(): void {
+        if (this.dom && this.dom.isConnected) {
+            this.dom.remove();
+        }
+        this.abortController.abort('teardown');
     }
 }
 
@@ -113,6 +136,13 @@ export class EditorContainerUiElement extends EditorUiElement {
         for (const child of this.getChildren()) {
             child.setContext(context);
         }
+    }
+
+    teardown() {
+        for (const child of this.children) {
+            child.teardown();
+        }
+        super.teardown();
     }
 }
 

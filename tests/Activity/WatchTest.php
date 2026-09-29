@@ -218,10 +218,10 @@ class WatchTest extends TestCase
 
         $notifications = Notification::fake();
 
-        $this->actingAs($editor)->post("/comment/{$entities['page']->id}", [
+        $resp = $this->actingAs($editor)->post("/comment/{$entities['page']->id}", [
             'html' => '<p>My new comment</p>'
         ]);
-        $comment = $entities['page']->comments()->orderBy('id', 'desc')->first();
+        $comment = $entities['page']->comments()->reorder('id', 'desc')->first();
 
         $this->asAdmin()->post("/comment/{$entities['page']->id}", [
             'html' => '<p>My new comment response</p>',
@@ -327,6 +327,24 @@ class WatchTest extends TestCase
         });
     }
 
+    public function test_notify_watch_page_ignore_when_no_page_owner()
+    {
+        $editor = $this->users->editor();
+        $entities = $this->entities->createChainBelongingToUser($editor);
+        $entities['page']->owned_by = null;
+        $entities['page']->save();
+
+        $watches = new UserEntityWatchOptions($editor, $entities['page']);
+        $watches->updateLevelByValue(WatchLevels::IGNORE);
+
+        $notifications = Notification::fake();
+        $this->asAdmin();
+
+        $this->entities->updatePage($entities['page'], ['name' => 'My updated page', 'html' => 'Hello']);
+
+        $notifications->assertNothingSent();
+    }
+
     public function test_notifications_sent_in_right_language()
     {
         $editor = $this->users->editor();
@@ -340,8 +358,8 @@ class WatchTest extends TestCase
             ActivityType::PAGE_CREATE => $entities['page'],
             ActivityType::PAGE_UPDATE => $entities['page'],
             ActivityType::COMMENT_CREATE => Comment::factory()->make([
-                'entity_id' => $entities['page']->id,
-                'entity_type' => $entities['page']->getMorphClass(),
+                'commentable_id' => $entities['page']->id,
+                'commentable_type' => $entities['page']->getMorphClass(),
             ]),
         ];
 

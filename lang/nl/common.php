@@ -30,6 +30,8 @@ return [
     'create' => 'Aanmaken',
     'update' => 'Bijwerken',
     'edit' => 'Bewerk',
+    'archive' => 'Archiveer',
+    'unarchive' => 'Terughalen',
     'sort' => 'Sorteer',
     'move' => 'Verplaats',
     'copy' => 'Kopieer',
@@ -38,7 +40,7 @@ return [
     'delete_confirm' => 'Verwijdering bevestigen',
     'search' => 'Zoek',
     'search_clear' => 'Zoekopdracht wissen',
-    'reset' => 'Reset',
+    'reset' => 'Wissen',
     'remove' => 'Verwijder',
     'add' => 'Voeg toe',
     'configure' => 'Configureer',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Inactief',
     'never' => 'Nooit',
     'none' => 'Geen',
+    'move_left' => 'Naar Links',
+    'move_right' => 'Naar Rechts',
 
     // Header
     'homepage' => 'Startpagina',

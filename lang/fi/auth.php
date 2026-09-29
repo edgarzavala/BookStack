@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Annettuja käyttäjätietoja ei löydy.',
     'throttle' => 'Liikaa kirjautumisyrityksiä. Yritä uudelleen :seconds sekunnin päästä.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'Rekisteröidy',
@@ -20,6 +21,9 @@ return [
     'username' => 'Käyttäjätunnus',
     'email' => 'Sähköposti',
     'password' => 'Salasana',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Vahvista salasana',
     'password_hint' => 'Tulee olla vähintään 8 merkkiä',
     'forgot_password' => 'Unohditko salasanan?',

@@ -50,15 +50,17 @@ class WebhookFormatter
         }
 
         if ($this->detail instanceof Model) {
-            $data['related_item'] = $this->formatModel();
+            $data['related_item'] = $this->formatModel($this->detail);
         }
 
         return $data;
     }
 
     /**
+     * @template TModel of Model
+     *
      * @param callable(string, Model):bool $condition
-     * @param callable(Model):void         $format
+     * @param callable(TModel):void         $format
      */
     public function addModelFormatter(callable $condition, callable $format): void
     {
@@ -73,20 +75,22 @@ class WebhookFormatter
         // Load entity owner, creator, updater details
         $this->addModelFormatter(
             fn ($event, $model) => ($model instanceof Entity),
-            fn ($model) => $model->load(['ownedBy', 'createdBy', 'updatedBy'])
+            function (Entity $model) {
+                $model->load(['ownedBy', 'createdBy', 'updatedBy']);
+            }
         );
 
         // Load revision detail for page update and create events
         $this->addModelFormatter(
             fn ($event, $model) => ($model instanceof Page && ($event === ActivityType::PAGE_CREATE || $event === ActivityType::PAGE_UPDATE)),
-            fn ($model) => $model->load('currentRevision')
+            function (Page $model) {
+                $model->load('currentRevision');
+            }
         );
     }
 
-    protected function formatModel(): array
+    protected function formatModel(Model $model): array
     {
-        /** @var Model $model */
-        $model = $this->detail;
         $model->unsetRelations();
 
         foreach ($this->modelFormatters as $formatter) {

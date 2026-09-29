@@ -61,11 +61,19 @@ class ImageStorageDisk
 
     /**
      * Get a stream to the file at the given path.
-     * @returns ?resource
+     * @return ?resource
      */
     public function stream(string $path): mixed
     {
         return $this->filesystem->readStream($this->adjustPathForDisk($path));
+    }
+
+    /**
+     * Get the size of the file at the given path.
+     */
+    public function size(string $path): int
+    {
+        return $this->filesystem->size($this->adjustPathForDisk($path));
     }
 
     /**

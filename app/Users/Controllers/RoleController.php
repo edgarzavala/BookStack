@@ -4,6 +4,7 @@ namespace BookStack\Users\Controllers;
 
 use BookStack\Exceptions\PermissionsException;
 use BookStack\Http\Controller;
+use BookStack\Permissions\Permission;
 use BookStack\Permissions\PermissionsRepo;
 use BookStack\Users\Models\Role;
 use BookStack\Users\Queries\RolesAllPaginatedAndSorted;
@@ -23,7 +24,7 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
-        $this->checkPermission('user-roles-manage');
+        $this->checkPermission(Permission::UserRolesManage);
 
         $listOptions = SimpleListOptions::fromRequest($request, 'roles')->withSortOptions([
             'display_name' => trans('common.sort_name'),
@@ -49,12 +50,12 @@ class RoleController extends Controller
      */
     public function create(Request $request)
     {
-        $this->checkPermission('user-roles-manage');
+        $this->checkPermission(Permission::UserRolesManage);
 
         /** @var ?Role $role */
         $role = null;
         if ($request->has('copy_from')) {
-            $role = Role::query()->find($request->get('copy_from'));
+            $role = Role::query()->find($request->input('copy_from'));
         }
 
         if ($role) {
@@ -71,7 +72,7 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
-        $this->checkPermission('user-roles-manage');
+        $this->checkPermission(Permission::UserRolesManage);
         $data = $this->validate($request, [
             'display_name' => ['required', 'min:3', 'max:180'],
             'description'  => ['max:180'],
@@ -92,8 +93,8 @@ class RoleController extends Controller
      */
     public function edit(string $id)
     {
-        $this->checkPermission('user-roles-manage');
-        $role = $this->permissionsRepo->getRoleById($id);
+        $this->checkPermission(Permission::UserRolesManage);
+        $role = $this->permissionsRepo->getRoleById(intval($id));
 
         $this->setPageTitle(trans('settings.role_edit'));
 
@@ -105,7 +106,7 @@ class RoleController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $this->checkPermission('user-roles-manage');
+        $this->checkPermission(Permission::UserRolesManage);
         $data = $this->validate($request, [
             'display_name' => ['required', 'min:3', 'max:180'],
             'description'  => ['max:180'],
@@ -127,8 +128,8 @@ class RoleController extends Controller
      */
     public function showDelete(string $id)
     {
-        $this->checkPermission('user-roles-manage');
-        $role = $this->permissionsRepo->getRoleById($id);
+        $this->checkPermission(Permission::UserRolesManage);
+        $role = $this->permissionsRepo->getRoleById(intval($id));
         $roles = $this->permissionsRepo->getAllRolesExcept($role);
         $blankRole = $role->newInstance(['display_name' => trans('settings.role_delete_no_migration')]);
         $roles->prepend($blankRole);
@@ -146,11 +147,11 @@ class RoleController extends Controller
      */
     public function delete(Request $request, string $id)
     {
-        $this->checkPermission('user-roles-manage');
+        $this->checkPermission(Permission::UserRolesManage);
 
         try {
-            $migrateRoleId = intval($request->get('migrate_role_id') ?: "0");
-            $this->permissionsRepo->deleteRole($id, $migrateRoleId);
+            $migrateRoleId = intval($request->input('migrate_role_id') ?: "0");
+            $this->permissionsRepo->deleteRole(intval($id), $migrateRoleId);
         } catch (PermissionsException $e) {
             $this->showErrorNotification($e->getMessage());
 

@@ -4,7 +4,6 @@ namespace BookStack\Util;
 
 use DOMAttr;
 use DOMElement;
-use DOMNamedNodeMap;
 use DOMNode;
 
 /**
@@ -20,13 +19,15 @@ class HtmlDescriptionFilter
      */
     protected static array $allowedAttrsByElements = [
         'p' => [],
-        'a' => ['href', 'title', 'target'],
+        'a' => ['href', 'title', 'target', 'data-mention-user-id'],
         'ol' => [],
         'ul' => [],
         'li' => [],
         'strong' => [],
+        'span' => [],
         'em' => [],
         'br' => [],
+        'code' => [],
     ];
 
     public static function filterFromString(string $html): string
@@ -59,7 +60,6 @@ class HtmlDescriptionFilter
             return;
         }
 
-        /** @var DOMNamedNodeMap $attrs */
         $attrs = $element->attributes;
         for ($i = $attrs->length - 1; $i >= 0; $i--) {
             /** @var DOMAttr $attr */
@@ -70,7 +70,8 @@ class HtmlDescriptionFilter
             }
         }
 
-        foreach ($element->childNodes as $child) {
+        $childNodes = [...$element->childNodes];
+        foreach ($childNodes as $child) {
             if ($child instanceof DOMElement) {
                 static::filterElement($child);
             }

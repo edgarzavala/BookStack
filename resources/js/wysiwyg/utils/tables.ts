@@ -3,13 +3,13 @@ import {
     $isTableCellNode,
     $isTableNode,
     $isTableRowNode,
-    $isTableSelection, TableCellNode, TableNode,
+    $isTableSelection, TableCellHeaderStates, TableCellNode, TableNode,
     TableRowNode,
     TableSelection,
 } from "@lexical/table";
 import {$getParentOfType} from "./nodes";
 import {$getNodeFromSelection} from "./selection";
-import {formatSizeValue} from "./dom";
+import {el, formatSizeValue} from "./dom";
 import {TableMap} from "./table-map";
 
 function $getTableFromCell(cell: TableCellNode): TableNode|null {
@@ -140,6 +140,23 @@ export function $getTableCellColumnWidth(editor: LexicalEditor, cell: TableCellN
     return (widths.length > index) ? widths[index] : '';
 }
 
+export function buildColgroupFromTableWidths(colWidths: string[]): HTMLElement|null {
+    if (colWidths.length === 0) {
+        return null
+    }
+
+    const colgroup = el('colgroup');
+    for (const width of colWidths) {
+        const col = el('col');
+        if (width) {
+            col.style.width = width;
+        }
+        colgroup.append(col);
+    }
+
+    return colgroup;
+}
+
 export function $getTableCellsFromSelection(selection: BaseSelection|null): TableCellNode[]  {
     if ($isTableSelection(selection)) {
         const nodes = selection.getNodes();
@@ -265,6 +282,7 @@ export function $clearTableFormatting(table: TableNode): void {
         const cells = row.getChildren().filter(c => $isTableCellNode(c));
         for (const cell of cells) {
             cell.setStyles(new Map);
+            cell.setBackgroundColor(null);
             cell.clearWidth();
         }
     }
@@ -310,9 +328,21 @@ export function $getCellPaddingForTable(table: TableNode): string {
     return padding || '';
 }
 
-
-
-
+/**
+ * Toggle the header state of the cells in the provided row.
+ * Returns a boolean to indicate if the new state of the cells is as headers.
+ */
+export function $toggleRowCellHeaderState(row: TableRowNode): boolean {
+    const firstCell = row.getFirstChild();
+    const isHeader = $isTableCellNode(firstCell) ? firstCell.getHeaderStyles() !== TableCellHeaderStates.NO_STATUS : false;
+    const cells = row.getChildren();
+    for (const cell of cells) {
+        if ($isTableCellNode(cell)) {
+            cell.setHeaderStyles(isHeader ? TableCellHeaderStates.NO_STATUS : TableCellHeaderStates.ROW);
+        }
+    }
+    return !isHeader;
+}
 
 
 

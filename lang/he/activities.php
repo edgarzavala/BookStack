@@ -99,6 +99,8 @@ return [
     'user_update_notification' => 'משתמש עודכן בהצלחה',
     'user_delete' => 'משתמש נמחק',
     'user_delete_notification' => 'משתמש הוסר בהצלחה',
+    'user_mfa_reset' => 'reset MFA for user',
+    'user_mfa_reset_notification' => 'Multi-factor authentication methods reset',
 
     // API Tokens
     'api_token_create' => 'API Token נוצר',
@@ -128,12 +130,12 @@ return [
     'comment_delete'              => 'תגובה נמחקה',
 
     // Sort Rules
-    'sort_rule_create' => 'created sort rule',
-    'sort_rule_create_notification' => 'Sort rule successfully created',
-    'sort_rule_update' => 'updated sort rule',
-    'sort_rule_update_notification' => 'Sort rule successfully updated',
-    'sort_rule_delete' => 'deleted sort rule',
-    'sort_rule_delete_notification' => 'Sort rule successfully deleted',
+    'sort_rule_create' => 'נוצר חוק מיון',
+    'sort_rule_create_notification' => 'חוק מיון נוצר בהצלחה',
+    'sort_rule_update' => 'חוק מיון עודכן',
+    'sort_rule_update_notification' => 'חוק מיון עודכן בהצלחה',
+    'sort_rule_delete' => 'חוק מיון נמחק',
+    'sort_rule_delete_notification' => 'חוק מיון נמחק בהצלחה',
 
     // Other
     'permissions_update'          => 'הרשאות עודכנו',

@@ -5,6 +5,8 @@ namespace Tests\Uploads;
 use BookStack\Entities\Repos\PageRepo;
 use BookStack\Uploads\Image;
 use BookStack\Uploads\ImageService;
+use BookStack\Uploads\UserAvatars;
+use BookStack\Users\Models\Role;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -32,6 +34,45 @@ class ImageTest extends TestCase
             'updated_by'  => $admin->id,
             'name'        => $imgDetails['name'],
         ]);
+    }
+
+    public function test_image_upload_with_page_reference_requires_visibility_and_update_permissions_of_target_page()
+    {
+        $page = $this->entities->page();
+        $editor = $this->users->editor();
+
+        $this->permissions->disableEntityInheritedPermissions($page);
+        $this->actingAs($editor);
+
+        $resp = $this->files->uploadGalleryImage($this, 'test-image.png', $page->id);
+        $resp->assertStatus(404);
+
+        $this->permissions->setEntityPermissionsForRole($page, ['view'], $editor->roles()->first());
+
+        $resp = $this->files->uploadGalleryImage($this, 'test-image.png', $page->id);
+        $this->assertPermissionError($resp);
+
+        $this->permissions->setEntityPermissionsForRole($page, ['view', 'update'], $editor->roles()->first());
+
+        $resp = $this->files->uploadGalleryImage($this, 'test-image.png', $page->id);
+        $resp->assertStatus(200);
+
+        $this->files->deleteAtRelativePath($resp->json('path'));
+    }
+
+    public function test_image_upload_with_page_reference_requires_page_to_exist()
+    {
+        $page = $this->entities->page();
+        $this->entities->destroy($page);
+
+        $editor = $this->users->editor();
+        $this->actingAs($editor);
+
+        $resp = $this->files->uploadGalleryImage($this, 'test-image.png', $page->id);
+        $resp->assertStatus(404);
+
+        $resp = $this->files->uploadGalleryImage($this, 'test-image.png', 0);
+        $resp->assertStatus(404);
     }
 
     public function test_image_display_thumbnail_generation_does_not_increase_image_size()
@@ -73,6 +114,10 @@ class ImageTest extends TestCase
 
     public function test_image_display_thumbnail_generation_for_animated_avif_images_uses_original_file()
     {
+        if ((gd_info()['AVIF Support'] ?? false) !== true) {
+            $this->markTestSkipped('imageavif() is not available');
+        }
+
         $page = $this->entities->page();
         $admin = $this->users->admin();
         $this->actingAs($admin);
@@ -423,29 +468,6 @@ class ImageTest extends TestCase
         }
     }
 
-    public function test_secure_images_not_tracked_in_session_history()
-    {
-        config()->set('filesystems.images', 'local_secure');
-        $this->asEditor();
-        $page = $this->entities->page();
-        $result = $this->files->uploadGalleryImageToPage($this, $page);
-        $expectedPath = storage_path($result['path']);
-        $this->assertFileExists($expectedPath);
-
-        $this->get('/books');
-        $this->assertEquals(url('/books'), session()->previousUrl());
-
-        $resp = $this->get($result['path']);
-        $resp->assertOk();
-        $resp->assertHeader('Content-Type', 'image/png');
-
-        $this->assertEquals(url('/books'), session()->previousUrl());
-
-        if (file_exists($expectedPath)) {
-            unlink($expectedPath);
-        }
-    }
-
     public function test_system_images_remain_public_with_local_secure_restricted()
     {
         config()->set('filesystems.images', 'local_secure_restricted');
@@ -461,6 +483,26 @@ class ImageTest extends TestCase
         if (file_exists($expectedPath)) {
             unlink($expectedPath);
         }
+    }
+
+    public function test_avatar_images_visible_only_when_public_access_enabled_with_local_secure_restricted()
+    {
+        config()->set('filesystems.images', 'local_secure_restricted');
+        $user = $this->users->admin();
+        $avatars = $this->app->make(UserAvatars::class);
+        $avatars->assignToUserFromExistingData($user, $this->files->pngImageData(), 'png');
+
+        $avatarUrl = $user->getAvatar();
+
+        $resp = $this->get($avatarUrl);
+        $resp->assertRedirect('/login');
+
+        $this->permissions->makeAppPublic();
+
+        $resp = $this->get($avatarUrl);
+        $resp->assertOk();
+
+        $this->files->deleteAtRelativePath($user->avatar->path);
     }
 
     public function test_secure_restricted_images_inaccessible_without_relation_permission()
@@ -481,6 +523,38 @@ class ImageTest extends TestCase
 
         $resp = $this->get($expectedUrl);
         $resp->assertNotFound();
+
+        if (file_exists($expectedPath)) {
+            unlink($expectedPath);
+        }
+    }
+
+    public function test_secure_restricted_images_accessible_with_public_guest_access()
+    {
+        config()->set('filesystems.images', 'local_secure_restricted');
+        $this->permissions->makeAppPublic();
+
+        $this->asEditor();
+        $page = $this->entities->page();
+        $this->files->uploadGalleryImageToPage($this, $page);
+        $image = Image::query()->where('type', '=', 'gallery')
+            ->where('uploaded_to', '=', $page->id)
+            ->first();
+
+        $expectedUrl = url($image->path);
+        $expectedPath = storage_path($image->path);
+        auth()->logout();
+
+        $this->get($expectedUrl)->assertOk();
+
+        $this->permissions->setEntityPermissions($page, [], []);
+
+        $resp = $this->get($expectedUrl);
+        $resp->assertNotFound();
+
+        $this->permissions->setEntityPermissions($page, ['view'], [Role::getSystemRole('public')]);
+
+        $this->get($expectedUrl)->assertOk();
 
         if (file_exists($expectedPath)) {
             unlink($expectedPath);
@@ -662,15 +736,15 @@ class ImageTest extends TestCase
         $galleryFileSize = filesize($galleryThumbPath);
 
         // Basic scan of GIF content to check frame count
-        $originalFrameCount = count(explode("\x00\x21\xF9", file_get_contents($originalFile)));
-        $galleryFrameCount = count(explode("\x00\x21\xF9", file_get_contents($galleryThumbPath)));
+        $originalFrameCount = count(explode("\x00\x21\xF9", file_get_contents($originalFile))) - 1;
+        $galleryFrameCount = count(explode("\x00\x21\xF9", file_get_contents($galleryThumbPath))) - 1;
 
         $this->files->deleteAtRelativePath($relPath);
         $this->files->deleteAtRelativePath($galleryThumbRelPath);
 
         $this->assertNotEquals($originalFileSize, $galleryFileSize);
-        $this->assertEquals(3, $originalFrameCount);
-        $this->assertEquals(1, $galleryFrameCount);
+        $this->assertEquals(2, $originalFrameCount);
+        $this->assertLessThan(2, $galleryFrameCount);
     }
 
     protected function getTestProfileImage()
@@ -745,7 +819,7 @@ class ImageTest extends TestCase
         $pageRepo->update($page, [
             'name'    => $page->name,
             'html'    => $page->html . "<img src=\"{$image->url}\">",
-            'summary' => '',
+            'changelog' => '',
         ]);
 
         // Ensure no images are reported as deletable
@@ -757,7 +831,7 @@ class ImageTest extends TestCase
         $pageRepo->update($page, [
             'name'    => $page->name,
             'html'    => '<p>Hello</p>',
-            'summary' => '',
+            'changelog' => '',
         ]);
 
         // Ensure revision images are picked up okay

@@ -138,7 +138,7 @@ class OidcTest extends TestCase
     {
         // Start auth
         $this->post('/oidc/login');
-        $state = session()->get('oidc_state');
+        $state = explode(':', session()->get('oidc_state'), 2)[1];
 
         $transactions = $this->mockHttpClient([$this->getMockAuthorizationResponse([
             'email' => 'benny@example.com',
@@ -187,6 +187,35 @@ class OidcTest extends TestCase
 
         $this->post('/oidc/login');
         $this->get('/oidc/callback?code=SplxlOBeZQQYbYS6WxSbIA&state=abc124');
+        $this->assertSessionError('Login using SingleSignOn-Testing failed, system did not provide successful authorization');
+    }
+
+    public function test_callback_works_even_if_other_request_made_by_session()
+    {
+        $this->mockHttpClient([$this->getMockAuthorizationResponse([
+            'email' => 'benny@example.com',
+            'sub'   => 'benny1010101',
+        ])]);
+
+        $this->post('/oidc/login');
+        $state = explode(':', session()->get('oidc_state'), 2)[1];
+
+        $this->get('/');
+
+        $resp = $this->get("/oidc/callback?code=SplxlOBeZQQYbYS6WxSbIA&state={$state}");
+        $resp->assertRedirect('/');
+    }
+
+    public function test_callback_fails_if_state_timestamp_is_too_old()
+    {
+        $this->post('/oidc/login');
+        $state = explode(':', session()->get('oidc_state'), 2)[1];
+        session()->put('oidc_state', (time() - 60 * 4) . ':' . $state);
+
+        $this->get('/');
+
+        $resp = $this->get("/oidc/callback?code=SplxlOBeZQQYbYS6WxSbIA&state={$state}");
+        $resp->assertRedirect('/login');
         $this->assertSessionError('Login using SingleSignOn-Testing failed, system did not provide successful authorization');
     }
 
@@ -442,7 +471,28 @@ class OidcTest extends TestCase
         $this->assertEquals('xXBennyTheGeezXx', $user->external_auth_id);
     }
 
-    public function test_auth_uses_mulitple_display_name_claims_if_configured()
+    public function test_auth_uses_external_id_as_exact_value()
+    {
+        // External auth id the same as we expect below but different casing
+        User::query()->forceCreate([
+            'email'            => 'otheruser@example.com',
+            'external_auth_id' => 'Benni202',
+            'email_confirmed'  => true,
+            'name'             => 'Barry Scott',
+        ]);
+
+        $resp = $this->runLogin([
+            'email'            => 'benny@example.com',
+            'sub'              => 'benni202',
+        ]);
+        $resp->assertRedirect('/');
+
+        $this->assertDatabaseHas('users', ['email' => 'benny@example.com']);
+        $this->assertEquals('benny@example.com', user()->email);
+        $this->assertEquals('benni202', user()->external_auth_id);
+    }
+
+    public function test_auth_uses_multiple_display_name_claims_if_configured()
     {
         config()->set(['oidc.display_name_claims' => 'first_name|last_name']);
 
@@ -793,11 +843,39 @@ class OidcTest extends TestCase
         ]);
     }
 
+    public function test_oidc_auth_pre_redirect_theme_event_with_return()
+    {
+        $args = [];
+        $callback = function (...$eventArgs) use (&$args) {
+            $args = $eventArgs;
+            return 'https://cats.example.com?beans=true';
+        };
+        Theme::listen(ThemeEvents::OIDC_AUTH_PRE_REDIRECT, $callback);
+
+        $resp = $this->post('/oidc/login');
+        $resp->assertRedirect('https://cats.example.com?beans=true');
+
+        $this->assertCount(1, $args);
+        $this->assertStringStartsWith('https://oidc.local/auth', $args[0]);
+    }
+
+    public function test_oidc_auth_pre_redirect_theme_event_with_no_return()
+    {
+        $callback = function ($redirectUrl) {
+            $redirectUrl = 'cat';
+        };
+        Theme::listen(ThemeEvents::OIDC_AUTH_PRE_REDIRECT, $callback);
+
+        $resp = $this->post('/oidc/login');
+        $redirect = $resp->headers->get('Location');
+        $this->assertStringStartsWith('https://oidc.local/auth?', $redirect);
+    }
+
     public function test_pkce_used_on_authorize_and_access()
     {
         // Start auth
         $resp = $this->post('/oidc/login');
-        $state = session()->get('oidc_state');
+        $state = explode(':', session()->get('oidc_state'), 2)[1];
 
         $pkceCode = session()->get('oidc_pkce_code');
         $this->assertGreaterThan(30, strlen($pkceCode));
@@ -825,7 +903,7 @@ class OidcTest extends TestCase
     {
         config()->set('oidc.display_name_claims', 'first_name|last_name');
         $this->post('/oidc/login');
-        $state = session()->get('oidc_state');
+        $state = explode(':', session()->get('oidc_state'), 2)[1];
 
         $client = $this->mockHttpClient([
             $this->getMockAuthorizationResponse(['name' => null]),
@@ -973,7 +1051,7 @@ class OidcTest extends TestCase
         ]);
 
         $this->post('/oidc/login');
-        $state = session()->get('oidc_state');
+        $state = explode(':', session()->get('oidc_state'), 2)[1];
         $client = $this->mockHttpClient([$this->getMockAuthorizationResponse([
             'groups' => [],
         ])]);
@@ -999,7 +1077,7 @@ class OidcTest extends TestCase
     protected function runLogin($claimOverrides = [], $additionalHttpResponses = []): TestResponse
     {
         $this->post('/oidc/login');
-        $state = session()->get('oidc_state');
+        $state = explode(':', session()->get('oidc_state'), 2)[1] ?? '';
         $this->mockHttpClient([$this->getMockAuthorizationResponse($claimOverrides), ...$additionalHttpResponses]);
 
         return $this->get('/oidc/callback?code=SplxlOBeZQQYbYS6WxSbIA&state=' . $state);

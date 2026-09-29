@@ -52,7 +52,7 @@
       "name": "Cool Animals",
       "slug": "cool-animals",
       "book_id": 16,
-      "chapter_id": 0,
+      "chapter_id": null,
       "draft": false,
       "template": false,
       "created_at": "2021-12-19T18:22:11.000000Z",
@@ -79,5 +79,17 @@
     "path": "/uploads/images/cover_book/2020-01/sjovall_m117hUWMu40.jpg",
     "type": "cover_book",
     "uploaded_to": 16
-  }
+  },
+  "shelves": [
+    {
+      "id": 1,
+      "name": "Great reads",
+      "slug": "great-reads"
+    },
+    {
+      "id": 5,
+      "name": "Personal Books",
+      "slug": "personal-books"
+    }
+  ]
 }

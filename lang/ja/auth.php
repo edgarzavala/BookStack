@@ -8,6 +8,7 @@ return [
 
     'failed' => 'この資格情報は登録されていません。',
     'throttle' => 'ログイン試行回数が制限を超えました。:seconds秒後に再試行してください。',
+    'mfa_throttle' => '多要素認証の試行回数が制限を越えました。:seconds 秒後に再試行してください。',
 
     // Login & Register
     'sign_up' => '新規登録',
@@ -20,6 +21,9 @@ return [
     'username' => 'ユーザ名',
     'email' => 'メールアドレス',
     'password' => 'パスワード',
+    'password_new' => '新しいパスワード',
+    'password_new_confirm' => '新しいパスワード(確認用)',
+    'password_current' => '現在のパスワード(確認用)',
     'password_confirm' => 'パスワード (確認)',
     'password_hint' => '8文字以上で設定する必要があります',
     'forgot_password' => 'パスワードをお忘れですか？',

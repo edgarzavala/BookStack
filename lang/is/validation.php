@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute má eingöngu innihalda stafi og tölustafi.',
     'array'                => 'The :attribute must be an array.',
     'backup_codes'         => 'Kóðinn sem þú gafst upp er ekki gildur eða hefur þegar verið notaður.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute verður að vera dagsetning á undan :date.',
     'between'              => [
         'numeric' => ':attribute verður að vera á milli :min og :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute gildið verður að vera true og false.',
     'confirmed'            => 'The :attribute confirmation does not match.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => 'The :attribute is not a valid date.',
     'date_format'          => 'The :attribute does not match the format :format.',
     'different'            => 'The :attribute and :other must be different.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'The file could not be uploaded. The server may not accept files of this size.',
 
     'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
+    'zip_file_size' => 'The file :attribute must not exceed :size MB.',
     'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
     'zip_model_expected' => 'Data object expected but ":type" found.',
     'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',

@@ -11,6 +11,7 @@ use BookStack\Entities\Tools\PageContent;
 use BookStack\Uploads\ImageService;
 use BookStack\Util\CspService;
 use BookStack\Util\HtmlDocument;
+use BookStack\Util\HtmlToPlainText;
 use DOMElement;
 use Exception;
 use Throwable;
@@ -208,7 +209,7 @@ class ExportFormatter
         preg_match_all("/\<img.*?src\=(\'|\")(.*?)(\'|\").*?\>/i", $htmlContent, $imageTagsOutput);
 
         // Replace image src with base64 encoded image strings
-        if (isset($imageTagsOutput[0]) && count($imageTagsOutput[0]) > 0) {
+        if (count($imageTagsOutput[0]) > 0) {
             foreach ($imageTagsOutput[0] as $index => $imgMatch) {
                 $oldImgTagString = $imgMatch;
                 $srcString = $imageTagsOutput[2][$index];
@@ -225,7 +226,7 @@ class ExportFormatter
         preg_match_all("/\<a.*href\=(\'|\")(.*?)(\'|\").*?\>/i", $htmlContent, $linksOutput);
 
         // Update relative links to be absolute, with instance url
-        if (isset($linksOutput[0]) && count($linksOutput[0]) > 0) {
+        if (count($linksOutput[0]) > 0) {
             foreach ($linksOutput[0] as $index => $linkMatch) {
                 $oldLinkString = $linkMatch;
                 $srcString = $linksOutput[2][$index];
@@ -242,24 +243,13 @@ class ExportFormatter
 
     /**
      * Converts the page contents into simple plain text.
-     * This method filters any bad looking content to provide a nice final output.
+     * We re-generate the plain text from HTML at this point, post-page-content rendering.
      */
     public function pageToPlainText(Page $page, bool $pageRendered = false, bool $fromParent = false): string
     {
         $html = $pageRendered ? $page->html : (new PageContent($page))->render();
-        // Add proceeding spaces before tags so spaces remain between
-        // text within elements after stripping tags.
-        $html = str_replace('<', " <", $html);
-        $text = trim(strip_tags($html));
-        // Replace multiple spaces with single spaces
-        $text = preg_replace('/ {2,}/', ' ', $text);
-        // Reduce multiple horrid whitespace characters.
-        $text = preg_replace('/(\x0A|\xA0|\x0A|\r|\n){2,}/su', "\n\n", $text);
-        $text = html_entity_decode($text);
-        // Add title
-        $text = $page->name . ($fromParent ? "\n" : "\n\n") . $text;
-
-        return $text;
+        $contentText = (new HtmlToPlainText())->convert($html);
+        return $page->name . ($fromParent ? "\n" : "\n\n") . $contentText;
     }
 
     /**
@@ -267,7 +257,7 @@ class ExportFormatter
      */
     public function chapterToPlainText(Chapter $chapter): string
     {
-        $text = $chapter->name . "\n" . $chapter->description;
+        $text = $chapter->name . "\n" . $chapter->descriptionInfo()->getPlain();
         $text = trim($text) . "\n\n";
 
         $parts = [];
@@ -284,7 +274,7 @@ class ExportFormatter
     public function bookToPlainText(Book $book): string
     {
         $bookTree = (new BookContents($book))->getTree(false, true);
-        $text = $book->name . "\n" . $book->description;
+        $text = $book->name . "\n" . $book->descriptionInfo()->getPlain();
         $text = rtrim($text) . "\n\n";
 
         $parts = [];
@@ -318,12 +308,12 @@ class ExportFormatter
     {
         $text = '# ' . $chapter->name . "\n\n";
 
-        $description = (new HtmlToMarkdown($chapter->descriptionHtml()))->convert();
+        $description = (new HtmlToMarkdown($chapter->descriptionInfo()->getHtml()))->convert();
         if ($description) {
             $text .= $description . "\n\n";
         }
 
-        foreach ($chapter->pages as $page) {
+        foreach ($chapter->getVisiblePages() as $page) {
             $text .= $this->pageToMarkdown($page) . "\n\n";
         }
 
@@ -338,7 +328,7 @@ class ExportFormatter
         $bookTree = (new BookContents($book))->getTree(false, true);
         $text = '# ' . $book->name . "\n\n";
 
-        $description = (new HtmlToMarkdown($book->descriptionHtml()))->convert();
+        $description = (new HtmlToMarkdown($book->descriptionInfo()->getHtml()))->convert();
         if ($description) {
             $text .= $description . "\n\n";
         }

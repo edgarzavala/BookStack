@@ -47,7 +47,7 @@ return [
     'bookshelf_update'                 => '更新書棧',
     'bookshelf_update_notification'    => '書棧已更新',
     'bookshelf_delete'                 => '刪除書棧',
-    'bookshelf_delete_notification'    => '書棧已刪除',
+    'bookshelf_delete_notification'    => '書架已刪除',
 
     // Revisions
     'revision_restore' => '還原的版本',
@@ -99,6 +99,8 @@ return [
     'user_update_notification' => '使用者已成功更新。',
     'user_delete' => '已刪除使用者',
     'user_delete_notification' => '使用者移除成功',
+    'user_mfa_reset' => '重設使用者的多要素驗證',
+    'user_mfa_reset_notification' => '重設多要素驗證方法',
 
     // API Tokens
     'api_token_create' => '建立 API 權杖',

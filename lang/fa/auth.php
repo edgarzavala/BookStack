@@ -8,6 +8,7 @@ return [
 
     'failed' => 'مشخصات وارد شده با اطلاعات ما سازگار نیست.',
     'throttle' => 'دفعات تلاش شما برای ورود بیش از حد مجاز است. لطفا پس از :seconds ثانیه مجددا تلاش فرمایید.',
+    'mfa_throttle' => 'تلاش‌های تأیید هویت چندمرحله‌ای بیش از حد مجاز است. لطفاً پس از :seconds ثانیه دوباره تلاش کنید.',
 
     // Login & Register
     'sign_up' => 'ثبت نام',
@@ -20,6 +21,9 @@ return [
     'username' => 'نام کاربری',
     'email' => 'پست الکترونیک',
     'password' => 'کلمه عبور',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'تایید کلمه عبور',
     'password_hint' => 'باید بیش از 8 کاراکتر باشد',
     'forgot_password' => 'کلمه عبور خود را فراموش کرده اید؟',
@@ -91,7 +95,7 @@ return [
     'mfa_option_totp_title' => 'برنامه ی موبایل',
     'mfa_option_totp_desc' => 'برای استفاده از احراز هویت چند عاملی به یک برنامه موبایلی نیاز دارید که از TOTP پشتیبانی کند، مانند Google Authenticator، Authy یا Microsoft Authenticator.',
     'mfa_option_backup_codes_title' => 'کدهای پشتیبان',
-    'mfa_option_backup_codes_desc' => 'Generates a set of one-time-use backup codes which you\'ll enter on login to verify your identity. Make sure to store these in a safe & secure place.',
+    'mfa_option_backup_codes_desc' => 'این فرایند مجموعه‌ای از کدهای پشتیبان یک‌بار مصرف تولید می‌کند که هنگام ورود به سامانه جهت تأیید هویت باید از آن‌ها استفاده کنید. توصیه می‌شود این کدها را در محلّی امن و محفوظ نگهداری نمایید.',
     'mfa_gen_confirm_and_enable' => 'تایید و فعال کنید',
     'mfa_gen_backup_codes_title' => 'راه اندازی کدهای پشتیبان',
     'mfa_gen_backup_codes_desc' => 'لیست کدهای زیر را در مکانی امن ذخیره کنید. هنگام دسترسی به سیستم، می توانید از یکی از کدها به عنوان مکانیزم احراز هویت دوم استفاده کنید.',

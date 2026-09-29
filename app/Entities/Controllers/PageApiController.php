@@ -1,18 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace BookStack\Entities\Controllers;
 
+use BookStack\Activity\Tools\CommentTree;
 use BookStack\Entities\Queries\EntityQueries;
 use BookStack\Entities\Queries\PageQueries;
 use BookStack\Entities\Repos\PageRepo;
 use BookStack\Exceptions\PermissionsException;
 use BookStack\Http\ApiController;
+use BookStack\Permissions\Permission;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class PageApiController extends ApiController
 {
-    protected $rules = [
+    protected array $rules = [
         'create' => [
             'book_id'    => ['required_without:chapter_id', 'integer'],
             'chapter_id' => ['required_without:book_id', 'integer'],
@@ -21,6 +27,7 @@ class PageApiController extends ApiController
             'markdown'   => ['required_without:html', 'string'],
             'tags'       => ['array'],
             'priority'   => ['integer'],
+            'changelog'  => ['string', 'min:1', 'max:180'],
         ],
         'update' => [
             'book_id'    => ['integer'],
@@ -30,6 +37,7 @@ class PageApiController extends ApiController
             'markdown'   => ['string'],
             'tags'       => ['array'],
             'priority'   => ['integer'],
+            'changelog'  => ['string', 'min:1', 'max:180'],
         ],
     ];
 
@@ -43,7 +51,7 @@ class PageApiController extends ApiController
     /**
      * Get a listing of pages visible to the user.
      */
-    public function list()
+    public function list(): JsonResponse
     {
         $pages = $this->queries->visibleForList()
             ->addSelect(['created_by', 'updated_by', 'revision_count', 'editor']);
@@ -67,19 +75,19 @@ class PageApiController extends ApiController
      * Any images included via base64 data URIs will be extracted and saved as gallery
      * images against the page during upload.
      */
-    public function create(Request $request)
+    public function create(Request $request): JsonResponse
     {
-        $this->validate($request, $this->rules['create']);
+        $validated = $this->validate($request, $this->rules['create']);
 
         if ($request->has('chapter_id')) {
-            $parent = $this->entityQueries->chapters->findVisibleByIdOrFail(intval($request->get('chapter_id')));
+            $parent = $this->entityQueries->chapters->findVisibleByIdOrFail(intval($request->input('chapter_id')));
         } else {
-            $parent = $this->entityQueries->books->findVisibleByIdOrFail(intval($request->get('book_id')));
+            $parent = $this->entityQueries->books->findVisibleByIdOrFail(intval($request->input('book_id')));
         }
-        $this->checkOwnablePermission('page-create', $parent);
+        $this->checkOwnablePermission(Permission::PageCreate, $parent);
 
         $draft = $this->pageRepo->getNewDraftPage($parent);
-        $this->pageRepo->publishDraft($draft, $request->only(array_keys($this->rules['create'])));
+        $this->pageRepo->publishDraft($draft, $validated);
 
         return response()->json($draft->forJsonDisplay());
     }
@@ -87,21 +95,32 @@ class PageApiController extends ApiController
     /**
      * View the details of a single page.
      * Pages will always have HTML content. They may have markdown content
-     * if the markdown editor was used to last update the page.
+     * if the Markdown editor was used to last update the page.
      *
-     * The 'html' property is the fully rendered & escaped HTML content that BookStack
+     * The 'html' property is the fully rendered and escaped HTML content that BookStack
      * would show on page view, with page includes handled.
      * The 'raw_html' property is the direct database stored HTML content, which would be
      * what BookStack shows on page edit.
      *
      * See the "Content Security" section of these docs for security considerations when using
      * the page content returned from this endpoint.
+     *
+     * Comments for the page are provided in a tree-structure representing the hierarchy of top-level
+     * comments and replies, for both archived and active comments.
      */
-    public function read(string $id)
+    public function read(string $id): JsonResponse
     {
-        $page = $this->queries->findVisibleByIdOrFail($id);
+        $page = $this->queries->findVisibleByIdOrFail(intval($id));
 
-        return response()->json($page->forJsonDisplay());
+        $page = $page->forJsonDisplay();
+        $commentTree = (new CommentTree($page));
+        $commentTree->loadVisibleHtml();
+        $page->setAttribute('comments', [
+            'active' => $commentTree->getActive(),
+            'archived' => $commentTree->getArchived(),
+        ]);
+
+        return response()->json($page);
     }
 
     /**
@@ -111,22 +130,22 @@ class PageApiController extends ApiController
      * Providing a 'book_id' or 'chapter_id' property will essentially move
      * the page into that parent element if you have permissions to do so.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id): JsonResponse
     {
         $requestData = $this->validate($request, $this->rules['update']);
 
-        $page = $this->queries->findVisibleByIdOrFail($id);
-        $this->checkOwnablePermission('page-update', $page);
+        $page = $this->queries->findVisibleByIdOrFail(intval($id));
+        $this->checkOwnablePermission(Permission::PageUpdate, $page);
 
         $parent = null;
         if ($request->has('chapter_id')) {
-            $parent = $this->entityQueries->chapters->findVisibleByIdOrFail(intval($request->get('chapter_id')));
+            $parent = $this->entityQueries->chapters->findVisibleByIdOrFail(intval($request->input('chapter_id')));
         } elseif ($request->has('book_id')) {
-            $parent = $this->entityQueries->books->findVisibleByIdOrFail(intval($request->get('book_id')));
+            $parent = $this->entityQueries->books->findVisibleByIdOrFail(intval($request->input('book_id')));
         }
 
         if ($parent && !$parent->matches($page->getParent())) {
-            $this->checkOwnablePermission('page-delete', $page);
+            $this->checkOwnablePermission(Permission::PageDelete, $page);
 
             try {
                 $this->pageRepo->move($page, $parent->getType() . ':' . $parent->id);
@@ -148,10 +167,10 @@ class PageApiController extends ApiController
      * Delete a page.
      * This will typically send the page to the recycle bin.
      */
-    public function delete(string $id)
+    public function delete(string $id): Response
     {
-        $page = $this->queries->findVisibleByIdOrFail($id);
-        $this->checkOwnablePermission('page-delete', $page);
+        $page = $this->queries->findVisibleByIdOrFail(intval($id));
+        $this->checkOwnablePermission(Permission::PageDelete, $page);
 
         $this->pageRepo->destroy($page);
 

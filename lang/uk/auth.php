@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Цей обліковий запис не знайдено.',
     'throttle' => 'Забагато спроб входу в систему. Будь ласка, спробуйте ще раз через :seconds секунд.',
+    'mfa_throttle' => 'Занадто багато спроб багатофакторної перевірки. Будь ласка, спробуйте ще раз через :seconds секунд.',
 
     // Login & Register
     'sign_up' => 'Реєстрація',
@@ -20,6 +21,9 @@ return [
     'username' => 'Логін',
     'email' => 'Адреса електронної пошти',
     'password' => 'Пароль',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Підтвердження пароля',
     'password_hint' => 'Повинен бути щонайменше 8 символів',
     'forgot_password' => 'Забули пароль?',

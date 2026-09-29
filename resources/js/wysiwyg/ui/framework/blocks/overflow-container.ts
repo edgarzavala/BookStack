@@ -9,9 +9,11 @@ export class EditorOverflowContainer extends EditorContainerUiElement {
     protected size: number;
     protected overflowButton: EditorDropdownButton;
     protected content: EditorUiElement[];
+    protected label: string;
 
-    constructor(size: number, children: EditorUiElement[]) {
+    constructor(label: string, size: number, children: EditorUiElement[]) {
         super(children);
+        this.label = label;
         this.size = size;
         this.content = children;
         this.overflowButton = new EditorDropdownButton({
@@ -19,8 +21,14 @@ export class EditorOverflowContainer extends EditorContainerUiElement {
                 label: 'More',
                 icon: moreHorizontal,
             },
+            hideOnAction: false,
         }, []);
         this.addChildren(this.overflowButton);
+    }
+
+    addChild(child: EditorUiElement, targetIndex: number = -1): void {
+        this.content.splice(targetIndex, 0, child);
+        this.addChildren(child);
     }
 
     protected buildDOM(): HTMLElement {
@@ -40,5 +48,8 @@ export class EditorOverflowContainer extends EditorContainerUiElement {
         }, visibleElements);
     }
 
+    getLabel(): string {
+        return this.label;
+    }
 
 }

@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Αυτά τα διαπιστευτήρια δεν ταιριάζουν με τα αρχεία μας.',
     'throttle' => 'Πάρα πολλές προσπάθειες σύνδεσης. Δοκιμάστε ξανά σε :δευτερόλεπτα.',
+    'mfa_throttle' => 'Too many multi-factor verification attempts. Please try again in :seconds seconds.',
 
     // Login & Register
     'sign_up' => 'Εγγραφείτε',
@@ -20,6 +21,9 @@ return [
     'username' => 'Όνομα χρήστη',
     'email' => 'Email',
     'password' => 'Ο κωδικός σας',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Επιβεβαιώστε τον κωδικό σας',
     'password_hint' => 'Πρέπει να αποτελείται από τουλάχιστον 8 χαρακτήρες',
     'forgot_password' => 'Ξεχάσατε τον κωδικό σας;',

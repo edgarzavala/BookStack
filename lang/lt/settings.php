@@ -9,8 +9,8 @@ return [
     // Common Messages
     'settings' => 'Nustatymai',
     'settings_save' => 'Išsaugoti nustatymus',
-    'system_version' => 'System Version',
-    'categories' => 'Categories',
+    'system_version' => 'Sistemos versija',
+    'categories' => 'Kategorijos',
 
     // App Settings
     'app_customization' => 'Tinkinimas',
@@ -75,8 +75,8 @@ return [
     'reg_confirm_restrict_domain_placeholder' => 'Nėra jokių apribojimų',
 
     // Sorting Settings
-    'sorting' => 'Sorting',
-    'sorting_book_default' => 'Default Book Sort',
+    'sorting' => 'Lists & Sorting',
+    'sorting_book_default' => 'Default Book Sort Rule',
     'sorting_book_default_desc' => 'Select the default sort rule to apply to new books. This won\'t affect existing books, and can be overridden per-book.',
     'sorting_rules' => 'Sort Rules',
     'sorting_rules_desc' => 'These are predefined sorting operations which can be applied to content in the system.',
@@ -103,6 +103,8 @@ return [
     'sort_rule_op_updated_date' => 'Updated Date',
     'sort_rule_op_chapters_first' => 'Chapters First',
     'sort_rule_op_chapters_last' => 'Chapters Last',
+    'sorting_page_limits' => 'Per-Page Display Limits',
+    'sorting_page_limits_desc' => 'Set how many items to show per-page in various lists within the system. Typically a lower amount will be more performant, while a higher amount avoids the need to click through multiple pages. Using a multiple of 6 is recommended.',
 
     // Maintenance settings
     'maint' => 'Priežiūra',
@@ -195,14 +197,18 @@ return [
     'role_import_content' => 'Import content',
     'role_editor_change' => 'Change page editor',
     'role_notifications' => 'Receive & manage notifications',
+    'role_permission_note_users_and_roles' => 'These permissions will technically also provide visibility & searching of users & roles in the system.',
     'role_asset' => 'Nuosavybės leidimai',
     'roles_system_warning' => 'Būkite sąmoningi, kad prieiga prie bet kurio iš trijų leidimų viršuje gali leisti naudotojui pakeisti jų pačių privilegijas arba kitų privilegijas sistemoje. Paskirkite vaidmenis su šiais leidimais tik patikimiems naudotojams.',
     'role_asset_desc' => 'Šie leidimai kontroliuoja numatytą prieigą į nuosavybę, esančią sistemoje. Knygų, skyrių ir puslapių leidimai nepaisys šių leidimų.',
     'role_asset_admins' => 'Administratoriams automatiškai yra suteikiama prieiga prie viso turinio, tačiau šie pasirinkimai gali rodyti arba slėpti vartotojo sąsajos parinktis.',
     'role_asset_image_view_note' => 'This relates to visibility within the image manager. Actual access of uploaded image files will be dependant upon system image storage option.',
+    'role_asset_users_note' => 'These permissions will technically also provide visibility & searching of users in the system.',
     'role_all' => 'Visi',
     'role_own' => 'Nuosavi',
+    'role_permission_aria' => ':action :resource: :value',
     'role_controlled_by_asset' => 'Kontroliuojami nuosavybės, į kurią yra įkelti',
+    'role_controlled_by_page_delete' => 'Controlled by page delete permissions',
     'role_save' => 'Išsaugoti vaidmenį',
     'role_users' => 'Naudotojai šiame vaidmenyje',
     'role_users_none' => 'Šiuo metu prie šio vaidmens nėra priskirta naudotojų',
@@ -259,6 +265,9 @@ return [
     'users_mfa_desc' => 'Setup multi-factor authentication as an extra layer of security for your user account.',
     'users_mfa_x_methods' => ':count method configured|:count methods configured',
     'users_mfa_configure' => 'Configure Methods',
+    'users_mfa_reset' => 'Reset Multi-Factor Authentication Methods',
+    'users_mfa_reset_desc' => 'This will reset and clear all configured multi-factor authentication methods for this user. If multi-factor authentication is required by any of their roles, they\'ll be prompted to configure new methods on their next login.',
+    'users_mfa_reset_confirm' => 'Are you sure you want to reset multi-factor authentication for this user?',
 
     // API Tokens
     'user_api_token_create' => 'Sukurti API sąsajos prieigos raktą',
@@ -348,6 +357,7 @@ return [
         'lt' => 'Lietuvių Kalba',
         'lv' => 'Latviešu Valoda',
         'nb' => 'Norsk (Bokmål)',
+        'ne' => 'नेपाली',
         'nn' => 'Nynorsk',
         'nl' => 'Nederlands',
         'pl' => 'Polski',
@@ -357,7 +367,9 @@ return [
         'ru' => 'Русский',
         'sk' => 'Slovensky',
         'sl' => 'Slovenščina',
+        'sr' => 'Српски',
         'sv' => 'Svenska',
+        'th' => 'ภาษาไทย',
         'tr' => 'Türkçe',
         'uk' => 'Українська',
         'uz' => 'O‘zbekcha',

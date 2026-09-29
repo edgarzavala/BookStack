@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute môže obsahovať iba písmená a čísla.',
     'array'                => ':attribute musí byť pole.',
     'backup_codes'         => 'Poskytnutý kód nie je platný alebo už bol použitý.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute musí byť dátum pred :date.',
     'between'              => [
         'numeric' => ':attribute musí byť medzi :min a :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute pole musí byť true alebo false.',
     'confirmed'            => ':attribute potvrdenie nesedí.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute nie je platný dátum.',
     'date_format'          => ':attribute nesedí s formátom :format.',
     'different'            => ':attribute a :other musia byť rozdielne.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'Súbor sa nepodarilo nahrať. Server nemusí akceptovať súbory tejto veľkosti.',
 
     'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
+    'zip_file_size' => 'The file :attribute must not exceed :size MB.',
     'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
     'zip_model_expected' => 'Data object expected but ":type" found.',
     'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',

@@ -3,6 +3,7 @@
 namespace Tests\Api;
 
 use BookStack\Entities\Models\Page;
+use BookStack\Permissions\Permission;
 use BookStack\Uploads\Attachment;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Testing\AssertableJsonString;
@@ -58,6 +59,22 @@ class AttachmentsApiTest extends TestCase
                 'id' => $attachment->id,
             ],
         ]]);
+    }
+
+    public function test_index_does_not_show_attachments_for_pages_in_recycle_bin()
+    {
+        $this->actingAsApiEditor();
+        $page = $this->entities->page();
+        $attachment = $this->createAttachmentForPage($page, [
+            'name'     => 'My test attachment',
+            'external' => true,
+        ]);
+        $this->entities->sendToRecycleBin($page);
+
+        $resp = $this->getJson("{$this->baseEndpoint}?filter[id]={$attachment->id}");
+
+        $resp->assertJsonCount(0, 'data');
+        $resp->assertJsonPath('total', 0);
     }
 
     public function test_create_endpoint_for_link_attachment()
@@ -343,6 +360,31 @@ class AttachmentsApiTest extends TestCase
         $this->assertTrue($attachment->external);
         $this->assertEquals('https://cats.example.com', $attachment->path);
         $this->assertEquals('', $attachment->extension);
+    }
+
+    public function test_update_uploaded_to_change_requires_edit_permission_to_old_page()
+    {
+        $editor = $this->users->editor();
+        $this->actingAsForApi($editor);
+
+        $originalPage = $this->entities->page();
+        $attachment = $this->createAttachmentForPage($originalPage);
+        $newPage = $this->entities->page();
+
+        $details = [
+            'name' => 'My updated API attachment',
+            'uploaded_to' => $newPage->id,
+        ];
+
+        $this->permissions->setEntityPermissions($originalPage, ['view'], [$editor->roles->first()]);
+        $this->permissions->grantUserRolePermissions($editor, [Permission::AttachmentUpdateAll]);
+
+        $resp = $this->putJson("{$this->baseEndpoint}/{$attachment->id}", $details);
+        $attachment->refresh();
+
+        $this->assertPermissionError($resp);
+        $this->assertNotEquals($newPage->id, $attachment->uploaded_to);
+        $this->assertEquals($originalPage->id, $attachment->uploaded_to);
     }
 
     public function test_delete_endpoint()

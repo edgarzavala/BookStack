@@ -30,6 +30,8 @@ return [
     'create' => 'Criar',
     'update' => 'Atualizar',
     'edit' => 'Editar',
+    'archive' => 'Arquivar',
+    'unarchive' => 'Desarquivar',
     'sort' => 'Ordenar',
     'move' => 'Mover',
     'copy' => 'Copiar',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Inativo',
     'never' => 'Nunca',
     'none' => 'Nenhum',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Página inicial',
@@ -109,5 +113,5 @@ return [
     'terms_of_service' => 'Termos de Utilização',
 
     // OpenSearch
-    'opensearch_description' => 'Search :appName',
+    'opensearch_description' => 'Procurar :appName',
 ];

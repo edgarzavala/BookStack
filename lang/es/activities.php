@@ -99,6 +99,8 @@ return [
     'user_update_notification' => 'Usuario actualizado correctamente',
     'user_delete' => 'usuario eliminado',
     'user_delete_notification' => 'Usuario eliminado correctamente',
+    'user_mfa_reset' => 'reiniciar autenticación en dos pasos para el usuario',
+    'user_mfa_reset_notification' => 'Métodos de autenticación en dos pasos restablecidos',
 
     // API Tokens
     'api_token_create' => 'token de API creado',

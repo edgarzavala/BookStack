@@ -29,7 +29,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ setting('app-icon-32') ?: url('/icon-32.png') }}">
 
     <!-- PWA -->
-    <link rel="manifest" href="{{ url('/manifest.json') }}">
+    <link rel="manifest" href="{{ url('/manifest.json') }}" crossorigin="use-credentials">
     <meta name="mobile-web-app-capable" content="yes">
 
     <!-- OpenSearch -->
@@ -61,12 +61,7 @@
     </div>
 
     @include('layouts.parts.footer')
-
-    <div component="back-to-top" class="back-to-top print-hidden">
-        <div class="inner">
-            @icon('chevron-up') <span>{{ trans('common.back_to_top') }}</span>
-        </div>
-    </div>
+    @include('layouts.parts.back-to-top')
 
     @if($cspNonce ?? false)
         <script src="{{ versioned_asset('dist/app.js') }}" type="module" nonce="{{ $cspNonce }}"></script>

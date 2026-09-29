@@ -1,0 +1,88 @@
+name: test-php
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**.php'
+      - 'composer.*'
+  pull_request:
+    paths:
+      - '**.php'
+      - 'composer.*'
+
+jobs:
+  build:
+    if: ${{ github.ref != 'refs/heads/l10n_development' }}
+    runs-on: docker
+    container:
+      image: docker.io/setupphp/node:noble
+    strategy:
+      matrix:
+        php: ['8.2', '8.3', '8.4', '8.5']
+    env:
+      phpextensions: gd, mbstring, json, curl, xml, dom, mysql, ldap, gmp
+      phpextensioncachekey: cache-v1
+    steps:
+    - uses: https://code.forgejo.org/actions/checkout@v6
+
+    - name: Setup cache environment
+      id: extcache
+      uses: https://github.com/shivammathur/cache-extensions@v1
+      with:
+        php-version: ${{ matrix.php }}
+        extensions: ${{ env.phpextensions }}
+        key: ${{ env.phpextensioncachekey }}
+
+    - name: Cache extensions
+      uses: https://code.forgejo.org/actions/cache@v5
+      with:
+        path: ${{ steps.extcache.outputs.dir }}
+        key: ${{ steps.extcache.outputs.key }}
+        restore-keys: ${{ steps.extcache.outputs.key }}
+
+    - name: Setup PHP
+      uses: https://github.com/shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php }}
+        extensions: ${{ env.phpextensions }}
+
+    - name: Get Composer Cache Directory
+      id: composer-cache
+      run: |
+        echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+    - name: Cache composer packages
+      uses: https://code.forgejo.org/actions/cache@v5
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ matrix.php }}
+        restore-keys: ${{ runner.os }}-composer-
+
+    - name: Install composer dependencies
+      run: composer install --prefer-dist --no-interaction --ansi
+      env:
+        COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{ secrets.GH_TOKEN }}"}}'
+
+    - name: Start MySQL
+      run: |
+        sudo systemctl start mysql
+
+    - name: Create database & user
+      run: |
+        mysql -uroot -proot -e 'CREATE DATABASE IF NOT EXISTS `bookstack-test`;'
+        mysql -uroot -proot -e "CREATE USER 'bookstack-test'@'localhost' IDENTIFIED WITH mysql_native_password BY 'bookstack-test';"
+        mysql -uroot -proot -e "GRANT ALL ON \`bookstack-test\`.* TO 'bookstack-test'@'localhost';"
+        mysql -uroot -proot -e 'FLUSH PRIVILEGES;'
+
+    - name: Migrate and seed the database
+      env:
+        TEST_DATABASE_URL: 'mysql://bookstack-test:bookstack-test@localhost/bookstack-test'
+      run: |
+        php${{ matrix.php }} artisan migrate --force -n --database=mysql_testing
+        php${{ matrix.php }} artisan db:seed --force -n --class=DummyContentSeeder --database=mysql_testing
+
+    - name: Run PHP tests
+      env:
+        TEST_DATABASE_URL: 'mysql://bookstack-test:bookstack-test@localhost/bookstack-test'
+      run: php${{ matrix.php }} ./vendor/bin/phpunit

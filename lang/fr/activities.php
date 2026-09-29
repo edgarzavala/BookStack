@@ -59,7 +59,7 @@ return [
     'favourite_remove_notification' => '":name" a été supprimé de vos favoris',
 
     // Watching
-    'watch_update_level_notification' => 'Suivre les préférences mises à jour avec succès',
+    'watch_update_level_notification' => 'Préférences de surveillance mises à jour avec succès',
 
     // Auth
     'auth_login' => 'connecté',
@@ -99,6 +99,8 @@ return [
     'user_update_notification' => 'Utilisateur mis à jour avec succès',
     'user_delete' => 'utilisateur supprimé',
     'user_delete_notification' => 'Utilisateur supprimé avec succès',
+    'user_mfa_reset' => 'réinitialiser l\'authentification multifacteur pour l\'utilisateur',
+    'user_mfa_reset_notification' => 'Les méthodes d\'authentification multifacteurs sont réinitialisées',
 
     // API Tokens
     'api_token_create' => 'a créé un jeton API',

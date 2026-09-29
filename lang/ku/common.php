@@ -30,6 +30,8 @@ return [
     'create' => 'دروستکردن',
     'update' => 'نوێکردنەوە',
     'edit' => 'دەسکاریکردن',
+    'archive' => 'Archive',
+    'unarchive' => 'Un-Archive',
     'sort' => 'ڕیزکردن',
     'move' => 'جوڵاندن',
     'copy' => 'لەبەرگرتنەوە',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Inactive',
     'never' => 'Never',
     'none' => 'هیچ',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'پەرەی سەرەكی',

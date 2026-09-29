@@ -30,6 +30,8 @@ return [
     'create' => 'Opprett',
     'update' => 'Oppdater',
     'edit' => 'Rediger',
+    'archive' => 'Archive',
+    'unarchive' => 'Un-Archive',
     'sort' => 'Sortér',
     'move' => 'Flytt',
     'copy' => 'Kopier',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Inaktiv',
     'never' => 'Aldri',
     'none' => 'Ingen',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Heimeside',

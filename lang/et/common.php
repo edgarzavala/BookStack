@@ -30,6 +30,8 @@ return [
     'create' => 'Lisa',
     'update' => 'Uuenda',
     'edit' => 'Muuda',
+    'archive' => 'Arhiveeri',
+    'unarchive' => 'Taasta arhiivist',
     'sort' => 'Sorteeri',
     'move' => 'Liiguta',
     'copy' => 'Kopeeri',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Mitteaktiivne',
     'never' => 'Mitte kunagi',
     'none' => 'Puudub',
+    'move_left' => 'Liiguta vasakule',
+    'move_right' => 'Liiguta paremale',
 
     // Header
     'homepage' => 'Avaleht',

@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute sadece harflerden ve rakamlardan oluşabilir.',
     'array'                => ':attribute bir dizi olmalıdır.',
     'backup_codes'         => 'Girilen kod geçersiz veya daha önce kullanılmış.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute tarihi, :date tarihinden önceki bir tarih olmalıdır.',
     'between'              => [
         'numeric' => ':attribute değeri, :min ve :max değerleri arasında olmalıdır.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute değeri true veya false olmalıdır.',
     'confirmed'            => ':attribute doğrulaması eşleşmiyor.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute geçerli bir tarih değil.',
     'date_format'          => ':attribute formatı, :format formatına uymuyor.',
     'different'            => ':attribute ve :other birbirinden farklı olmalıdır.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'Dosya yüklemesi başarısız oldu. Sunucu, bu boyuttaki dosyaları kabul etmiyor olabilir.',
 
     'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
+    'zip_file_size' => 'The file :attribute must not exceed :size MB.',
     'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
     'zip_model_expected' => 'Data object expected but ":type" found.',
     'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',

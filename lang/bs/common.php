@@ -30,6 +30,8 @@ return [
     'create' => 'Kreiraj',
     'update' => 'Ažuriraj',
     'edit' => 'Uredi',
+    'archive' => 'Archive',
+    'unarchive' => 'Un-Archive',
     'sort' => 'Sortiraj',
     'move' => 'Pomjeri',
     'copy' => 'Kopiraj',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Inactive',
     'never' => 'Never',
     'none' => 'None',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Homepage',

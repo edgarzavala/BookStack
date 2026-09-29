@@ -119,14 +119,14 @@ class SearchIndex
      * Create a scored term array from the given text, where the keys are the terms
      * and the values are their scores.
      *
-     * @returns array<string, int>
+     * @return array<string, float>
      */
     protected function generateTermScoreMapFromText(string $text, float $scoreAdjustment = 1): array
     {
         $termMap = $this->textToTermCountMap($text);
 
         foreach ($termMap as $term => $count) {
-            $termMap[$term] = floor($count * $scoreAdjustment);
+            $termMap[$term] = intval($count * $scoreAdjustment);
         }
 
         return $termMap;
@@ -136,7 +136,7 @@ class SearchIndex
      * Create a scored term array from the given HTML, where the keys are the terms
      * and the values are their scores.
      *
-     * @returns array<string, int>
+     * @return array<string, float>
      */
     protected function generateTermScoreMapFromHtml(string $html): array
     {
@@ -160,7 +160,9 @@ class SearchIndex
         /** @var DOMNode $child */
         foreach ($doc->getBodyChildren() as $child) {
             $nodeName = $child->nodeName;
-            $termCounts = $this->textToTermCountMap(trim($child->textContent));
+            $text = trim($child->textContent);
+            $text = str_replace("\u{00A0}", ' ', $text);
+            $termCounts = $this->textToTermCountMap($text);
             foreach ($termCounts as $term => $count) {
                 $scoreChange = $count * ($elementScoreAdjustmentMap[$nodeName] ?? 1);
                 $scoresByTerm[$term] = ($scoresByTerm[$term] ?? 0) + $scoreChange;
@@ -175,7 +177,7 @@ class SearchIndex
      *
      * @param Tag[] $tags
      *
-     * @returns array<string, int>
+     * @return array<string, float>
      */
     protected function generateTermScoreMapFromTags(array $tags): array
     {
@@ -197,7 +199,7 @@ class SearchIndex
      * For the given text, return an array where the keys are the unique term words
      * and the values are the frequency of that term.
      *
-     * @returns array<string, int>
+     * @return array<string, int>
      */
     protected function textToTermCountMap(string $text): array
     {
@@ -241,7 +243,7 @@ class SearchIndex
      * For the given entity, Generate an array of term data details.
      * Is the raw term data, not instances of SearchTerm models.
      *
-     * @returns array{term: string, score: float, entity_id: int, entity_type: string}[]
+     * @return array{term: string, score: float, entity_id: int, entity_type: string}[]
      */
     protected function entityToTermDataArray(Entity $entity): array
     {
@@ -275,9 +277,9 @@ class SearchIndex
      * For the given term data arrays, Merge their contents by term
      * while combining any scores.
      *
-     * @param array<string, int>[] ...$scoreMaps
+     * @param array<string, float>[] ...$scoreMaps
      *
-     * @returns array<string, int>
+     * @return array<string, float>
      */
     protected function mergeTermScoreMaps(...$scoreMaps): array
     {

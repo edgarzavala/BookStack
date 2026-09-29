@@ -4,6 +4,7 @@ namespace BookStack\Access\Mfa;
 
 use BookStack\Users\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -16,6 +17,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class MfaValue extends Model
 {
+    use HasFactory;
+
     protected static $unguarded = true;
 
     const METHOD_TOTP = 'totp';
@@ -45,17 +48,16 @@ class MfaValue extends Model
     }
 
     /**
-     * Easily get the decrypted MFA value for the given user and method.
+     * Get the decrypted MFA value for the given user and method.
      */
     public static function getValueForUser(User $user, string $method): ?string
     {
-        /** @var MfaValue $mfaVal */
         $mfaVal = static::query()
             ->where('user_id', '=', $user->id)
             ->where('method', '=', $method)
             ->first();
 
-        return $mfaVal ? $mfaVal->getValue() : null;
+        return $mfaVal?->getValue();
     }
 
     /**

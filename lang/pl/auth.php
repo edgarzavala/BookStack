@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Wprowadzone poświadczenia są nieprawidłowe.',
     'throttle' => 'Zbyt wiele prób logowania. Spróbuj ponownie za :seconds s.',
+    'mfa_throttle' => 'Zbyt wiele prób weryfikacji wieloskładnikowej. Spróbuj ponownie za :seconds sekund.',
 
     // Login & Register
     'sign_up' => 'Zarejestruj się',
@@ -20,6 +21,9 @@ return [
     'username' => 'Nazwa użytkownika',
     'email' => 'E-mail',
     'password' => 'Hasło',
+    'password_new' => 'New Password',
+    'password_new_confirm' => 'Confirm New Password',
+    'password_current' => 'Confirm Current Password',
     'password_confirm' => 'Potwierdź hasło',
     'password_hint' => 'Musi mieć co najmniej 8 znaków',
     'forgot_password' => 'Zapomniałeś hasła?',

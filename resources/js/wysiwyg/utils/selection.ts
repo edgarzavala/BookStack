@@ -1,22 +1,24 @@
 import {
     $createNodeSelection,
-    $createParagraphNode, $createRangeSelection,
+    $createParagraphNode, $createRangeSelection, $getEditor, $getNearestNodeFromDOMNode,
     $getRoot,
     $getSelection, $isBlockElementNode, $isDecoratorNode,
-    $isElementNode,
+    $isElementNode, $isParagraphNode,
     $isTextNode,
     $setSelection,
     BaseSelection, DecoratorNode,
     ElementNode, LexicalEditor,
-    LexicalNode,
+    LexicalNode, NodeSelection, RangeSelection,
     TextFormatType, TextNode
 } from "lexical";
 import {$getNearestBlockElementAncestorOrThrow} from "@lexical/utils";
 import {LexicalElementNodeCreator, LexicalNodeMatcher} from "../nodes";
 import {$setBlocksType} from "@lexical/selection";
 
-import {$getNearestNodeBlockParent, $getParentOfType, nodeHasAlignment} from "./nodes";
+import {$getNearestNodeBlockParent, $getParentOfType, $sortNodes, nodeHasAlignment} from "./nodes";
 import {CommonBlockAlignment} from "lexical/nodes/common";
+import {$isListItemNode} from "@lexical/list";
+import {$createCollapsedRangeSelectionForNode} from "lexical/LexicalSelection";
 
 const lastSelectionByEditor = new WeakMap<LexicalEditor, BaseSelection|null>;
 
@@ -60,18 +62,49 @@ export function $selectionContainsTextFormat(selection: BaseSelection | null, fo
         return false;
     }
 
-    for (const node of selection.getNodes()) {
+    // Check text nodes
+    const nodes = selection.getNodes();
+    for (const node of nodes) {
         if ($isTextNode(node) && node.hasFormat(format)) {
             return true;
         }
     }
 
+    // If we're in an empty paragraph, check the paragraph format
+    if (nodes.length === 1 && $isParagraphNode(nodes[0]) && nodes[0].hasTextFormat(format)) {
+        return true;
+    }
+
     return false;
+}
+
+function createNewBlockIfSelectionIsSingleListItemText(selection: BaseSelection): void {
+    const startEnd = selection.getStartEndPoints();
+    if (!startEnd) {
+        return;
+    }
+
+    const startBlock = $getNearestNodeBlockParent(startEnd[0].getNode());
+    const endBlock = $getNearestNodeBlockParent(startEnd[1].getNode());
+    const isSingleListItemTextSelection = $isListItemNode(startBlock) && startBlock.getKey() === endBlock?.getKey();
+
+    if (isSingleListItemTextSelection) {
+        const wrapper = $createParagraphNode();
+        const firstNode = $sortNodes([startEnd[0].getNode(), startEnd[1].getNode()], startBlock)[0];
+        firstNode.insertBefore(wrapper);
+        wrapper.append(...selection.getNodes());
+    }
 }
 
 export function $toggleSelectionBlockNodeType(matcher: LexicalNodeMatcher, creator: LexicalElementNodeCreator) {
     const selection = $getSelection();
     const blockElement = selection ? $getNearestBlockElementAncestorOrThrow(selection.getNodes()[0]) : null;
+
+    const inListItem = $isListItemNode(blockElement);
+    if (inListItem && selection) {
+        createNewBlockIfSelectionIsSingleListItemText(selection);
+    }
+
     if (selection && matcher(blockElement)) {
         $setBlocksType(selection, $createParagraphNode);
     } else {
@@ -102,10 +135,49 @@ export function $insertNewBlockNodesAtSelection(nodes: LexicalNode[], insertAfte
     }
 }
 
-export function $selectSingleNode(node: LexicalNode) {
+export function $insertNewNodesAtSelection(nodes: LexicalNode[]) {
+    const selection = $getSelection();
+    if (selection) {
+        selection.insertNodes(nodes);
+        return;
+    }
+
+    // Do something relatively sensible if we don't have a selection within view
+    const root = $getRoot();
+    let targetBlock = root.getLastChild();
+    for (const node of nodes) {
+        const isBlock = $isBlockElementNode(node);
+        if (isBlock && !targetBlock) {
+            root.append(node);
+            targetBlock = node;
+        } else if (isBlock) {
+            targetBlock?.insertAfter(node);
+            targetBlock = node;
+        } else if ($isElementNode(targetBlock)) {
+            targetBlock.append(node);
+        } else {
+            const paragraph = $createParagraphNode();
+            paragraph.append(node);
+            root.append(paragraph);
+            targetBlock = paragraph;
+        }
+    }
+}
+
+/**
+ * Create a selection for a single node.
+ */
+export function $createSingleNodeSelection(node: LexicalNode): NodeSelection {
     const nodeSelection = $createNodeSelection();
     nodeSelection.add(node.getKey());
-    $setSelection(nodeSelection);
+    return nodeSelection;
+}
+
+/**
+ * Create and apply a selection for a single node.
+ */
+export function $selectSingleNode(node: LexicalNode): void {
+    $setSelection($createSingleNodeSelection(node));
 }
 
 function getFirstTextNodeInNodes(nodes: LexicalNode[]): TextNode|null {
@@ -239,4 +311,39 @@ export function $getDecoratorNodesInSelection(selection: BaseSelection | null): 
     }
 
     return selection.getNodes().filter(node => $isDecoratorNode(node));
+}
+
+/**
+ * Attempt to select the given node at roughly the pixel offset, relative to the left of the node.
+ * Returns the range selection if a selection could be made.
+ * Returns null if no selection can be made.
+ */
+export function $selectNodeAtXPixelOffset(node: LexicalNode, pixelOffset: number, targetStart: boolean = true): RangeSelection|null {
+    const targetDOM = $getEditor().getElementByKey(node.getKey());
+    if (!targetDOM) {
+        return null;
+    }
+
+    const targetChild = targetDOM.children[targetStart ? 0 : targetDOM.children.length - 1] || targetDOM;
+    const targetBounds = targetChild.getBoundingClientRect();
+    const targetY = targetBounds[targetStart ? 'top' : 'bottom'] + (targetStart ? 1 : -1);
+    const targetX = targetBounds.x + pixelOffset;
+    // Temporary caretRangeFromPoint usage due to caretPositionFromPoint being only
+    // very recently supported in Safari
+    // To remove post 2026
+    const caretRange = document.caretRangeFromPoint?.(targetX, targetY);
+    const caret = document.caretPositionFromPoint?.(targetX, targetY)
+        ?? (caretRange ? { offsetNode: caretRange.startContainer, offset: caretRange.startOffset } : undefined);
+    if (!caret) {
+        return null;
+    }
+
+    const targetNode = $getNearestNodeFromDOMNode(caret.offsetNode);
+    if (!targetNode) {
+        return null;
+    }
+
+    const rangeSelection = $createCollapsedRangeSelectionForNode(targetNode, caret.offset);
+    $setSelection(rangeSelection);
+    return rangeSelection;
 }

@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute får bara innehålla bokstäver och siffror.',
     'array'                => ':attribute måste vara en array.',
     'backup_codes'         => 'Den angivna koden är inte giltig eller har redan använts.',
+    'base64_uri_mime'      => ':attribute måste vara en giltig base64-URI som innehåller data av MIME-typen :mime.',
     'before'               => ':attribute måste vara före :date.',
     'between'              => [
         'numeric' => ':attribute måste vara mellan :min och :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute måste vara sant eller falskt.',
     'confirmed'            => 'Bekräftelsen av :attribute stämmer inte.',
+    'current_password'     => 'Detta stämmer inte överens med ditt nuvarande lösenord.',
     'date'                 => ':attribute är inte ett giltigt datum.',
     'date_format'          => ':attribute matchar inte formatet :format.',
     'different'            => ':attribute och :other måste vara olika.',
@@ -105,10 +107,11 @@ return [
     'url'                  => 'Formatet på :attribute är ogiltigt.',
     'uploaded'             => 'Filen kunde inte laddas upp. Servern kanske inte tillåter filer med denna storlek.',
 
-    'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
-    'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
-    'zip_model_expected' => 'Data object expected but ":type" found.',
-    'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',
+    'zip_file' => ':attribute måste referera till en fil inom ZIP-filen.',
+    'zip_file_size' => 'Filen :attribute får inte överstiga :size MB.',
+    'zip_file_mime' => ':attribute måste referera till en fil av typen :validTypes, hittade :foundType.',
+    'zip_model_expected' => 'Dataobjekt förväntades men ":type" hittades.',
+    'zip_unique' => ':attribute måste referera till en fil inom ZIP-filen.',
 
     // Custom validation lines
     'custom' => [

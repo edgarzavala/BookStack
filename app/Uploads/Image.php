@@ -7,21 +7,22 @@ use BookStack\Entities\Models\Page;
 use BookStack\Permissions\Models\JointPermission;
 use BookStack\Permissions\PermissionApplicator;
 use BookStack\Users\Models\HasCreatorAndUpdater;
+use BookStack\Users\Models\OwnableInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property int    $id
- * @property string $name
- * @property string $url
- * @property string $path
- * @property string $type
- * @property int    $uploaded_to
- * @property int    $created_by
- * @property int    $updated_by
+ * @property int      $id
+ * @property string   $name
+ * @property string   $url
+ * @property string   $path
+ * @property string   $type
+ * @property int|null $uploaded_to
+ * @property int      $created_by
+ * @property int      $updated_by
  */
-class Image extends Model
+class Image extends Model implements OwnableInterface
 {
     use HasFactory;
     use HasCreatorAndUpdater;
@@ -38,10 +39,13 @@ class Image extends Model
     /**
      * Scope the query to just the images visible to the user based upon the
      * user visibility of the uploaded_to page.
+     * This limits results to just page-based images (gallery and drawio types).
      */
     public function scopeVisible(Builder $query): Builder
     {
-        return app()->make(PermissionApplicator::class)->restrictPageRelationQuery($query, 'images', 'uploaded_to');
+        return app()->make(PermissionApplicator::class)
+            ->restrictPageRelationQuery($query, 'images', 'uploaded_to')
+            ->whereIn('type', ['gallery', 'drawio']);
     }
 
     /**

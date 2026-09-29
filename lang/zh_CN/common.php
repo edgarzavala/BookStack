@@ -30,6 +30,8 @@ return [
     'create' => '创建',
     'update' => '更新',
     'edit' => '编辑',
+    'archive' => '存档',
+    'unarchive' => '取消存档',
     'sort' => '排序',
     'move' => '移动',
     'copy' => '复制',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => '未激活',
     'never' => '从未',
     'none' => '无',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => '主页',

@@ -30,6 +30,8 @@ return [
     'create' => 'Skapa',
     'update' => 'Uppdatera',
     'edit' => 'Redigera',
+    'archive' => 'Arkivera',
+    'unarchive' => 'Avarkivera',
     'sort' => 'Sortera',
     'move' => 'Flytta',
     'copy' => 'Kopiera',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Inaktiv',
     'never' => 'Aldrig',
     'none' => 'Inga',
+    'move_left' => 'Flytta åt vänster',
+    'move_right' => 'Flytta åt höger',
 
     // Header
     'homepage' => 'Startsida',

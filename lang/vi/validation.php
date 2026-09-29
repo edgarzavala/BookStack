@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute chỉ được chứa chữ cái hoặc chữ số.',
     'array'                => ':attribute phải là một mảng.',
     'backup_codes'         => 'Mã cung cấp không hợp lệ hoặc đã được sử dụng.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute phải là một ngày trước :date.',
     'between'              => [
         'numeric' => ':attribute phải nằm trong khoảng :min đến :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => 'Trường :attribute phải có giá trị đúng hoặc sai.',
     'confirmed'            => 'Xác nhận :attribute không khớp.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute không phải là ngày hợp lệ.',
     'date_format'          => ':attribute không khớp với định dạng :format.',
     'different'            => ':attribute và :other phải khác nhau.',
@@ -105,10 +107,11 @@ return [
     'url'                  => 'Định dạng của :attribute không hợp lệ.',
     'uploaded'             => 'Tệp tin đã không được tải lên. Máy chủ không chấp nhận các tệp tin với dung lượng lớn như tệp tin trên.',
 
-    'zip_file' => 'The :attribute needs to reference a file within the ZIP.',
-    'zip_file_mime' => 'The :attribute needs to reference a file of type :validTypes, found :foundType.',
-    'zip_model_expected' => 'Data object expected but ":type" found.',
-    'zip_unique' => 'The :attribute must be unique for the object type within the ZIP.',
+    'zip_file' => ':attribute cần tham chiếu đến một tệp trong ZIP.',
+    'zip_file_size' => 'The file :attribute must not exceed :size MB.',
+    'zip_file_mime' => ':attribute cần tham chiếu đến một tệp có kiểu: :validTypes, tìm thấy :foundType.',
+    'zip_model_expected' => 'Đối tượng dữ liệu được mong đợi nhưng tìm thấy ":type".',
+    'zip_unique' => ':attribute phải là duy nhất cho kiểu đối tượng trong ZIP.',
 
     // Custom validation lines
     'custom' => [

@@ -30,6 +30,8 @@ return [
     'create' => 'Create',
     'update' => 'Update',
     'edit' => 'Edit',
+    'archive' => 'Archive',
+    'unarchive' => 'Un-Archive',
     'sort' => 'Sort',
     'move' => 'Move',
     'copy' => 'Copy',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Inactive',
     'never' => 'Never',
     'none' => 'None',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Homepage',

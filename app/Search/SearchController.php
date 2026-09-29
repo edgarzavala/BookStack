@@ -7,6 +7,7 @@ use BookStack\Entities\Queries\QueryPopular;
 use BookStack\Entities\Tools\SiblingFetcher;
 use BookStack\Http\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class SearchController extends Controller
 {
@@ -23,20 +24,22 @@ class SearchController extends Controller
     {
         $searchOpts = SearchOptions::fromRequest($request);
         $fullSearchString = $searchOpts->toString();
-        $this->setPageTitle(trans('entities.search_for_term', ['term' => $fullSearchString]));
+        $page = intval($request->input('page', '0')) ?: 1;
+        $count = setting()->getInteger('lists-page-count-search', 18, 1, 1000);
 
-        $page = intval($request->get('page', '0')) ?: 1;
-        $nextPageLink = url('/search?term=' . urlencode($fullSearchString) . '&page=' . ($page + 1));
-
-        $results = $this->searchRunner->searchEntities($searchOpts, 'all', $page, 20);
+        $results = $this->searchRunner->searchEntities($searchOpts, 'all', $page, $count);
         $formatter->format($results['results']->all(), $searchOpts);
+        $paginator = new LengthAwarePaginator($results['results'], $results['total'], $count, $page);
+        $paginator->setPath(url('/search'));
+        $paginator->appends($request->except('page'));
+
+        $this->setPageTitle(trans('entities.search_for_term', ['term' => $fullSearchString]));
 
         return view('search.all', [
             'entities'     => $results['results'],
             'totalResults' => $results['total'],
+            'paginator'    => $paginator,
             'searchTerm'   => $fullSearchString,
-            'hasNextPage'  => $results['has_more'],
-            'nextPageLink' => $nextPageLink,
             'options'      => $searchOpts,
         ]);
     }
@@ -46,10 +49,10 @@ class SearchController extends Controller
      */
     public function searchBook(Request $request, int $bookId)
     {
-        $term = $request->get('term', '');
-        $results = $this->searchRunner->searchBook($bookId, $term);
+        $term = $request->input('term', '');
+        $results = $this->searchRunner->searchBook($bookId, SearchOptions::fromString($term));
 
-        return view('entities.list', ['entities' => $results]);
+        return view('entities.list', ['entities' => $results['results']]);
     }
 
     /**
@@ -57,10 +60,10 @@ class SearchController extends Controller
      */
     public function searchChapter(Request $request, int $chapterId)
     {
-        $term = $request->get('term', '');
-        $results = $this->searchRunner->searchChapter($chapterId, $term);
+        $term = $request->input('term', '');
+        $results = $this->searchRunner->searchChapter($chapterId, SearchOptions::fromString($term));
 
-        return view('entities.list', ['entities' => $results]);
+        return view('entities.list', ['entities' => $results['results']]);
     }
 
     /**
@@ -69,14 +72,15 @@ class SearchController extends Controller
      */
     public function searchForSelector(Request $request, QueryPopular $queryPopular)
     {
-        $entityTypes = $request->filled('types') ? explode(',', $request->get('types')) : ['page', 'chapter', 'book'];
-        $searchTerm = $request->get('term', false);
-        $permission = $request->get('permission', 'view');
+        $entityTypes = $request->filled('types') ? explode(',', $request->input('types')) : ['page', 'chapter', 'book'];
+        $searchTerm = $request->input('term', false);
+        $permission = $request->input('permission', 'view');
 
         // Search for entities otherwise show most popular
         if ($searchTerm !== false) {
-            $searchTerm .= ' {type:' . implode('|', $entityTypes) . '}';
-            $entities = $this->searchRunner->searchEntities(SearchOptions::fromString($searchTerm), 'all', 1, 20)['results'];
+            $options = SearchOptions::fromString($searchTerm);
+            $options->setFilter('type', implode('|', $entityTypes));
+            $entities = $this->searchRunner->searchEntities($options, 'all', 1, 20)['results'];
         } else {
             $entities = $queryPopular->run(20, 0, $entityTypes);
         }
@@ -89,7 +93,7 @@ class SearchController extends Controller
      */
     public function templatesForSelector(Request $request)
     {
-        $searchTerm = $request->get('term', false);
+        $searchTerm = $request->input('term', false);
 
         if ($searchTerm !== false) {
             $searchOptions = SearchOptions::fromString($searchTerm);
@@ -115,7 +119,7 @@ class SearchController extends Controller
      */
     public function searchSuggestions(Request $request)
     {
-        $searchTerm = $request->get('term', '');
+        $searchTerm = $request->input('term', '');
         $entities = $this->searchRunner->searchEntities(SearchOptions::fromString($searchTerm), 'all', 1, 5)['results'];
 
         foreach ($entities as $entity) {
@@ -128,12 +132,12 @@ class SearchController extends Controller
     }
 
     /**
-     * Search siblings items in the system.
+     * Search sibling items in the system.
      */
     public function searchSiblings(Request $request, SiblingFetcher $siblingFetcher)
     {
-        $type = $request->get('entity_type', null);
-        $id = $request->get('entity_id', null);
+        $type = $request->input('entity_type', null);
+        $id = $request->input('entity_id', null);
 
         $entities = $siblingFetcher->fetch($type, $id);
 

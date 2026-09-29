@@ -8,6 +8,7 @@ return [
 
     'failed' => 'Kasutajanimi ja parool ei klapi.',
     'throttle' => 'Liiga palju sisselogimiskatseid. Proovi uuesti :seconds sekundi pärast.',
+    'mfa_throttle' => 'Liiga palju mitmeastmelise kinnituse katseid. Proovi uuesti :seconds sekundi pärast.',
 
     // Login & Register
     'sign_up' => 'Registreeru',
@@ -20,6 +21,9 @@ return [
     'username' => 'Kasutajanimi',
     'email' => 'E-post',
     'password' => 'Parool',
+    'password_new' => 'Uus parool',
+    'password_new_confirm' => 'Kinnita uus parool',
+    'password_current' => 'Kinnita praegune parool',
     'password_confirm' => 'Kinnita parool',
     'password_hint' => 'Peab olema vähemalt 8 tähemärki pikk',
     'forgot_password' => 'Unustasid parooli?',

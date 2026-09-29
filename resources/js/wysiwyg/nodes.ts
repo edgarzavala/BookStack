@@ -19,10 +19,8 @@ import {MediaNode} from "@lexical/rich-text/LexicalMediaNode";
 import {HeadingNode} from "@lexical/rich-text/LexicalHeadingNode";
 import {QuoteNode} from "@lexical/rich-text/LexicalQuoteNode";
 import {CaptionNode} from "@lexical/table/LexicalCaptionNode";
+import {MentionNode} from "@lexical/link/LexicalMentionNode";
 
-/**
- * Load the nodes for lexical.
- */
 export function getNodesForPageEditor(): (KlassConstructor<typeof LexicalNode> | LexicalNodeReplacement)[] {
     return [
         CalloutNode,
@@ -45,6 +43,22 @@ export function getNodesForPageEditor(): (KlassConstructor<typeof LexicalNode> |
     ];
 }
 
+export function getNodesForBasicEditor(): (KlassConstructor<typeof LexicalNode> | LexicalNodeReplacement)[] {
+    return [
+        ListNode,
+        ListItemNode,
+        ParagraphNode,
+        LinkNode,
+    ];
+}
+
+export function getNodesForCommentEditor(): (KlassConstructor<typeof LexicalNode> | LexicalNodeReplacement)[] {
+    return [
+        ...getNodesForBasicEditor(),
+        MentionNode,
+    ];
+}
+
 export function registerCommonNodeMutationListeners(context: EditorUiContext): void {
     const decorated = [ImageNode, CodeBlockNode, DiagramNode];
 
@@ -53,7 +67,7 @@ export function registerCommonNodeMutationListeners(context: EditorUiContext): v
             if (mutation === "destroyed") {
                 const decorator = context.manager.getDecoratorByNodeKey(nodeKey);
                 if (decorator) {
-                    decorator.destroy(context);
+                    decorator.teardown();
                 }
             }
         }

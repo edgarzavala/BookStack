@@ -1,18 +1,24 @@
 import {
     $createParagraphNode,
+    $getNearestNodeFromDOMNode,
     $getRoot,
     $isDecoratorNode,
     $isElementNode, $isRootNode,
     $isTextNode,
     ElementNode,
     LexicalEditor,
-    LexicalNode
+    LexicalNode, RangeSelection
 } from "lexical";
 import {LexicalNodeMatcher} from "../nodes";
 import {$generateNodesFromDOM} from "@lexical/html";
 import {htmlToDom} from "./dom";
 import {NodeHasAlignment, NodeHasInset} from "lexical/nodes/common";
 import {$findMatchingParent} from "@lexical/utils";
+import {$isImageNode} from "@lexical/rich-text/LexicalImageNode";
+import {$isMediaNode} from "@lexical/rich-text/LexicalMediaNode";
+import {$isDiagramNode} from "./diagrams";
+import {$isLinkedImageNode} from "./images";
+import {$isDetailsNode} from "@lexical/rich-text/LexicalDetailsNode";
 
 function wrapTextNodes(nodes: LexicalNode[]): LexicalNode[] {
     return nodes.map(node => {
@@ -25,10 +31,13 @@ function wrapTextNodes(nodes: LexicalNode[]): LexicalNode[] {
     });
 }
 
-export function $htmlToBlockNodes(editor: LexicalEditor, html: string): LexicalNode[] {
+export function $htmlToNodes(editor: LexicalEditor, html: string): LexicalNode[] {
     const dom = htmlToDom(html);
-    const nodes = $generateNodesFromDOM(editor, dom);
-    return wrapTextNodes(nodes);
+    return $generateNodesFromDOM(editor, dom);
+}
+
+export function $htmlToBlockNodes(editor: LexicalEditor, html: string): LexicalNode[] {
+    return wrapTextNodes($htmlToNodes(editor, html));
 }
 
 export function $getParentOfType(node: LexicalNode, matcher: LexicalNodeMatcher): LexicalNode | null {
@@ -59,6 +68,27 @@ export function $getAllNodesOfType(matcher: LexicalNodeMatcher, root?: ElementNo
     }
 
     return matches;
+}
+
+/**
+ * Get the node based on the given mouse event.
+ */
+export function $getNodePositionFromMouseEvent(event: MouseEvent, editor: LexicalEditor): {node: LexicalNode, offset: number}|null {
+    const x = event.clientX;
+    const y = event.clientY;
+    const caretPosition = window.document.caretPositionFromPoint(event.x, event.y);
+    if (!caretPosition) {
+        const backup = $getNearestBlockNodeForCoords(editor, x, y);
+        return backup ? {node: backup, offset: 0} : null;
+    }
+
+    const node = $getNearestNodeFromDOMNode(caretPosition.offsetNode);
+    if (!node) {
+        const backup = $getNearestBlockNodeForCoords(editor, x, y);
+        return backup ? {node: backup, offset: 0} : null;
+    }
+
+    return {node, offset: caretPosition.offset};
 }
 
 /**
@@ -94,7 +124,12 @@ export function $getNearestNodeBlockParent(node: LexicalNode): LexicalNode|null 
     return $findMatchingParent(node, isBlockNode);
 }
 
-export function $sortNodes(nodes: LexicalNode[]): LexicalNode[] {
+/**
+ * Sort the given node array by their position in the document.
+ * A search point can be provided to limit the search to a specific part of the document, which can
+ * avoid having to traverse the entire document.
+ */
+export function $sortNodes(nodes: LexicalNode[], searchPoint: ElementNode|null = null): LexicalNode[] {
     const idChain: string[] = [];
     const addIds = (n: ElementNode) => {
         for (const child of n.getChildren()) {
@@ -105,8 +140,7 @@ export function $sortNodes(nodes: LexicalNode[]): LexicalNode[] {
         }
     };
 
-    const root = $getRoot();
-    addIds(root);
+    addIds(searchPoint || $getRoot());
 
     const sorted = Array.from(nodes);
     sorted.sort((a, b) => {
@@ -116,6 +150,59 @@ export function $sortNodes(nodes: LexicalNode[]): LexicalNode[] {
     });
 
     return sorted;
+}
+
+export function $selectOrCreateAdjacent(node: LexicalNode, after: boolean): RangeSelection {
+    const nearestBlock = $getNearestNodeBlockParent(node) || node;
+    let target = after ? nearestBlock.getNextSibling() : nearestBlock.getPreviousSibling()
+
+    if (!target) {
+        target = $createParagraphNode();
+        if (after) {
+            nearestBlock.insertAfter(target)
+        } else {
+            nearestBlock.insertBefore(target);
+        }
+    }
+
+    return after ? target.selectStart() : target.selectEnd();
+}
+
+/**
+ * Check if the range of nodes represents a single node which is wholly selectable.
+ */
+export function $isSingleSelectableNode(nodes: LexicalNode[]): boolean {
+    if (nodes.length === 1) {
+        const node = nodes[0];
+        if ($isDecoratorNode(node) || $isImageNode(node) || $isMediaNode(node) || $isDiagramNode(node)) {
+            return true;
+        }
+
+        if ($isDetailsNode(node)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Get the single selectable node if the given range represents a single selectable node.
+ * Typically called with a selection's node ranges.
+ * Normalises the result, like for linked images, for example.
+ */
+export function $getSingleSelectableNode(nodes: LexicalNode[]): LexicalNode|null {
+    if (!$isSingleSelectableNode(nodes)) {
+        return null;
+    }
+
+    const node = nodes[0];
+
+    if ($isLinkedImageNode(node)) {
+        return node.getParent();
+    }
+
+    return node;
 }
 
 export function nodeHasAlignment(node: object): node is NodeHasAlignment {

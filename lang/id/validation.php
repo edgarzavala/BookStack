@@ -16,6 +16,7 @@ return [
     'alpha_num'            => ':attribute hanya boleh berisi huruf dan angka.',
     'array'                => ':attribute harus berupa larik.',
     'backup_codes'         => 'Kode yang diberikan tidak valid atau telah digunakan.',
+    'base64_uri_mime'      => 'The :attribute must be a valid base64 URI containing data of :mime mime type.',
     'before'               => ':attribute harus tanggal sebelum :date.',
     'between'              => [
         'numeric' => ':attribute harus di antara :min dan :max.',
@@ -25,6 +26,7 @@ return [
     ],
     'boolean'              => ':attribute bidang harus berisi benar atau salah.',
     'confirmed'            => ':attribute konfirmasi tidak sama.',
+    'current_password'     => 'This does not match your current password.',
     'date'                 => ':attribute bukan tanggal yang valid.',
     'date_format'          => ':attribute tidak sesuai dengan format :format.',
     'different'            => ':attribute dan :other harus berbeda.',
@@ -106,6 +108,7 @@ return [
     'uploaded'             => 'Berkas tidak dapat diunggah. Server mungkin tidak menerima berkas dengan ukuran ini.',
 
     'zip_file' => ':attribute perlu merujuk ke sebuah file yang terdapat di dalam arsip ZIP.',
+    'zip_file_size' => 'The file :attribute must not exceed :size MB.',
     'zip_file_mime' => ':attribute seharusnya berupa file dengan tipe :validTypes, tapi yang Anda unggah bertipe :foundType.',
     'zip_model_expected' => 'Diharapkan sebuah objek data, namun yang ditemukan adalah \':type\'.',
     'zip_unique' => ':attribute harus bersifat unik untuk setiap jenis objek dalam file ZIP.',

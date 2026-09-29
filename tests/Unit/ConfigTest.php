@@ -2,6 +2,8 @@
 
 namespace Tests\Unit;
 
+use Exception;
+use Illuminate\Encryption\MissingAppKeyException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
@@ -16,7 +18,7 @@ class ConfigTest extends TestCase
 {
     public function test_filesystem_images_falls_back_to_storage_type_var()
     {
-        $this->runWithEnv('STORAGE_TYPE', 'local_secure', function () {
+        $this->runWithEnv(['STORAGE_TYPE' => 'local_secure'], function () {
             $this->checkEnvConfigResult('STORAGE_IMAGE_TYPE', 's3', 'filesystems.images', 's3');
             $this->checkEnvConfigResult('STORAGE_IMAGE_TYPE', null, 'filesystems.images', 'local_secure');
         });
@@ -24,7 +26,7 @@ class ConfigTest extends TestCase
 
     public function test_filesystem_attachments_falls_back_to_storage_type_var()
     {
-        $this->runWithEnv('STORAGE_TYPE', 'local_secure', function () {
+        $this->runWithEnv(['STORAGE_TYPE' => 'local_secure'], function () {
             $this->checkEnvConfigResult('STORAGE_ATTACHMENT_TYPE', 's3', 'filesystems.attachments', 's3');
             $this->checkEnvConfigResult('STORAGE_ATTACHMENT_TYPE', null, 'filesystems.attachments', 'local_secure');
         });
@@ -114,7 +116,7 @@ class ConfigTest extends TestCase
         $this->assertEmpty($getStreamOptions());
 
 
-        $this->runWithEnv('MAIL_VERIFY_SSL', 'false', function () use ($getStreamOptions) {
+        $this->runWithEnv(['MAIL_VERIFY_SSL' => 'false'], function () use ($getStreamOptions) {
             $options = $getStreamOptions();
             $this->assertArrayHasKey('ssl', $options);
             $this->assertFalse($options['ssl']['verify_peer']);
@@ -122,11 +124,32 @@ class ConfigTest extends TestCase
         });
     }
 
+    public function test_app_url_changes_smtp_ehlo_host_on_mailer()
+    {
+        $getLocalDomain = function (): string {
+            /** @var EsmtpTransport $transport */
+            $transport = Mail::mailer('smtp')->getSymfonyTransport();
+            return $transport->getLocalDomain();
+        };
+
+        $this->runWithEnv(['APP_URL' => ''], function () use ($getLocalDomain) {
+            $this->assertEquals('[127.0.0.1]', $getLocalDomain());
+        });
+
+        $this->runWithEnv(['APP_URL' => 'https://example.com/cats/dogs'], function () use ($getLocalDomain) {
+            $this->assertEquals('example.com', $getLocalDomain());
+        });
+
+        $this->runWithEnv(['APP_URL' => 'http://beans.cat.example.com'], function () use ($getLocalDomain) {
+            $this->assertEquals('beans.cat.example.com', $getLocalDomain());
+        });
+    }
+
     public function test_non_null_mail_encryption_options_enforce_smtp_scheme()
     {
-        $this->checkEnvConfigResult('MAIL_ENCRYPTION', 'tls', 'mail.mailers.smtp.tls_required', true);
-        $this->checkEnvConfigResult('MAIL_ENCRYPTION', 'ssl', 'mail.mailers.smtp.tls_required', true);
-        $this->checkEnvConfigResult('MAIL_ENCRYPTION', 'null', 'mail.mailers.smtp.tls_required', false);
+        $this->checkEnvConfigResult('MAIL_ENCRYPTION', 'tls', 'mail.mailers.smtp.require_tls', true);
+        $this->checkEnvConfigResult('MAIL_ENCRYPTION', 'ssl', 'mail.mailers.smtp.require_tls', true);
+        $this->checkEnvConfigResult('MAIL_ENCRYPTION', 'null', 'mail.mailers.smtp.require_tls', false);
     }
 
     public function test_smtp_scheme_and_certain_port_forces_tls_usage()
@@ -135,29 +158,18 @@ class ConfigTest extends TestCase
             /** @var EsmtpTransport $transport */
             $transport = Mail::mailer('smtp')->getSymfonyTransport();
             Mail::purge('smtp');
-            return $transport->getTlsRequirement();
+            return $transport->isTlsRequired();
         };
 
-        config()->set([
-            'mail.mailers.smtp.tls_required' => null,
-            'mail.mailers.smtp.port' => 587,
-        ]);
+        $runTest = function (string $tlsOption, int $port, bool $expectedResult) use ($isMailTlsRequired) {
+            $this->runWithEnv(['MAIL_ENCRYPTION' => $tlsOption, 'MAIL_PORT' => $port], function () use ($isMailTlsRequired, $port, $expectedResult) {
+                $this->assertEquals($expectedResult, $isMailTlsRequired());
+            });
+        };
 
-        $this->assertFalse($isMailTlsRequired());
-
-        config()->set([
-            'mail.mailers.smtp.tls_required' => 'tls',
-            'mail.mailers.smtp.port' => 587,
-        ]);
-
-        $this->assertTrue($isMailTlsRequired());
-
-        config()->set([
-            'mail.mailers.smtp.tls_required' => null,
-            'mail.mailers.smtp.port' => 465,
-        ]);
-
-        $this->assertTrue($isMailTlsRequired());
+        $runTest('null', 587, false);
+        $runTest('tls', 587, true);
+        $runTest('null', 465, true);
     }
 
     public function test_mysql_host_parsed_as_expected()
@@ -174,23 +186,56 @@ class ConfigTest extends TestCase
         ];
 
         foreach ($cases as $host => [$expectedHost, $expectedPort]) {
-            $this->runWithEnv("DB_HOST", $host, function () use ($expectedHost, $expectedPort) {
+            $this->runWithEnv(["DB_HOST" => $host], function () use ($expectedHost, $expectedPort) {
                 $this->assertEquals($expectedHost, config("database.connections.mysql.host"));
                 $this->assertEquals($expectedPort, config("database.connections.mysql.port"));
             }, false);
         }
     }
 
+    public function test_content_filtering_defaults_to_enabled()
+    {
+        $this->runWithEnv(['APP_CONTENT_FILTERING' => null, 'ALLOW_CONTENT_SCRIPTS' => null], function () {
+            $this->assertEquals('jhfa', config('app.content_filtering'));
+        });
+    }
+
+    public function test_content_filtering_can_be_disabled()
+    {
+        $this->runWithEnv(['APP_CONTENT_FILTERING' => "", 'ALLOW_CONTENT_SCRIPTS' => null], function () {
+            $this->assertEquals('', config('app.content_filtering'));
+        });
+    }
+
+    public function test_allow_content_scripts_disables_content_filtering()
+    {
+        $this->runWithEnv(['APP_CONTENT_FILTERING' => null, 'ALLOW_CONTENT_SCRIPTS' => 'true'], function () {
+            $this->assertEquals('', config('app.content_filtering'));
+        });
+    }
+
+    public function test_app_errors_if_no_app_key_set()
+    {
+        $this->runWithEnv(['APP_KEY' => ''], function () {
+            $error = null;
+            try {
+                $this->get('/');
+            } catch (Exception $e) {
+                $error = $e;
+            }
+
+            $this->assertInstanceOf(MissingAppKeyException::class, $error);
+        });
+    }
+
     /**
-     * Set an environment variable of the given name and value
+     * Set an environment variable of the given name and value,
      * then check the given config key to see if it matches the given result.
      * Providing a null $envVal clears the variable.
-     *
-     * @param mixed $expectedResult
      */
-    protected function checkEnvConfigResult(string $envName, ?string $envVal, string $configKey, $expectedResult)
+    protected function checkEnvConfigResult(string $envName, ?string $envVal, string $configKey, mixed $expectedResult): void
     {
-        $this->runWithEnv($envName, $envVal, function () use ($configKey, $expectedResult) {
+        $this->runWithEnv([$envName => $envVal], function () use ($configKey, $expectedResult) {
             $this->assertEquals($expectedResult, config($configKey));
         });
     }

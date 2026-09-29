@@ -30,6 +30,8 @@ return [
     'create' => 'Crea',
     'update' => 'Actualitza',
     'edit' => 'Edita',
+    'archive' => 'Arxivar',
+    'unarchive' => 'Desarxivar',
     'sort' => 'Ordena',
     'move' => 'Mou',
     'copy' => 'Copia',
@@ -82,6 +84,8 @@ return [
     'status_inactive' => 'Inactiu',
     'never' => 'Mai',
     'none' => 'Cap',
+    'move_left' => 'Move Left',
+    'move_right' => 'Move Right',
 
     // Header
     'homepage' => 'Pàgina d’inici',
@@ -109,5 +113,5 @@ return [
     'terms_of_service' => 'Condicions del servei',
 
     // OpenSearch
-    'opensearch_description' => 'Search :appName',
+    'opensearch_description' => 'Buscar :appName',
 ];

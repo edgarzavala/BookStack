@@ -4,13 +4,14 @@
         <div class="tabs-inner flex-container-column justify-center">
             <button type="button" refs="editor-toolbox@toggle" title="{{ trans('entities.toggle_sidebar') }}" aria-expanded="false" class="toolbox-toggle">@icon('caret-left-circle')</button>
             <button type="button" refs="editor-toolbox@tab-button" data-tab="tags" title="{{ trans('entities.page_tags') }}" class="active">@icon('tag')</button>
-            @if(userCan('attachment-create-all'))
+            @if(userCan(\BookStack\Permissions\Permission::AttachmentCreateAll))
                 <button type="button" refs="editor-toolbox@tab-button" data-tab="files" title="{{ trans('entities.attachments') }}">@icon('attach')</button>
             @endif
             <button type="button" refs="editor-toolbox@tab-button" data-tab="templates" title="{{ trans('entities.templates') }}">@icon('template')</button>
             @if($comments->enabled())
                 <button type="button" refs="editor-toolbox@tab-button" data-tab="comments" title="{{ trans('entities.comments') }}">@icon('comment')</button>
             @endif
+            <button type="button" refs="editor-toolbox@tab-button" data-tab="contents" title="{{ trans('entities.page_contents') }}">@icon('contents')</button>
         </div>
     </div>
 
@@ -21,7 +22,7 @@
         </div>
     </div>
 
-    @if(userCan('attachment-create-all'))
+    @if(userCan(\BookStack\Permissions\Permission::AttachmentCreateAll))
         @include('attachments.manager', ['page' => $page])
     @endif
 
@@ -36,5 +37,7 @@
     @if($comments->enabled())
         @include('pages.parts.toolbox-comments')
     @endif
+
+    @include('pages.parts.toolbox-contents')
 
 </div>
